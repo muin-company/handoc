@@ -18,17 +18,24 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "docx": "^9.0.0",
     "@handoc/document-model": "workspace:*",
-    "@handoc/hwpx-parser": "workspace:*"
+    "@handoc/hwpx-parser": "workspace:*",
+    "docx": "^9.0.0"
   },
   "devDependencies": {
-    "vitest": "^4.0.0",
+    "fflate": "^0.8.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.0"
   },
   "description": "Convert HWPX documents to DOCX format",
-  "keywords": ["hwpx", "docx", "converter", "hancom", "document"],
+  "keywords": [
+    "hwpx",
+    "docx",
+    "converter",
+    "hancom",
+    "document"
+  ],
   "author": "MUIN <mj@muin.company>",
   "license": "MIT",
   "repository": {
@@ -40,5 +47,9 @@
   "bugs": {
     "url": "https://github.com/muin-company/handoc/issues"
   },
-  "files": ["dist", "README.md", "LICENSE"]
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

@@ -158,10 +158,19 @@ describe('Table and Image Conversion (HWPX → DOCX)', () => {
     const docxXml = extractDocxXml(docxBuffer);
 
     // Verify paragraphs exist within table cells
-    expect(docxXml).toMatch(/<w:tc>.*?<w:p>.*?<\/w:p>.*?<\/w:tc>/s);
+    expect(docxXml).toContain('<w:tc>');
+    expect(docxXml).toContain('<w:p>');
+    expect(docxXml).toContain('</w:p>');
+    expect(docxXml).toContain('</w:tc>');
 
-    // Verify text runs exist
-    expect(docxXml).toMatch(/<w:p>.*?<w:r>.*?<w:t>.*?<\/w:t>.*?<\/w:r>.*?<\/w:p>/s);
+    // Verify text runs exist with proper structure
+    expect(docxXml).toContain('<w:r>');
+    expect(docxXml).toContain('<w:t');
+    expect(docxXml).toContain('</w:t>');
+    expect(docxXml).toContain('</w:r>');
+    
+    // Verify table cell contains paragraph with run and text
+    expect(docxXml).toMatch(/<w:tc>.*<w:p>.*<w:r>.*<w:t.*>.*<\/w:t>.*<\/w:r>.*<\/w:p>.*<\/w:tc>/);
   });
 });
 
