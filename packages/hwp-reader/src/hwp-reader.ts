@@ -1,4 +1,4 @@
-import { inflateSync } from 'node:zlib';
+import { inflateSync, inflateRawSync } from 'node:zlib';
 import { openCfb, type CfbFile } from './cfb-reader.js';
 
 /** Parsed HWP FileHeader information */
@@ -88,11 +88,16 @@ function parseFileHeader(data: Uint8Array): HwpFileHeader {
 
 function decompressIfNeeded(data: Uint8Array, compressed: boolean): Uint8Array {
   if (!compressed) return data;
+  // HWP 5.x uses raw deflate (no zlib/gzip header). Try raw first, then zlib-wrapped.
   try {
-    return new Uint8Array(inflateSync(data));
+    return new Uint8Array(inflateRawSync(data));
   } catch {
-    // Some streams may not actually be compressed even if flag is set
-    return data;
+    try {
+      return new Uint8Array(inflateSync(data));
+    } catch {
+      // Some streams may not actually be compressed even if flag is set
+      return data;
+    }
   }
 }
 
