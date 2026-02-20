@@ -1,0 +1,79 @@
+/* HanDoc Viewer Styles */
+
+.handoc-viewer {
+  font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+  color: #000;
+  background: #e8e8e8;
+  padding: 20px;
+}
+
+.handoc-page {
+  background: #fff;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 20px auto;
+  padding: 20mm 15mm 15mm 15mm;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.handoc-para {
+  margin: 0;
+  padding: 0;
+  min-height: 1em;
+}
+
+.handoc-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.handoc-table td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+.handoc-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}
+
+.handoc-image-missing {
+  color: #999;
+  font-style: italic;
+}
+
+.handoc-loading,
+.handoc-error {
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.handoc-error {
+  color: #c00;
+}
+
+/* Print styles */
+@media print {
+  .handoc-viewer {
+    background: none;
+    padding: 0;
+  }
+
+  .handoc-page {
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+  }
+
+  .handoc-page:last-child {
+    page-break-after: auto;
+  }
+}

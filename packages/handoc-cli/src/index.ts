@@ -4,6 +4,9 @@ import { basename } from 'node:path';
 import { OpcPackage } from '@handoc/hwpx-core';
 import { HanDoc } from '@handoc/hwpx-parser';
 import { convertHwpToHwpx } from '@handoc/hwp-reader';
+import { hwpxToDocx } from '@handoc/docx-writer';
+import { docxToHwpx } from '@handoc/docx-reader';
+import { hwpxToPdf, renderToHtml } from '@handoc/pdf-export';
 
 const program = new Command();
 
@@ -99,6 +102,63 @@ program
         console.log(`  ${p}`);
       }
     }
+  });
+
+// ── to-docx ──
+program
+  .command('to-docx')
+  .description('Convert HWPX to DOCX')
+  .argument('<file>', 'HWPX file path')
+  .option('-o, --output <path>', 'Output DOCX file path')
+  .action(async (file: string, opts: { output?: string }) => {
+    const buf = await readFile(file);
+    const docx = await hwpxToDocx(new Uint8Array(buf));
+    const outPath = opts.output || file.replace(/\.hwpx$/i, '.docx');
+    await writeFile(outPath, docx);
+    console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
+  });
+
+// ── to-hwpx ──
+program
+  .command('to-hwpx')
+  .description('Convert DOCX to HWPX')
+  .argument('<file>', 'DOCX file path')
+  .option('-o, --output <path>', 'Output HWPX file path')
+  .action(async (file: string, opts: { output?: string }) => {
+    const buf = await readFile(file);
+    const hwpx = await docxToHwpx(new Uint8Array(buf));
+    const outPath = opts.output || file.replace(/\.docx$/i, '.hwpx');
+    await writeFile(outPath, hwpx);
+    console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
+  });
+
+// ── to-pdf ──
+program
+  .command('to-pdf')
+  .description('Convert HWPX to PDF (requires Playwright)')
+  .argument('<file>', 'HWPX file path')
+  .option('-o, --output <path>', 'Output PDF file path')
+  .action(async (file: string, opts: { output?: string }) => {
+    const buf = await readFile(file);
+    const pdf = await hwpxToPdf(new Uint8Array(buf));
+    const outPath = opts.output || file.replace(/\.hwpx$/i, '.pdf');
+    await writeFile(outPath, pdf);
+    console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
+  });
+
+// ── to-html ──
+program
+  .command('to-html')
+  .description('Convert HWPX to HTML')
+  .argument('<file>', 'HWPX file path')
+  .option('-o, --output <path>', 'Output HTML file path')
+  .action(async (file: string, opts: { output?: string }) => {
+    const buf = await readFile(file);
+    const doc = await HanDoc.open(new Uint8Array(buf));
+    const html = renderToHtml(doc);
+    const outPath = opts.output || file.replace(/\.hwpx$/i, '.html');
+    await writeFile(outPath, html);
+    console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
   });
 
 program.parse();

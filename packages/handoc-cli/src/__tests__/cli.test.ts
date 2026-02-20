@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, unlinkSync } from 'node:fs';
 
 const CLI = resolve(__dirname, '../index.ts');
 const FIXTURES = resolve(__dirname, '../../../../fixtures/hwpx');
@@ -55,6 +55,69 @@ describe('handoc cli', () => {
     });
   });
 
+  describe('to-docx', () => {
+    it('converts HWPX to DOCX', () => {
+      const outPath = resolve(FIXTURES, 'simple-text.docx');
+      try {
+        const out = run('to-docx', simpleText, '-o', outPath);
+        expect(out).toContain('Converted:');
+        expect(existsSync(outPath)).toBe(true);
+      } finally {
+        if (existsSync(outPath)) unlinkSync(outPath);
+      }
+    });
+  });
+
+  describe('to-hwpx', () => {
+    it('converts DOCX to HWPX', () => {
+      // First create a DOCX from HWPX, then convert back
+      const docxPath = resolve(FIXTURES, 'roundtrip.docx');
+      const hwpxPath = resolve(FIXTURES, 'roundtrip.hwpx');
+      try {
+        run('to-docx', simpleText, '-o', docxPath);
+        const out = run('to-hwpx', docxPath, '-o', hwpxPath);
+        expect(out).toContain('Converted:');
+        expect(existsSync(hwpxPath)).toBe(true);
+      } finally {
+        if (existsSync(docxPath)) unlinkSync(docxPath);
+        if (existsSync(hwpxPath)) unlinkSync(hwpxPath);
+      }
+    });
+  });
+
+  describe('to-html', () => {
+    it('converts HWPX to HTML', () => {
+      const outPath = resolve(FIXTURES, 'simple-text.html');
+      try {
+        const out = run('to-html', simpleText, '-o', outPath);
+        expect(out).toContain('Converted:');
+        expect(existsSync(outPath)).toBe(true);
+      } finally {
+        if (existsSync(outPath)) unlinkSync(outPath);
+      }
+    });
+  });
+
+  describe('to-pdf', () => {
+    it('converts HWPX to PDF (skipped without Playwright)', () => {
+      let hasPlaywright = false;
+      try {
+        require.resolve('playwright');
+        hasPlaywright = true;
+      } catch { /* skip */ }
+      if (!hasPlaywright) return;
+
+      const outPath = resolve(FIXTURES, 'simple-text.pdf');
+      try {
+        const out = run('to-pdf', simpleText, '-o', outPath);
+        expect(out).toContain('Converted:');
+        expect(existsSync(outPath)).toBe(true);
+      } finally {
+        if (existsSync(outPath)) unlinkSync(outPath);
+      }
+    });
+  });
+
   describe('help', () => {
     it('shows help', () => {
       const out = run('--help');
@@ -62,6 +125,10 @@ describe('handoc cli', () => {
       expect(out).toContain('text');
       expect(out).toContain('convert');
       expect(out).toContain('inspect');
+      expect(out).toContain('to-docx');
+      expect(out).toContain('to-hwpx');
+      expect(out).toContain('to-pdf');
+      expect(out).toContain('to-html');
     });
   });
 });

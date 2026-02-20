@@ -15,6 +15,9 @@
     "@handoc/hwpx-core": "workspace:*",
     "@handoc/hwpx-parser": "workspace:*",
     "@handoc/hwpx-writer": "workspace:*",
+    "@handoc/docx-writer": "workspace:*",
+    "@handoc/docx-reader": "workspace:*",
+    "@handoc/pdf-export": "workspace:*",
     "commander": "^13.0.0"
   },
   "devDependencies": {
