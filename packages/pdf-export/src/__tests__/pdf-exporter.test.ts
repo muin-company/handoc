@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { hwpxToPdf } from '../pdf-exporter';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -27,6 +26,9 @@ vi.mock('playwright', () => ({
     launch: mockLaunch,
   },
 }));
+
+// Import hwpxToPdf AFTER the mock is set up
+const { hwpxToPdf } = await import('../pdf-exporter');
 
 describe('hwpxToPdf', () => {
   beforeEach(() => {
@@ -119,20 +121,6 @@ describe('hwpxToPdf', () => {
     await expect(hwpxToPdf(hwpxBuffer)).rejects.toThrow('PDF generation failed');
     
     expect(mockClose).toHaveBeenCalled();
-  });
-
-  it('should throw error if Playwright is not installed', async () => {
-    const hwpxBuffer = readFixture('simple-text.hwpx');
-    
-    // Temporarily break the mock to simulate missing playwright
-    const originalMock = vi.mocked(await import('playwright'));
-    vi.doUnmock('playwright');
-    vi.mock('playwright', () => {
-      throw new Error('Cannot find module playwright');
-    });
-    
-    // This test is hard to implement without actually uninstalling playwright
-    // Skip for now as it's more of an edge case
   });
 });
 
