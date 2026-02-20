@@ -13,4 +13,7 @@ export type {
 } from './types';
 export { parseXml, getAttr, getAttrs, getChildren } from './xml-utils';
 
+export { parseTable, tableToTextGrid } from './table-parser';
+export type { ParsedTable, ParsedTableRow, ParsedTableCell, CellAddress, CellSpan, CellSize } from './table-parser';
+
 export const VERSION = '0.1.0';
