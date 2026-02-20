@@ -12,6 +12,13 @@ import { writeHeader } from './header-writer';
 import { writeSection } from './section-writer';
 import { zipSync } from 'fflate';
 
+/** Minimal interface for the original OPC package (avoids hard dependency on hwpx-core). */
+export interface OpcPackageLike {
+  partNames(): string[];
+  getPart(name: string): Uint8Array;
+  getPartAsText(name: string): string;
+}
+
 export const VERSION = '0.1.0';
 
 export interface HwpxDocument {
@@ -51,26 +58,34 @@ function encode(s: string): Uint8Array {
 
 /**
  * Create a minimal HWPX ZIP from header + sections.
+ * If originalPackage is provided, non-header/section parts are preserved from it
+ * (including the original content.hpf manifest).
  * Returns raw ZIP bytes.
  */
-export function writeHwpx(doc: HwpxDocument): Uint8Array {
+export function writeHwpx(doc: HwpxDocument, originalPackage?: OpcPackageLike): Uint8Array {
   const parts: Record<string, Uint8Array> = {};
 
-  // mimetype
-  parts['mimetype'] = encode('application/hwp+zip');
+  if (originalPackage) {
+    // Copy ALL parts from original first
+    for (const name of originalPackage.partNames()) {
+      parts[name] = originalPackage.getPart(name);
+    }
+  } else {
+    // mimetype
+    parts['mimetype'] = encode('application/hwp+zip');
 
-  // version.xml
-  parts['version.xml'] = encode(
-    '<?xml version="1.0" encoding="UTF-8" ?><HWPVersion Major="1" Minor="5" Micro="0" BuildNumber="0"/>'
-  );
+    // version.xml
+    parts['version.xml'] = encode(
+      '<?xml version="1.0" encoding="UTF-8" ?><HWPVersion Major="1" Minor="5" Micro="0" BuildNumber="0"/>'
+    );
 
-  // content.hpf
-  parts['Contents/content.hpf'] = encode(buildManifest(doc.sections.length));
+    // content.hpf
+    parts['Contents/content.hpf'] = encode(buildManifest(doc.sections.length));
+  }
 
-  // header.xml
+  // Overwrite header.xml and section*.xml with our generated versions
   parts['Contents/header.xml'] = encode(writeHeader(doc.header));
 
-  // section*.xml
   for (let i = 0; i < doc.sections.length; i++) {
     parts[`Contents/section${i}.xml`] = encode(writeSection(doc.sections[i]));
   }

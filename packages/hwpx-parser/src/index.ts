@@ -1,4 +1,5 @@
 export { HanDoc, type HanDocMetadata } from './handoc';
+export { extractImages, type ImageInfo } from './image-extractor';
 export { parseHeader } from './header-parser';
 export type { DocumentHeader } from './header-parser';
 export { parseSection, extractText } from './section-parser';

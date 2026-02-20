@@ -41,11 +41,11 @@ async function testFile(filePath: string): Promise<TestResult> {
     const sectionCount1 = doc1.sections.length;
     const paraCount1 = doc1.sections.reduce((sum, s) => sum + s.paragraphs.length, 0);
 
-    // 2. Write back to HWPX
+    // 2. Write back to HWPX (pass original package to preserve custom parts)
     const hwpxBytes = writeHwpx({
       header: doc1.header,
       sections: doc1.sections,
-    });
+    }, doc1.opcPackage);
 
     // 3. Re-open & re-parse
     const doc2 = await HanDoc.open(hwpxBytes);

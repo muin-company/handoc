@@ -25,5 +25,29 @@
     "tsup": "^8.0.0",
     "typescript": "^5.7.0",
     "vitest": "^4.0.0"
-  }
+  },
+  "description": "Low-level HWPX (OPC/ZIP) package reader",
+  "keywords": [
+    "hwpx",
+    "opc",
+    "zip",
+    "hancom",
+    "hwp"
+  ],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/hwpx-core"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/hwpx-core",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

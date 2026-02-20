@@ -6,7 +6,11 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.js", "require": "./dist/index.cjs", "types": "./dist/index.d.ts" }
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
@@ -22,5 +26,29 @@
     "vitest": "^4.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.7.0"
-  }
+  },
+  "description": "Parse HWPX files into a structured document model",
+  "keywords": [
+    "hwpx",
+    "hwp",
+    "parser",
+    "hancom",
+    "document"
+  ],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/hwpx-parser"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/hwpx-parser",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

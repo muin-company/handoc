@@ -6,7 +6,11 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.js", "require": "./dist/index.cjs", "types": "./dist/index.d.ts" }
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
@@ -17,5 +21,30 @@
     "vitest": "^4.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.7.0"
-  }
+  },
+  "description": "TypeScript types and utilities for HWP/HWPX document model",
+  "keywords": [
+    "hwp",
+    "hwpx",
+    "hancom",
+    "document",
+    "model",
+    "typescript"
+  ],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/document-model"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/document-model",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

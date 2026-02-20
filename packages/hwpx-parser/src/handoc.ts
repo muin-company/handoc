@@ -1,6 +1,7 @@
 import { OpcPackage } from '@handoc/hwpx-core';
 import { parseHeader } from './header-parser';
 import { parseSection, extractText } from './section-parser';
+import { extractImages, type ImageInfo } from './image-extractor';
 import type { Section } from './types';
 import type { DocumentHeader } from './header-parser';
 
@@ -22,6 +23,7 @@ export class HanDoc {
   private pkg: OpcPackage;
   private _header: DocumentHeader | null = null;
   private _sections: Section[] | null = null;
+  private _images: ImageInfo[] | null = null;
 
   private constructor(pkg: OpcPackage) {
     this.pkg = pkg;
@@ -73,8 +75,32 @@ export class HanDoc {
     return this._sections;
   }
 
+  /** Access the underlying OPC package (for roundtrip preservation). */
+  get opcPackage(): OpcPackage {
+    return this.pkg;
+  }
+
   get metadata(): HanDocMetadata {
     return this.pkg.getMetadata();
+  }
+
+  /**
+   * All images/binary data found in BinData/ (lazy loaded).
+   */
+  get images(): ImageInfo[] {
+    if (!this._images) {
+      this._images = extractImages(this.pkg);
+    }
+    return this._images;
+  }
+
+  /**
+   * Get a single image by its path within the ZIP.
+   * Returns null if not found.
+   */
+  getImage(path: string): Uint8Array | null {
+    const img = this.images.find((i) => i.path === path);
+    return img?.data ?? null;
   }
 
   /**

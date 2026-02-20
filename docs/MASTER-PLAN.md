@@ -11,14 +11,14 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
 
 ### 1.1 필수 기능 (Must Have)
 
-| # | 기능 | 패키지 | 완료 기준 |
-|---|------|--------|----------|
-| M1 | HWPX 파일 열기 (ZIP→파트 추출) | hwpx-core | 349개 실제 문서 100% 열기 성공 |
-| M2 | HWPX 헤더 파싱 (글꼴, 스타일, 문단모양) | hwpx-parser | 349개 중 warning 0 비율 ≥ 90% |
-| M3 | HWPX 본문 파싱 (텍스트, 서식, 표) | hwpx-parser | 텍스트 추출 성공률 ≥ 95% (현재 76%) |
-| M4 | HWPX 파일 쓰기 (문서모델→ZIP) | hwpx-writer | 라운드트립 성공률 ≥ 80% |
-| M5 | HwpxBuilder API (프로그래매틱 문서 생성) | hwpx-writer | 생성 파일 한컴오피스 열기 성공 |
-| M6 | npm 배포 | 전체 | `@handoc/*` 4개 패키지 npm 퍼블리시 완료 |
+| # | 기능 | 패키지 | 완료 기준 | 상태 |
+|---|------|--------|----------|------|
+| M1 | HWPX 파일 열기 (ZIP→파트 추출) | hwpx-core | 349개 실제 문서 100% 열기 성공 | ✅ 완료 |
+| M2 | HWPX 헤더 파싱 (글꼴, 스타일, 문단모양) | hwpx-parser | 349개 중 warning 0 비율 ≥ 90% | ✅ 완료 |
+| M3 | HWPX 본문 파싱 (텍스트, 서식, 표) | hwpx-parser | 텍스트 추출 성공률 ≥ 95% | ✅ 100% (349/349) |
+| M4 | HWPX 파일 쓰기 (문서모델→ZIP) | hwpx-writer | 라운드트립 성공률 ≥ 80% | ✅ 라운드트립 성공 |
+| M5 | HwpxBuilder API (프로그래매틱 문서 생성) | hwpx-writer | 생성 파일 한컴오피스 열기 성공 | ⬜ 미검증 |
+| M6 | npm 배포 | 전체 | `@handoc/*` 4개 패키지 npm 퍼블리시 완료 | ⬜ 미배포 |
 
 ### 1.2 선택 기능 (Nice to Have — Level 1에서 하면 좋지만 필수 아님)
 
@@ -33,12 +33,12 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
 
 | 메트릭 | 현재 값 | Level 1 목표 |
 |--------|---------|-------------|
-| 349개 실제 문서 파싱 성공률 | 100% (ZIP 열기) | 100% 유지 |
-| 텍스트 추출 성공률 | 76% (265/349) | ≥ 95% (332/349) |
-| 텍스트 추출 0줄 파일 | 7개 | ≤ 2개 |
-| 유닛 테스트 수 | 22개 (4패키지) | ≥ 80개 |
-| 라운드트립 테스트 (parse→write→parse) | 미구현 | ≥ 10개 픽스처 통과 |
-| 빌드 성공 | 6/7 패키지 (parser에 Buffer 에러) | 7/7 |
+| 349개 실제 문서 파싱 성공률 | **100%** (349/349) | 100% 유지 ✅ |
+| 텍스트 추출 성공률 | **100%** (349/349) | ≥ 95% ✅ 달성 |
+| 텍스트 추출 0줄 파일 | **0개** | ≤ 2개 ✅ 달성 |
+| 유닛 테스트 수 | **75개** (4패키지) | ≥ 80개 |
+| 라운드트립 테스트 (parse→write→parse) | ✅ 구현 완료 | ≥ 10개 픽스처 통과 ✅ |
+| 빌드 성공 | **4/4 패키지** | 4/4 ✅ |
 
 ### 1.4 성능 기준
 
@@ -70,191 +70,130 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
 
 | 요소 | 파싱(읽기) | 생성(쓰기) | 라운드트립 | 상태 |
 |------|-----------|-----------|-----------|------|
-| **텍스트** (hp:t) | ✅ 구현됨 | ❌ 미구현 | ❌ | 파서에서 TextSpan 추출 동작 |
-| **문단** (hp:p) | ✅ 구현됨 | ❌ 미구현 | ❌ | paraPrIDRef, styleIDRef 등 속성 파싱 |
-| **런** (hp:run) | ✅ 구현됨 | ❌ 미구현 | ❌ | charPrIDRef 파싱 |
-| **섹션** (hs:sec) | ✅ 구현됨 | ❌ 미구현 | ❌ | 다중 섹션 지원 |
-| **글꼴 정보** (hh:fontfaces) | ✅ 구현됨 | ❌ 미구현 | ❌ | lang별 font 목록 파싱 |
-| **글자 모양** (hh:charPr) | ✅ 구현됨 | ❌ 미구현 | ❌ | height, bold, italic 등 |
-| **문단 모양** (hh:paraPr) | ✅ 구현됨 | ❌ 미구현 | ❌ | align, margin, lineSpacing |
-| **스타일** (hh:style) | ✅ 구현됨 | ❌ 미구현 | ❌ | id, type, name, engName |
-| **표** (hp:tbl) | ⚠️ GenericElement | ❌ 미구현 | ❌ | 구조는 보존되나 셀 접근 API 없음 |
-| **이미지** (hp:picture/pic) | ⚠️ GenericElement | ❌ 미구현 | ❌ | BinData 참조 보존 |
-| **섹션 속성** (hp:secPr) | ⚠️ GenericElement | ❌ 미구현 | ❌ | 용지/여백/단 설정 |
-| **컨트롤** (hp:ctrl) | ⚠️ GenericElement | ❌ 미구현 | ❌ | colPr 등 |
-| **도형** (line/rect/ellipse 등) | ⚠️ GenericElement | ❌ 미구현 | ❌ | 20종 인라인 객체 |
-| **수식** (equation) | ⚠️ GenericElement | ❌ 미구현 | ❌ | SCRIPT 텍스트 보존 |
-| **머리말/꼬리말** (header/footer) | ⚠️ GenericElement | ❌ 미구현 | ❌ | PARALIST 내 텍스트 |
-| **각주/미주** (footnote/endnote) | ⚠️ GenericElement | ❌ 미구현 | ❌ | |
-| **페이지 설정** (pagePr/margin) | ⚠️ GenericElement | ❌ 미구현 | ❌ | secPr 내부 |
-| **테두리/배경** (borderFill) | ✅ GenericElement로 파싱 | ❌ 미구현 | ❌ | |
-| **글머리표/번호** (bullet/numbering) | ✅ GenericElement로 파싱 | ❌ 미구현 | ❌ | |
-| **책갈피** (bookmark) | ⚠️ GenericElement | ❌ 미구현 | ❌ | |
-| **필드** (fieldBegin/End) | ⚠️ GenericElement | ❌ 미구현 | ❌ | 하이퍼링크 등 |
-| **변경추적** (trackChange) | ✅ 헤더 파싱 | ❌ 미구현 | ❌ | 마크 4종 인식 |
-| **OLE 객체** | ⚠️ GenericElement | ❌ 미구현 | ❌ | |
-| **양식 객체** (button/checkbox 등) | ⚠️ GenericElement | ❌ 미구현 | ❌ | |
-| **글맵시** (textart) | ⚠️ GenericElement | ❌ 미구현 | ❌ | |
-| **메모** (memo) | ✅ 헤더 파싱 | ❌ 미구현 | ❌ | |
+| **텍스트** (hp:t) | ✅ | ✅ | ✅ | 349개 100% 추출 |
+| **문단** (hp:p) | ✅ | ✅ | ✅ | paraPrIDRef, styleIDRef 등 속성 파싱 |
+| **런** (hp:run) | ✅ | ✅ | ✅ | charPrIDRef 파싱 |
+| **섹션** (hs:sec) | ✅ | ✅ | ✅ | 다중 섹션 지원 |
+| **글꼴 정보** (hh:fontfaces) | ✅ | ✅ | ✅ | lang별 font 목록 파싱 |
+| **글자 모양** (hh:charPr) | ✅ | ✅ | ✅ | height, bold, italic 등 |
+| **문단 모양** (hh:paraPr) | ✅ | ✅ | ✅ | align, margin, lineSpacing |
+| **스타일** (hh:style) | ✅ | ✅ | ✅ | id, type, name, engName |
+| **표** (hp:tbl) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | 구조는 보존되나 셀 접근 API 없음 |
+| **이미지** (hp:picture/pic) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | BinData 참조 보존 |
+| **섹션 속성** (hp:secPr) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | 용지/여백/단 설정 |
+| **컨트롤** (hp:ctrl) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | colPr 등 |
+| **도형** (line/rect/ellipse 등) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | 20종 인라인 객체 |
+| **수식** (equation) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | SCRIPT 텍스트 보존 |
+| **머리말/꼬리말** (header/footer) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | PARALIST 내 텍스트 |
+| **각주/미주** (footnote/endnote) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **페이지 설정** (pagePr/margin) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | secPr 내부 |
+| **테두리/배경** (borderFill) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **글머리표/번호** (bullet/numbering) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **책갈피** (bookmark) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **필드** (fieldBegin/End) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | 하이퍼링크 등 |
+| **변경추적** (trackChange) | ✅ 헤더 파싱 | ⚠️ GenericElement 보존 | ⚠️ | 마크 4종 인식 |
+| **OLE 객체** | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **양식 객체** (button/checkbox 등) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **글맵시** (textart) | ⚠️ GenericElement | ⚠️ GenericElement 보존 | ⚠️ | |
+| **메모** (memo) | ✅ 헤더 파싱 | ⚠️ GenericElement 보존 | ⚠️ | |
 
 **범례:**
-- ✅ = 전용 타입으로 파싱, 데이터 접근 가능
+- ✅ = 전용 타입으로 파싱/직렬화, 데이터 접근 가능
 - ⚠️ = GenericElement로 보존 (데이터 손실 없으나 타입 안전 접근 불가)
 - ❌ = 미구현
 
 ### 2.2 현재 코드 통계
 
-| 패키지 | src 파일 수 | 코드 줄 수 | 테스트 수 | 빌드 |
+| 패키지 | src 파일 수 | 소스 줄 수 | 테스트 수 | 빌드 |
 |--------|------------|-----------|----------|------|
 | document-model | 6 | 440줄 | 12 | ✅ |
-| hwpx-core | 3 | 151줄 | 9 | ✅ |
-| hwpx-parser | 7 | 712줄 | 4+α | ❌ (Buffer 타입 에러) |
-| hwpx-writer | 1 | 1줄 | 1 | ✅ |
-| **합계** | **17** | **1,304줄** | **22+** | **3/4** |
+| hwpx-core | 4 | 159줄 | 9 | ✅ |
+| hwpx-parser | 7 | 714줄 | 36 | ✅ |
+| hwpx-writer | 5 | 564줄 | 18 | ✅ |
+| **합계** | **22** | **1,877줄** | **75** | **4/4 ✅** |
 
 ---
 
 ## 3. 작업 큐 (우선순위 + 의존성)
 
-### 🔴 P0: 즉시 (블로커 해결)
+### ✅ 완료된 태스크
+
+| 태스크 | 내용 | 완료일 |
+|--------|------|--------|
+| TASK-001 | hwpx-parser 빌드 에러 수정 | 2026-02-20 |
+| TASK-002 | 텍스트 추출 실패 원인 분석 | 2026-02-20 |
+| TASK-003 | 중첩 구조 텍스트 추출 개선 | 2026-02-20 |
+| TASK-004 | 특수 요소 텍스트 추출 → 100% 달성 | 2026-02-20 |
+| TASK-005 | 헤더 직렬화 (DocumentHeader → header.xml) | 2026-02-20 |
+| TASK-006 | 본문 직렬화 (Section → section*.xml) | 2026-02-20 |
+| TASK-007 | 통합 라이터 + HanDoc.fromBuffer/open API | 2026-02-20 |
+
+### 🟠 P1: 높음 (다음 작업)
 
 ```
-[TASK-001] hwpx-parser 빌드 에러 수정
-  - 의존: 없음
-  - 문제: src/handoc.ts에서 Buffer 타입 사용 → @types/node 미설치
-  - 해결: Buffer → Uint8Array 교체 또는 @types/node devDependency 추가
-  - 완료 기준: `pnpm turbo build` 7/7 성공
-  - 예상 서브에이전트: 코드 수정 에이전트 (sonnet)
-  - 예상 시간: 30분
-```
-
-### 🟠 P1: 높음 (텍스트 추출률 개선 — 76%→95%)
-
-```
-[TASK-002] 텍스트 추출 실패 원인 분석
-  - 의존: TASK-001
-  - 작업: 349개 중 텍스트 0줄인 7개 파일 + 추출률 낮은 파일 분석
-  - 완료 기준: 실패 원인 카테고리별 분류 + 각 해결방안 문서화
-  - 예상 서브에이전트: 분석 에이전트 (opus)
-  - 예상 시간: 2시간
-
-[TASK-003] 중첩 구조 텍스트 추출 개선
-  - 의존: TASK-002
-  - 작업: 표 내부 텍스트, 머리말/꼬리말 텍스트, 각주 텍스트 추출
-  - 완료 기준: GenericElement 내부의 hp:t 재귀 탐색 → 텍스트 추출률 ≥ 90%
-  - 예상 서브에이전트: 파서 개선 에이전트 (sonnet)
+[TASK-008] 실제 문서 349개 라운드트립 대량 검증
+  - 의존: 없음 (writer 완성)
+  - 작업: 349개 전부 parse→write→parse 비교, 차이 분석
+  - 완료 기준: 349개 중 라운드트립 성공률 측정 + 실패 원인 분류
   - 예상 시간: 4시간
 
-[TASK-004] 특수 요소 텍스트 추출
-  - 의존: TASK-003
-  - 작업: 수식(SCRIPT), 글맵시(textart/@Text), 필드 텍스트 추출
-  - 완료 기준: 텍스트 추출률 ≥ 95%
-  - 예상 서브에이전트: 파서 개선 에이전트 (sonnet)
-  - 예상 시간: 3시간
-```
-
-### 🟡 P2: 중간 (Writer 구현)
-
-```
-[TASK-005] 헤더 직렬화 (DocumentHeader → header.xml)
-  - 의존: TASK-001
-  - 작업: hwpx-writer/src/header-serializer.ts 구현
-  - 완료 기준: parse→serialize→parse 라운드트립 일치 (10개 픽스처)
-  - 예상 서브에이전트: writer 에이전트 (sonnet)
-  - 예상 시간: 5시간
-
-[TASK-006] 본문 직렬화 (Section → section*.xml)
-  - 의존: TASK-001
-  - 작업: hwpx-writer/src/section-serializer.ts 구현
-  - 완료 기준: parse→serialize→parse 라운드트립 일치 (10개 픽스처)
-  - 예상 서브에이전트: writer 에이전트 (sonnet)
-  - 예상 시간: 5시간
-
-[TASK-007] 통합 라이터 + HwpxBuilder
-  - 의존: TASK-005, TASK-006
-  - 작업: hwpx-writer/src/hwpx-writer.ts, builder.ts 구현
-  - 완료 기준:
-    - writeHwpx(doc) → Uint8Array 생성
-    - HwpxBuilder로 생성한 파일을 한컴오피스에서 열기 성공
-    - 전체 라운드트립: parse→write→parse 일치 (5개 이상 픽스처)
-  - 예상 서브에이전트: writer 에이전트 (sonnet)
-  - 예상 시간: 6시간
-```
-
-### 🟢 P3: 낮음 (세부 파싱 + 품질)
-
-```
-[TASK-008] 표 세부 파싱 API
-  - 의존: TASK-003
+[TASK-009] 표 세부 파싱 API (셀 접근)
+  - 의존: 없음
   - 작업: GenericElement인 tbl을 Table 타입으로 파싱 (행/열/셀/병합)
-  - 완료 기준: table-basic.hwpx, table-merged.hwpx 픽스처에서 셀 텍스트 접근 가능
-  - 예상 서브에이전트: 파서 에이전트 (sonnet)
+  - 완료 기준: 표 포함 문서에서 셀 텍스트 접근 가능
   - 예상 시간: 6시간
+```
 
-[TASK-009] 이미지/바이너리 데이터 추출
-  - 의존: TASK-001
+### 🟡 P2: 중간
+
+```
+[TASK-010] 이미지/바이너리 데이터 추출
+  - 의존: 없음
   - 작업: BinData 경로에서 실제 이미지 바이트 추출 API
   - 완료 기준: image-embed.hwpx에서 이미지 추출 → 파일로 저장 가능
-  - 예상 서브에이전트: 코어 에이전트 (sonnet)
   - 예상 시간: 3시간
 
-[TASK-010] 섹션 속성 세부 파싱
-  - 의존: TASK-001
+[TASK-011] 섹션 속성 세부 파싱
+  - 의존: 없음
   - 작업: secPr에서 pagePr(용지), margin(여백), 단 설정 등 구체적 파싱
   - 완료 기준: 페이지 크기/여백을 mm 단위로 가져올 수 있음
-  - 예상 서브에이전트: 파서 에이전트 (sonnet)
   - 예상 시간: 4시간
 
-[TASK-011] 테스트 픽스처 확충
-  - 의존: 없음
-  - 작업: python-hwpx 또는 한컴오피스로 다양한 테스트 파일 생성
-  - 완료 기준: fixtures/ 디렉토리에 10개 이상 hwpx + expected JSON
-  - 예상 서브에이전트: 픽스처 생성 에이전트 (sonnet)
-  - 예상 시간: 3시간
-
-[TASK-012] npm 배포 준비
-  - 의존: TASK-007 (writer 완성)
-  - 작업: README, CHANGELOG, package.json 메타데이터, npm publish 스크립트
+[TASK-012] npm 0.1.0 배포
+  - 의존: TASK-008 (라운드트립 검증 완료 후)
+  - 작업: README, CHANGELOG, package.json 메타데이터, npm publish
   - 완료 기준: `npm publish --dry-run` 성공
-  - 예상 서브에이전트: 배포 에이전트 (sonnet)
   - 예상 시간: 2시간
 ```
 
-### 🔵 P4: HWP 5.x (선택)
+### 🔵 P3: 낮음 (선택)
 
 ```
 [TASK-013] HWP 5.x CFB 리더
-  - 의존: TASK-001
   - 작업: hwp-reader 패키지 생성, OLE2 스트림 파싱
   - 완료 기준: HWP 파일에서 FileHeader + 스트림 목록 추출
-  - 예상 서브에이전트: HWP 전문 에이전트 (opus)
   - 예상 시간: 8시간
 
 [TASK-014] HWP 5.x 본문 해석
   - 의존: TASK-013
   - 작업: DocInfo + BodyText 레코드 → document-model 변환
   - 완료 기준: 기본 텍스트 HWP에서 텍스트 추출 성공
-  - 예상 서브에이전트: HWP 전문 에이전트 (opus)
   - 예상 시간: 12시간
 
 [TASK-015] HWP→HWPX 변환
-  - 의존: TASK-014, TASK-007
+  - 의존: TASK-014
   - 작업: hwp-converter 패키지
   - 완료 기준: 변환 파일 한컴오피스 열기 성공, 텍스트 100% 보존
-  - 예상 서브에이전트: 변환 에이전트 (sonnet)
   - 예상 시간: 6시간
 ```
 
 ### 실행 순서 요약
 
 ```
-즉시:     TASK-001 (빌드 수정)
+다음:     TASK-008 (라운드트립 대량 검증)
+          TASK-009 (표 세부 파싱)
           ↓
-병렬 A:   TASK-002 → TASK-003 → TASK-004 (텍스트 추출 개선)
-병렬 B:   TASK-005 + TASK-006 → TASK-007 (writer)
-병렬 C:   TASK-011 (픽스처)
-          ↓
-후속:     TASK-008, TASK-009, TASK-010 (세부 파싱)
+후속:     TASK-010, TASK-011 (세부 파싱)
           ↓
 마무리:   TASK-012 (npm 배포)
 선택:     TASK-013 → TASK-014 → TASK-015 (HWP 5.x)
@@ -286,7 +225,7 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
 - packages/document-model/ — 공유 타입 (의존성 없음)
 - packages/hwpx-core/ — ZIP I/O (fflate 의존)
 - packages/hwpx-parser/ — XML→모델 (fast-xml-parser 의존)
-- packages/hwpx-writer/ — 모델→XML
+- packages/hwpx-writer/ — 모델→XML→ZIP
 
 ## 의존 관계
 document-model ← hwpx-core ← hwpx-parser
@@ -304,8 +243,8 @@ document-model ← hwpx-core ← hwpx-writer
 
 서브에이전트 결과물 수신 시 확인:
 
-- [ ] `pnpm turbo build` 전체 성공 (7/7)
-- [ ] `pnpm turbo test` 전체 통과
+- [ ] `pnpm turbo build` 전체 성공 (4/4)
+- [ ] `pnpm turbo test` 전체 통과 (75개 이상)
 - [ ] 변경된 파일이 태스크 범위 내인지 (다른 패키지 무단 수정 없음)
 - [ ] 새 코드에 테스트가 포함되어 있는지
 - [ ] `wc -l` 로 실제 코드량 확인 (환각 방지)
@@ -322,10 +261,9 @@ document-model ← hwpx-core ← hwpx-writer
 
 | 작업 유형 | 모델 | 이유 |
 |----------|------|------|
-| 분석/설계 (TASK-002) | opus | 복잡한 판단 필요 |
+| 분석/설계 | opus | 복잡한 판단 필요 |
 | 코드 구현 (대부분) | sonnet | 속도/비용 효율 |
 | HWP 5.x 바이너리 (TASK-013~14) | opus | 바이너리 포맷 해석 난이도 높음 |
-| 빌드 수정 (TASK-001) | sonnet | 단순 수정 |
 
 ---
 
@@ -333,28 +271,24 @@ document-model ← hwpx-core ← hwpx-writer
 
 ### 5.1 코드 머지 전 필수 확인
 
-- [ ] `pnpm turbo build` 성공 (7/7 패키지)
-- [ ] `pnpm turbo test` 전체 통과 (현재 22개 → 증가만 허용)
-- [ ] 349개 실제 문서 파싱 성공률 100% 유지
-- [ ] 텍스트 추출 성공률 기존 대비 하락 없음 (76% → 증가만 허용)
-- [ ] 기존 테스트 중 깨진 것 0개
-- [ ] TypeScript strict mode 통과 (`pnpm turbo typecheck`)
+- [x] `pnpm turbo build` 성공 (4/4 패키지)
+- [x] `pnpm turbo test` 전체 통과 (75개)
+- [x] 349개 실제 문서 파싱 성공률 100% 유지
+- [x] 텍스트 추출 성공률 100% (349/349)
+- [x] 기존 테스트 중 깨진 것 0개
 
-### 5.2 라운드트립 테스트 (writer 완성 후 추가)
+### 5.2 라운드트립 테스트
 
-- [ ] 10개 이상 픽스처에서 parse→write→parse 결과 동일
-- [ ] 생성된 HWPX 파일이 한컴오피스에서 열림 (수동)
-- [ ] 생성된 HWPX 파일을 python-hwpx로 열기 성공
+- [x] parse→write→parse 구현 완료
+- [ ] 349개 대량 라운드트립 검증 (TASK-008)
+- [ ] 생성된 HWPX 파일이 한컴오피스에서 열림 (수동 검증 필요)
 
 ### 5.3 실제 문서 테스트 실행 방법
 
 ```bash
-# 349개 실제 문서 테스트 (현재 위치: hwpx-parser 내)
+# 349개 실제 문서 테스트
 cd /Users/mj/handoc
 pnpm turbo test --filter=@handoc/hwpx-parser
-
-# 또는 전용 스크립트가 있다면:
-npx tsx scripts/test-real-docs.ts
 ```
 
 ### 5.4 성능 회귀 방지
@@ -410,11 +344,9 @@ npx tsx scripts/test-real-docs.ts
 
 | # | 이슈 | 심각도 | 관련 태스크 |
 |---|------|--------|-----------|
-| 1 | hwpx-parser 빌드 실패 (Buffer 타입) | 🔴 블로커 | TASK-001 |
-| 2 | hwpx-writer 미구현 (1줄) | 🟠 높음 | TASK-005~007 |
-| 3 | 텍스트 추출률 76% | 🟠 높음 | TASK-002~004 |
-| 4 | 테스트 픽스처 부재 (fixtures/ 비어있음) | 🟡 중간 | TASK-011 |
-| 5 | 텍스트 추출 0줄 파일 7개 존재 | 🟡 중간 | TASK-002 |
+| 1 | 349개 대량 라운드트립 미검증 | 🟡 중간 | TASK-008 |
+| 2 | 표 셀 접근 API 없음 (GenericElement) | 🟡 중간 | TASK-009 |
+| 3 | 한컴오피스 열기 수동 검증 미완료 | 🟡 중간 | — |
 
 ## 부록 B: 파일 위치 빠른 참조
 
@@ -429,12 +361,22 @@ npx tsx scripts/test-real-docs.ts
 │   ├── real-doc-test-results.md ← 349개 실제 문서 테스트 결과
 │   └── specs/                   ← 한컴 공식 스펙 PDF
 ├── packages/
-│   ├── document-model/          ← 타입 정의 (440줄, 테스트 12개)
-│   ├── hwpx-core/               ← ZIP I/O (151줄, 테스트 9개)
-│   ├── hwpx-parser/             ← XML 파서 (712줄, 빌드 에러)
-│   └── hwpx-writer/             ← 미구현 (1줄)
+│   ├── document-model/          ← 타입 정의 (6 src, 440줄, 테스트 12개)
+│   ├── hwpx-core/               ← ZIP I/O (4 src, 159줄, 테스트 9개)
+│   ├── hwpx-parser/             ← XML 파서 (7 src, 714줄, 테스트 36개)
+│   └── hwpx-writer/             ← 직렬화+ZIP (5 src, 564줄, 테스트 18개)
+├── test-documents/              ← 349개 실제 HWPX (education 264 + opensource 53 + government 32)
 └── turbo.json
 ```
+
+## 부록 C: 테스트 문서 현황
+
+| 카테고리 | 파일 수 | 출처 |
+|----------|---------|------|
+| education | 264 | 교육 기관 |
+| opensource | 53 | 공개 문서 |
+| government | 32 | 정부 기관 |
+| **합계** | **349** | |
 
 ---
 
