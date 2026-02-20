@@ -3,6 +3,7 @@ import { hwpUnitToMm } from '@handoc/document-model';
 import { parseHeader } from './header-parser';
 import { parseSection, extractText } from './section-parser';
 import { extractImages, type ImageInfo } from './image-extractor';
+import { collectHeadersFooters, collectFootnotes, type HeaderFooter, type Footnote } from './annotation-parser';
 import type { Section } from './types';
 import type { DocumentHeader } from './header-parser';
 import type { SectionProperties } from './section-props-parser';
@@ -26,6 +27,9 @@ export class HanDoc {
   private _header: DocumentHeader | null = null;
   private _sections: Section[] | null = null;
   private _images: ImageInfo[] | null = null;
+  private _headers: HeaderFooter[] | null = null;
+  private _footers: HeaderFooter[] | null = null;
+  private _footnotes: Footnote[] | null = null;
 
   private constructor(pkg: OpcPackage) {
     this.pkg = pkg;
@@ -146,6 +150,39 @@ export class HanDoc {
       footer: Math.round(hwpUnitToMm(m.footer) * 10) / 10,
       gutter: Math.round(hwpUnitToMm(m.gutter) * 10) / 10,
     };
+  }
+
+  /**
+   * All headers found in the document (from ctrl elements in section paragraphs).
+   */
+  get headers(): HeaderFooter[] {
+    if (!this._headers) {
+      const all = collectHeadersFooters(this.sections);
+      this._headers = all.filter(h => h.type === 'header');
+      this._footers = all.filter(h => h.type === 'footer');
+    }
+    return this._headers;
+  }
+
+  /**
+   * All footers found in the document.
+   */
+  get footers(): HeaderFooter[] {
+    if (!this._footers) {
+      // Force computation via headers getter
+      void this.headers;
+    }
+    return this._footers!;
+  }
+
+  /**
+   * All footnotes and endnotes found in the document.
+   */
+  get footnotes(): Footnote[] {
+    if (!this._footnotes) {
+      this._footnotes = collectFootnotes(this.sections);
+    }
+    return this._footnotes;
   }
 
   /**
