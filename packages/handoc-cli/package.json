@@ -26,5 +26,21 @@
     "typescript": "^5.7.0",
     "vitest": "^4.0.0"
   },
-  "description": "CLI tool for HanDoc - inspect, extract, and convert HWP/HWPX documents"
+  "description": "CLI tool for HanDoc - inspect, extract, and convert HWP/HWPX documents",
+  "keywords": ["hwp", "hwpx", "cli", "converter", "hancom", "document"],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/handoc-cli"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/handoc-cli",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -35,5 +35,22 @@
     "tsup": "^8.4.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
+  },
+  "description": "React component for rendering HWPX documents",
+  "keywords": ["hwpx", "viewer", "react", "component", "hancom", "document"],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/viewer"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/viewer",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
   }
 }

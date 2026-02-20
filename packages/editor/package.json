@@ -38,5 +38,22 @@
     "@types/node": "^25.3.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0"
+  },
+  "description": "ProseMirror-based HWPX document editor",
+  "keywords": ["hwpx", "editor", "prosemirror", "react", "hancom", "document"],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/editor",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
   }
 }
