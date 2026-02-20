@@ -191,7 +191,10 @@ function renderSectionBody(doc: HanDoc, section: Section): { html: string; pw: n
 function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string; footerHtml: string } {
   let headerHtml = '';
   let footerHtml = '';
-  const sProps = section.sectionProps;
+  const sProps = section.sectionProps as (Section['sectionProps'] & {
+    headerParagraphs?: Paragraph[];
+    footerParagraphs?: Paragraph[];
+  }) | undefined;
   if (sProps) {
     if (sProps.headerParagraphs && sProps.headerParagraphs.length > 0) {
       headerHtml = '<header class="page-header">';

@@ -67,7 +67,7 @@ describe('renderToHtml', () => {
     const html = renderToHtml(doc);
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('안녕하세요');
-    expect(html).toContain('<div class="page"');
+    expect(html).toContain('<section class="page"');
     expect(html).toContain('<p');
   });
 
@@ -191,5 +191,121 @@ describe('renderToHtml', () => {
     const html = renderToHtml(doc);
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
+  });
+
+  it('should include lang="ko" and semantic tags', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('테스트')])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('lang="ko"');
+    expect(html).toContain('<section class="page"');
+    expect(html).toContain('<article>');
+  });
+
+  it('should include print CSS media query', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('인쇄')])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('@media print');
+  });
+
+  it('should include Korean font family', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('폰트')])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain("'Malgun Gothic'");
+    expect(html).toContain('맑은 고딕');
+  });
+
+  it('should render page dividers between sections', () => {
+    const doc = mockDoc({
+      sections: [
+        makeSection([makePara([textRun('페이지1')])]),
+        makeSection([makePara([textRun('페이지2')])]),
+      ],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('page-divider');
+  });
+});
+
+describe('renderToStandaloneHtml', () => {
+  it('should produce a complete standalone HTML document', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('독립 HTML')])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('<html lang="ko">');
+    expect(html).toContain('</html>');
+    expect(html).toContain('<title>');
+    expect(html).toContain('독립 HTML');
+  });
+
+  it('should include all CSS inline with no external dependencies', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('CSS 테스트')])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('<style>');
+    expect(html).not.toContain('<link');
+    expect(html).toContain('border-collapse');
+    expect(html).toContain('@media print');
+    expect(html).toContain('@media screen');
+  });
+
+  it('should contain Korean text correctly', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('한글 텍스트 테스트입니다')])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('한글 텍스트 테스트입니다');
+  });
+
+  it('should embed images as base64 data URIs', () => {
+    const imgData = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG header
+    const imgElement = {
+      tag: 'pic',
+      attrs: {},
+      children: [
+        {
+          tag: 'fileRef',
+          attrs: { binItemIDRef: 'image1.png' },
+          children: [],
+          text: null,
+        },
+        {
+          tag: 'imgRect',
+          attrs: { width: '36000', height: '28800' },
+          children: [],
+          text: null,
+        },
+      ],
+      text: null,
+    };
+
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject', name: 'picture', element: imgElement }],
+    };
+
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    (doc as any).images = [{ path: 'image1.png', data: imgData }];
+
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('data:image/png;base64,');
+  });
+
+  it('should use first paragraph text as title', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun('문서 제목')]), makePara([textRun('본문')])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('<title>문서 제목</title>');
   });
 });
