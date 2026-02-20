@@ -5,9 +5,13 @@
 export { writeHeader } from './header-writer';
 export { writeSection } from './section-writer';
 export { writeGenericElement, escapeXml } from './xml-helpers';
-export type * from './parser-types';
+export type {
+  DocumentHeader, Section, Paragraph, Run, RunChild, LineSeg,
+  GenericElement, BeginNum, RefList, FontFaceDecl, CharProperty,
+  ParaProperty, StyleDecl, SectionProperties,
+} from '@handoc/document-model';
 
-import type { DocumentHeader, Section } from './parser-types';
+import type { DocumentHeader, Section } from '@handoc/document-model';
 import { writeHeader } from './header-writer';
 import { writeSection } from './section-writer';
 import { zipSync } from 'fflate';

@@ -7,11 +7,9 @@ import { join } from 'path';
 import { HanDoc } from '../packages/hwpx-parser/src/handoc';
 import { writeHwpx } from '../packages/hwpx-writer/src/index';
 
-const ROOT = join(__dirname, '..');
+const ROOT = '/Users/mj/handoc';
 const SIMPLE = join(ROOT, 'fixtures/hwpx/simple-text.hwpx');
-const FIXTURES_DIR = process.env.HANDOC_FIXTURES_DIR
-  ? join(process.env.HANDOC_FIXTURES_DIR, 'real-world')
-  : '';
+const FIXTURES_DIR = '/Users/mj/handoc-fixtures/real-world';
 const ITERATIONS = 5;
 
 function findLargestHwpx(dir: string): string | null {
@@ -28,7 +26,7 @@ function findLargestHwpx(dir: string): string | null {
           largest = full;
         }
       }
-    } catch {}
+    } catch { /* dir may not exist */ }
   };
   walk(dir);
   return largest || null;

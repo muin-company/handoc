@@ -2,7 +2,7 @@
  * xml-helpers.ts — Shared XML serialization utilities
  */
 
-import type { GenericElement } from './parser-types';
+import type { GenericElement } from '@handoc/document-model';
 
 export function escapeXml(s: string): string {
   return s

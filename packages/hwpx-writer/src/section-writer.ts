@@ -4,7 +4,7 @@
  * Works with hwpx-parser's section-parser/paragraph-parser output types.
  */
 
-import type { Section, Paragraph, Run, RunChild, LineSeg, GenericElement } from './parser-types';
+import type { Section, Paragraph, Run, RunChild, LineSeg, GenericElement } from '@handoc/document-model';
 import { writeGenericElement, escapeXml } from './xml-helpers';
 
 const SECTION_NS: Record<string, string> = {

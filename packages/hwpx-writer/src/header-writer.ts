@@ -10,7 +10,7 @@ import type {
   ParaProperty,
   StyleDecl,
   GenericElement,
-} from './parser-types';
+} from '@handoc/document-model';
 import { escapeXml, writeGenericElement } from './xml-helpers';
 
 function attrs(obj: Record<string, string>): string {
