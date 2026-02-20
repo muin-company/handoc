@@ -63,4 +63,29 @@ describe('convertHwpToHwpx', () => {
     const doc = await HanDoc.open(hwpxBytes);
     expect(doc.extractText()).toContain('비압축 문서입니다.');
   });
+
+  it('should preserve font and style information from DocInfo', async () => {
+    const paragraphs = ['스타일 있는 문서입니다.', '두 번째 문단.'];
+    const hwp = createTestHwp({ paragraphs });
+
+    const hwpxBytes = convertHwpToHwpx(hwp);
+    expect(hwpxBytes).toBeInstanceOf(Uint8Array);
+
+    const doc = await HanDoc.open(hwpxBytes);
+    
+    // Verify font faces are extracted
+    expect(doc.header.refList.fontFaces.length).toBeGreaterThan(0);
+    
+    // Verify char properties exist
+    expect(doc.header.refList.charProperties.length).toBeGreaterThan(0);
+    
+    // Verify para properties exist
+    expect(doc.header.refList.paraProperties.length).toBeGreaterThan(0);
+    
+    // Text should still be preserved
+    const text = doc.extractText();
+    for (const p of paragraphs) {
+      expect(text).toContain(p);
+    }
+  });
 });
