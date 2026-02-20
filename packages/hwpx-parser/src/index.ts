@@ -1,3 +1,6 @@
+export { HanDoc, type HanDocMetadata } from './handoc';
+export { parseHeader } from './header-parser';
+export type { DocumentHeader } from './header-parser';
 export { parseSection, extractText } from './section-parser';
 export { parseParagraph, parseRun, parseRunChild, parseGenericElement } from './paragraph-parser';
 export type {
