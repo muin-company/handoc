@@ -1,5 +1,6 @@
 import { OpcPackage } from '@handoc/hwpx-core';
-import { hwpUnitToMm } from '@handoc/document-model';
+import { hwpUnitToMm, WarningCollector } from '@handoc/document-model';
+import type { ParseWarning } from '@handoc/document-model';
 import { parseHeader } from './header-parser';
 import { parseSection, extractText } from './section-parser';
 import { extractImages, type ImageInfo } from './image-extractor';
@@ -30,6 +31,7 @@ export class HanDoc {
   private _headers: HeaderFooter[] | null = null;
   private _footers: HeaderFooter[] | null = null;
   private _footnotes: Footnote[] | null = null;
+  private _warnings = new WarningCollector();
 
   private constructor(pkg: OpcPackage) {
     this.pkg = pkg;
@@ -63,7 +65,7 @@ export class HanDoc {
         ? paths[0]
         : `Contents/${paths[0]}`;
       const xml = this.pkg.getPartAsText(headerPath);
-      this._header = parseHeader(xml);
+      this._header = parseHeader(xml, this._warnings);
     }
     return this._header;
   }
@@ -75,7 +77,7 @@ export class HanDoc {
       this._sections = paths.map((p) => {
         const fullPath = p.startsWith('Contents/') ? p : `Contents/${p}`;
         const xml = this.pkg.getPartAsText(fullPath);
-        return parseSection(xml);
+        return parseSection(xml, this._warnings);
       });
     }
     return this._sections;
@@ -183,6 +185,18 @@ export class HanDoc {
       this._footnotes = collectFootnotes(this.sections);
     }
     return this._footnotes;
+  }
+
+  /**
+   * Warnings collected during parsing.
+   */
+  get warnings(): ParseWarning[] {
+    return this._warnings.toJSON();
+  }
+
+  /** The underlying warning collector (for internal use by parsers). */
+  get warningCollector(): WarningCollector {
+    return this._warnings;
   }
 
   /**

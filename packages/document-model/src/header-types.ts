@@ -44,6 +44,14 @@ export interface FontFaceDecl {
 export interface CharProperty {
   id: number;
   height: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: string;
+  strikeout?: string;
+  textColor?: string;
+  shadeColor?: string;
+  highlightColor?: string;
+  fontRef?: Record<string, number>; // lang → fontFace index (e.g. hangul, latin, hanja, ...)
   attrs: Record<string, string>;
   children: GenericElement[];
 }
@@ -52,6 +60,10 @@ export interface CharProperty {
 
 export interface ParaProperty {
   id: number;
+  align?: 'left' | 'center' | 'right' | 'justify' | 'distribute';
+  heading?: { type: string; level: number };
+  lineSpacing?: { type: string; value: number };
+  margin?: { left?: number; right?: number; indent?: number; prev?: number; next?: number };
   attrs: Record<string, string>;
   children: GenericElement[];
 }

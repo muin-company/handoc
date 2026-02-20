@@ -1,5 +1,6 @@
 import type { Section, GenericElement, RunChild, Paragraph } from './types';
 import type { SectionProperties } from './section-props-parser';
+import type { WarningCollector } from '@handoc/document-model';
 import { parseSectionProps } from './section-props-parser';
 import { parseXml, getChildren } from './xml-utils';
 import { parseParagraph } from './paragraph-parser';
@@ -18,13 +19,25 @@ function findSecPr(paragraphs: Paragraph[]): GenericElement | undefined {
   return undefined;
 }
 
-export function parseSection(xml: string): Section {
+export function parseSection(xml: string, warnings?: WarningCollector): Section {
   const root = parseXml(xml);
   const paragraphs: Section['paragraphs'] = [];
 
   // Root could be { sec: { p: [...] } } after namespace removal
   const sec = root['sec'] as Record<string, unknown> | undefined;
   if (!sec) return { paragraphs };
+
+  // Warn about unknown child elements under <sec>
+  if (warnings) {
+    const knownSecChildren = new Set(['p', '@_']);
+    for (const key of Object.keys(sec)) {
+      if (key.startsWith('@_') || key === '#text') continue;
+      const local = key.includes(':') ? key.split(':').pop()! : key;
+      if (!knownSecChildren.has(local) && local !== 'p') {
+        warnings.add('UNKNOWN_ELEMENT', `Unknown element <${local}> under <sec>`, `sec/${local}`);
+      }
+    }
+  }
 
   const pNodes = getChildren(sec, 'p');
   for (const pNode of pNodes) {

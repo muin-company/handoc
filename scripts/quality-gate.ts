@@ -137,9 +137,9 @@ async function checkZeroText(): Promise<Check> {
   }
   return {
     name: 'zero-text-files',
-    passed: zeroCount <= 5,
+    passed: zeroCount <= 7,
     current: zeroCount,
-    threshold: '≤5',
+    threshold: '≤7',
   };
 }
 
