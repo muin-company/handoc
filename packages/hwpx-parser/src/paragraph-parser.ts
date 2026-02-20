@@ -54,11 +54,25 @@ export function parseRunChild(key: string, value: unknown): RunChild[] {
 
   if (key === 't') {
     // Text content - can be string, number, object with #text, or empty
+    // May also contain inline elements (track change marks, tabs, etc.)
     let content = '';
     if (typeof value === 'string' || typeof value === 'number') {
       content = String(value);
-    } else if (typeof value === 'object' && value !== null && '#text' in (value as Record<string, unknown>)) {
-      content = String((value as Record<string, unknown>)['#text']);
+    } else if (typeof value === 'object' && value !== null) {
+      const obj = value as Record<string, unknown>;
+      if ('#text' in obj) {
+        content = String(obj['#text']);
+      }
+      // Process inline elements within <hp:t> (e.g. insertBegin, deleteBegin, tab)
+      for (const innerKey of Object.keys(obj)) {
+        if (innerKey.startsWith('@_') || innerKey === '#text') continue;
+        const localKey = innerKey.includes(':') ? innerKey.split(':').pop()! : innerKey;
+        const innerVal = obj[innerKey];
+        const items = Array.isArray(innerVal) ? innerVal : [innerVal];
+        for (const item of items) {
+          results.push(...parseRunChild(localKey, item));
+        }
+      }
     }
     // Array case handled by caller
     results.push({ type: 'text', content });

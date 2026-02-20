@@ -259,15 +259,17 @@ export class HanDoc {
     const hdr = h as any;
     const entries: TCEntry[] = hdr.trackChanges ?? [];
     const authors: TCAuthor[] = hdr.trackChangeAuthors ?? [];
-    const authorMap = new Map<number, string>();
+    const authorById = new Map<number, string>();
+    const authorByMark = new Map<number, string>();
     for (const a of authors) {
-      authorMap.set(a.id, a.name);
+      authorById.set(a.id, a.name);
+      authorByMark.set(a.mark, a.name);
     }
     return entries.map((e) => ({
       id: e.id,
       type: e.type,
       date: e.date,
-      author: authorMap.get(e.authorID) ?? `Author#${e.authorID}`,
+      author: authorById.get(e.authorID) ?? authorByMark.get(e.authorID) ?? `Author#${e.authorID}`,
       hide: e.hide,
     }));
   }

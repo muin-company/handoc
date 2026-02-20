@@ -49,12 +49,13 @@ describe('Track Changes parsing', () => {
   });
 
   it('parses insertBegin/deleteBegin marks with Id/TcId', () => {
+    // fast-xml-parser with removeNSPrefix:true strips namespace prefixes
     const run = parseRun({
       '@_charPrIDRef': '0',
-      'hp:t': {
+      't': {
         '#text': '변경',
-        'hp:deleteBegin': { '@_Id': '2', '@_TcId': '2' },
-        'hp:insertEnd': { '@_Id': '1', '@_TcId': '1', '@_paraend': '0' },
+        'deleteBegin': { '@_Id': '2', '@_TcId': '2' },
+        'insertEnd': { '@_Id': '1', '@_TcId': '1', '@_paraend': '0' },
       },
     });
 
