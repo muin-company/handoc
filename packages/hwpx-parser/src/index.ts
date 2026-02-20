@@ -3,6 +3,7 @@ export { extractImages, type ImageInfo } from './image-extractor';
 export { parseHeader } from './header-parser';
 export type { DocumentHeader } from './header-parser';
 export { parseSection, extractText } from './section-parser';
+export { parseSectionProps, type SectionProperties } from './section-props-parser';
 export { parseParagraph, parseRun, parseRunChild, parseGenericElement } from './paragraph-parser';
 export type {
   Section,

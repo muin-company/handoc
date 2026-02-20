@@ -1,6 +1,22 @@
 import type { Section, GenericElement, RunChild, Paragraph } from './types';
+import type { SectionProperties } from './section-props-parser';
+import { parseSectionProps } from './section-props-parser';
 import { parseXml, getChildren } from './xml-utils';
 import { parseParagraph } from './paragraph-parser';
+
+/**
+ * Find the first secPr GenericElement in parsed paragraphs.
+ */
+function findSecPr(paragraphs: Paragraph[]): GenericElement | undefined {
+  for (const p of paragraphs) {
+    for (const r of p.runs) {
+      for (const c of r.children) {
+        if (c.type === 'secPr') return c.element;
+      }
+    }
+  }
+  return undefined;
+}
 
 export function parseSection(xml: string): Section {
   const root = parseXml(xml);
@@ -15,7 +31,10 @@ export function parseSection(xml: string): Section {
     paragraphs.push(parseParagraph(pNode));
   }
 
-  return { paragraphs };
+  const secPrEl = findSecPr(paragraphs);
+  const sectionProps = secPrEl ? parseSectionProps(secPrEl) : undefined;
+
+  return { paragraphs, sectionProps };
 }
 
 /**

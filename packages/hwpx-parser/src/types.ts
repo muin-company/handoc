@@ -1,5 +1,8 @@
+import type { SectionProperties } from './section-props-parser';
+
 export interface Section {
   paragraphs: Paragraph[];
+  sectionProps?: SectionProperties;
 }
 
 export interface Paragraph {

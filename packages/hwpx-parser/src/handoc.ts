@@ -1,9 +1,11 @@
 import { OpcPackage } from '@handoc/hwpx-core';
+import { hwpUnitToMm } from '@handoc/document-model';
 import { parseHeader } from './header-parser';
 import { parseSection, extractText } from './section-parser';
 import { extractImages, type ImageInfo } from './image-extractor';
 import type { Section } from './types';
 import type { DocumentHeader } from './header-parser';
+import type { SectionProperties } from './section-props-parser';
 
 export interface HanDocMetadata {
   title?: string;
@@ -101,6 +103,49 @@ export class HanDoc {
   getImage(path: string): Uint8Array | null {
     const img = this.images.find((i) => i.path === path);
     return img?.data ?? null;
+  }
+
+  /**
+   * Section properties of the first section (or undefined if not available).
+   */
+  get sectionProps(): SectionProperties | undefined {
+    return this.sections[0]?.sectionProps;
+  }
+
+  /**
+   * Page size in mm (from the first section).
+   * Returns { width: 210, height: 297 } for A4.
+   */
+  get pageSize(): { width: number; height: number } {
+    const props = this.sectionProps;
+    if (!props) return { width: 210, height: 297 }; // A4 default
+    return {
+      width: Math.round(hwpUnitToMm(props.pageWidth)),
+      height: Math.round(hwpUnitToMm(props.pageHeight)),
+    };
+  }
+
+  /**
+   * Page margins in mm (from the first section).
+   */
+  get margins(): {
+    left: number; right: number; top: number; bottom: number;
+    header: number; footer: number; gutter: number;
+  } {
+    const props = this.sectionProps;
+    if (!props) {
+      return { left: 0, right: 0, top: 0, bottom: 0, header: 0, footer: 0, gutter: 0 };
+    }
+    const m = props.margins;
+    return {
+      left: Math.round(hwpUnitToMm(m.left) * 10) / 10,
+      right: Math.round(hwpUnitToMm(m.right) * 10) / 10,
+      top: Math.round(hwpUnitToMm(m.top) * 10) / 10,
+      bottom: Math.round(hwpUnitToMm(m.bottom) * 10) / 10,
+      header: Math.round(hwpUnitToMm(m.header) * 10) / 10,
+      footer: Math.round(hwpUnitToMm(m.footer) * 10) / 10,
+      gutter: Math.round(hwpUnitToMm(m.gutter) * 10) / 10,
+    };
   }
 
   /**
