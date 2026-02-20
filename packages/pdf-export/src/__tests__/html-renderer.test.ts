@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderToHtml } from '../html-renderer';
+import { renderToHtml, renderToStandaloneHtml } from '../html-renderer';
 import type { HanDoc } from '@handoc/hwpx-parser';
 import type { Section, Paragraph, Run, RunChild } from '@handoc/document-model';
 import type { CharProperty, ParaProperty, RefList, DocumentHeader } from '@handoc/document-model';

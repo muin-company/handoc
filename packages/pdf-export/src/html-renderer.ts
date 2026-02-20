@@ -170,44 +170,154 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
   return `<p${styleAttr}>${inner || '&nbsp;'}</p>`;
 }
 
+function renderSectionBody(doc: HanDoc, section: Section): { html: string; pw: number; ph: number; ml: number; mr: number; mt: number; mb: number } {
+  const pageSize = doc.pageSize;
+  const margins = doc.margins;
+  const sProps = section.sectionProps;
+  const pw = sProps ? Math.round((sProps.pageWidth / 7200) * 25.4) : pageSize.width;
+  const ph = sProps ? Math.round((sProps.pageHeight / 7200) * 25.4) : pageSize.height;
+  const ml = sProps ? Math.round((sProps.margins.left / 7200) * 25.4 * 10) / 10 : margins.left;
+  const mr = sProps ? Math.round((sProps.margins.right / 7200) * 25.4 * 10) / 10 : margins.right;
+  const mt = sProps ? Math.round((sProps.margins.top / 7200) * 25.4 * 10) / 10 : margins.top;
+  const mb = sProps ? Math.round((sProps.margins.bottom / 7200) * 25.4 * 10) / 10 : margins.bottom;
+
+  let html = '';
+  for (const para of section.paragraphs) {
+    html += renderParagraph(doc, para);
+  }
+  return { html, pw, ph, ml, mr, mt, mb };
+}
+
+function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string; footerHtml: string } {
+  let headerHtml = '';
+  let footerHtml = '';
+  const sProps = section.sectionProps;
+  if (sProps) {
+    if (sProps.headerParagraphs && sProps.headerParagraphs.length > 0) {
+      headerHtml = '<header class="page-header">';
+      for (const para of sProps.headerParagraphs) {
+        headerHtml += renderParagraph(doc, para);
+      }
+      headerHtml += '</header>';
+    }
+    if (sProps.footerParagraphs && sProps.footerParagraphs.length > 0) {
+      footerHtml = '<footer class="page-footer">';
+      for (const para of sProps.footerParagraphs) {
+        footerHtml += renderParagraph(doc, para);
+      }
+      footerHtml += '</footer>';
+    }
+  }
+  return { headerHtml, footerHtml };
+}
+
+const BASE_CSS = `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #000; line-height: 1.6; }
+  .page { page-break-after: always; position: relative; margin: 0 auto; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  .page-divider { border: none; border-top: 1px dashed #ccc; margin: 0; }
+  .page-header { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
+  .page-footer { border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
+  article { flex: 1; }
+  p { margin: 2px 0; }
+  table { margin: 4px 0; border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #000; padding: 4px; vertical-align: top; }
+  th { background-color: #f0f0f0; font-weight: bold; }
+  img { display: inline-block; max-width: 100%; }
+  @media print {
+    body { margin: 0; }
+    .page { page-break-after: always; margin: 0; box-shadow: none; border: none; }
+    .page:last-child { page-break-after: auto; }
+    .page-divider { display: none; }
+  }
+`;
+
 /**
  * Render a HanDoc to a full HTML document string.
  */
 export function renderToHtml(doc: HanDoc): string {
-  const pageSize = doc.pageSize;
-  const margins = doc.margins;
-
   let body = '';
 
-  for (const section of doc.sections) {
-    const sProps = section.sectionProps;
-    const pw = sProps ? Math.round((sProps.pageWidth / 7200) * 25.4) : pageSize.width;
-    const ph = sProps ? Math.round((sProps.pageHeight / 7200) * 25.4) : pageSize.height;
-    const ml = sProps ? Math.round((sProps.margins.left / 7200) * 25.4 * 10) / 10 : margins.left;
-    const mr = sProps ? Math.round((sProps.margins.right / 7200) * 25.4 * 10) / 10 : margins.right;
-    const mt = sProps ? Math.round((sProps.margins.top / 7200) * 25.4 * 10) / 10 : margins.top;
-    const mb = sProps ? Math.round((sProps.margins.bottom / 7200) * 25.4 * 10) / 10 : margins.bottom;
+  for (let i = 0; i < doc.sections.length; i++) {
+    const section = doc.sections[i];
+    const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
+    const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
 
-    body += `<div class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm;box-sizing:border-box">`;
-    for (const para of section.paragraphs) {
-      body += renderParagraph(doc, para);
-    }
-    body += '</div>';
+    if (i > 0) body += '<hr class="page-divider" />';
+    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm;display:flex;flex-direction:column">`;
+    body += headerHtml;
+    body += `<article>${html}</article>`;
+    body += footerHtml;
+    body += '</section>';
   }
 
   return `<!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="utf-8">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; }
-  .page { page-break-after: always; }
-  .page:last-child { page-break-after: auto; }
-  p { margin: 2px 0; }
-  table { margin: 4px 0; }
-  img { display: inline-block; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>${BASE_CSS}</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+/**
+ * Render a HanDoc to a standalone HTML file.
+ * All CSS is inlined and images are embedded as base64 data URIs.
+ * The resulting file can be opened directly in a browser with no external dependencies.
+ */
+export function renderToStandaloneHtml(doc: HanDoc): string {
+  let body = '';
+
+  for (let i = 0; i < doc.sections.length; i++) {
+    const section = doc.sections[i];
+    const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
+    const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
+
+    if (i > 0) body += '<hr class="page-divider" />';
+    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm;display:flex;flex-direction:column">`;
+    body += headerHtml;
+    body += `<article>${html}</article>`;
+    body += footerHtml;
+    body += '</section>';
+  }
+
+  // Extract title from first non-empty paragraph if available
+  let title = 'HanDoc Document';
+  for (const section of doc.sections) {
+    for (const para of section.paragraphs) {
+      for (const run of para.runs) {
+        for (const child of run.children) {
+          if (child.type === 'text' && child.content.trim()) {
+            title = child.content.trim().substring(0, 100);
+            break;
+          }
+        }
+        if (title !== 'HanDoc Document') break;
+      }
+      if (title !== 'HanDoc Document') break;
+    }
+    if (title !== 'HanDoc Document') break;
+  }
+
+  const standaloneCss = BASE_CSS + `
+  @media screen {
+    body { background: #e8e8e8; padding: 20px; }
+    .page { box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 20px; border: 1px solid #ccc; }
+  }
+`;
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(title)}</title>
+<style>${standaloneCss}</style>
 </head>
 <body>
 ${body}
