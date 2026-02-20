@@ -5,12 +5,13 @@ import { HanDoc } from '../handoc';
 import { extractImages } from '../image-extractor';
 import { OpcPackage } from '@handoc/hwpx-core';
 
-const REAL_WORLD = '/Users/mj/handoc-fixtures/real-world/20260220';
-const IMAGE_DOC = resolve(
-  REAL_WORLD,
-  '2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.hwpx',
-);
-const hasImageDoc = existsSync(IMAGE_DOC);
+const REAL_WORLD = process.env.HANDOC_FIXTURES_DIR
+  ? resolve(process.env.HANDOC_FIXTURES_DIR, 'real-world/20260220')
+  : '';
+const IMAGE_DOC = REAL_WORLD
+  ? resolve(REAL_WORLD, '2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.hwpx')
+  : '';
+const hasImageDoc = IMAGE_DOC !== '' && existsSync(IMAGE_DOC);
 
 const FIXTURES = resolve(__dirname, '../../../../fixtures/hwpx');
 

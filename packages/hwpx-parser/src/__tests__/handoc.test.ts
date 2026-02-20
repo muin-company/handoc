@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { HanDoc } from '../handoc';
 
 const FIXTURES = resolve(__dirname, '../../../../fixtures/hwpx');
-const REAL_WORLD = '/Users/mj/handoc-fixtures/real-world/20260220';
+const REAL_WORLD = process.env.HANDOC_FIXTURES_DIR
+  ? resolve(process.env.HANDOC_FIXTURES_DIR, 'real-world/20260220')
+  : '';
+const hasRealWorld = REAL_WORLD !== '' && require('node:fs').existsSync(REAL_WORLD);
 
 function readFixture(name: string): Uint8Array {
   return readFileSync(resolve(FIXTURES, name));
@@ -81,7 +84,7 @@ describe('HanDoc', () => {
     });
   });
 
-  describe('real-world documents', () => {
+  describe.skipIf(!hasRealWorld)('real-world documents', () => {
     it('opens 제안요청서', async () => {
       const buf = readFileSync(resolve(REAL_WORLD, '2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.hwpx'));
       const doc = await HanDoc.open(buf);

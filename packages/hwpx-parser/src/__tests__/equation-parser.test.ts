@@ -4,7 +4,9 @@ import { HanDoc } from '../handoc';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const FIXTURES_DIR = '/Users/mj/handoc-fixtures/real-world/opensource';
+const FIXTURES_DIR = process.env.HANDOC_FIXTURES_DIR
+  ? path.join(process.env.HANDOC_FIXTURES_DIR, 'real-world/opensource')
+  : '';
 
 describe('parseEquation', () => {
   it('parses equation with script', () => {
