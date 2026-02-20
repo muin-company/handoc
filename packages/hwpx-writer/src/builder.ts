@@ -329,6 +329,8 @@ export class HwpxBuilder {
         borderFills: [],
         charProperties,
         tabProperties: [],
+        numberings: [],
+        bullets: [],
         paraProperties,
         styles,
         others: [],

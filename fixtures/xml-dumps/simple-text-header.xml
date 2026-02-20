@@ -181,6 +181,11 @@
         <hh:paraHead start="1" level="10" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="ROMAN_SMALL" charPrIDRef="4294967295" checkable="1"/>
       </hh:numbering>
     </hh:numberings>
+    <hh:bullets itemCnt="1">
+      <hh:bullet id="1" char="●" useImage="0">
+        <hh:paraHead level="0" align="LEFT" useInstWidth="0" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="0" numFormat="DIGIT" charPrIDRef="0" checkable="0"/>
+      </hh:bullet>
+    </hh:bullets>
     <hh:paraProperties itemCnt="20">
       <hh:paraPr id="0" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
         <hh:align horizontal="JUSTIFY" vertical="BASELINE"/>

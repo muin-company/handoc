@@ -1,5 +1,19 @@
 import type { GenericElement } from './generic';
 
+// ── Track Changes & Memo (stub types) ──
+
+export interface TrackChangeEntry {
+  [key: string]: unknown;
+}
+
+export interface TrackChangeAuthor {
+  [key: string]: unknown;
+}
+
+export interface MemoShape {
+  [key: string]: unknown;
+}
+
 // ── Document Header ──
 
 export interface DocumentHeader {
@@ -7,6 +21,9 @@ export interface DocumentHeader {
   secCnt: number;
   beginNum: BeginNum;
   refList: RefList;
+  trackChanges?: TrackChangeEntry[];
+  trackChangeAuthors?: TrackChangeAuthor[];
+  memoShapes?: MemoShape[];
   extra?: GenericElement[];
 }
 
@@ -28,6 +45,8 @@ export interface RefList {
   borderFills: GenericElement[];
   charProperties: CharProperty[];
   tabProperties: TabProperty[];
+  numberings: NumberingProperty[];
+  bullets: BulletProperty[];
   paraProperties: ParaProperty[];
   styles: StyleDecl[];
   others: GenericElement[];
@@ -88,7 +107,7 @@ export interface TabProperty {
 export interface ParaProperty {
   id: number;
   align?: 'left' | 'center' | 'right' | 'justify' | 'distribute';
-  heading?: { type: string; level: number };
+  heading?: { type: string; idRef: number; level: number };
   lineSpacing?: { type: string; value: number };
   margin?: { left?: number; right?: number; indent?: number; prev?: number; next?: number };
   tabPrIDRef?: number;
@@ -98,6 +117,38 @@ export interface ParaProperty {
   autoSpacing?: { eAsianEng?: boolean; eAsianNum?: boolean };
   attrs: Record<string, string>;
   children: GenericElement[];
+}
+
+// ── Numbering properties ──
+
+export interface ParaHead {
+  level: number;
+  start?: number;
+  align?: string;
+  useInstWidth?: boolean;
+  autoIndent?: boolean;
+  widthAdjust?: number;
+  textOffsetType?: string;
+  textOffset?: number;
+  numFormat?: string;
+  charPrIDRef?: number;
+  checkable?: boolean;
+  text?: string; // element text content (e.g. "^1.", "^2)")
+}
+
+export interface NumberingProperty {
+  id: number;
+  start: number;
+  levels: ParaHead[];
+}
+
+// ── Bullet properties ──
+
+export interface BulletProperty {
+  id: number;
+  char: string;
+  useImage?: boolean;
+  levels: ParaHead[];
 }
 
 // ── Styles ──

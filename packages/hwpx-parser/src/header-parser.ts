@@ -2,7 +2,8 @@ import { parseXml, getAttr, getAttrs, parseBool, parseIntSafe } from './xml-util
 import type {
   DocumentHeader, BeginNum, RefList,
   FontFaceDecl, CharProperty, ParaProperty, StyleDecl,
-  TabProperty, TabStop,
+  TabProperty, TabStop, NumberingProperty, BulletProperty, ParaHead,
+  TrackChangeEntry, TrackChangeAuthor, MemoShape,
 } from '@handoc/document-model';
 import type { GenericElement, WarningCollector } from '@handoc/document-model';
 
@@ -25,7 +26,18 @@ export function parseHeader(xml: string, warnings?: WarningCollector): DocumentH
   const refListNode = findChild(head, 'refList') ?? {};
   const refList = parseRefList(refListNode);
 
-  return { version, secCnt, beginNum, refList };
+  // Parse track changes
+  const trackChanges = parseTrackChanges(refListNode);
+  const trackChangeAuthors = parseTrackChangeAuthors(refListNode);
+
+  // Parse memo shapes
+  const memoShapes = parseMemoShapes(refListNode);
+
+  const result: DocumentHeader = { version, secCnt, beginNum, refList };
+  if (trackChanges.length > 0) result.trackChanges = trackChanges;
+  if (trackChangeAuthors.length > 0) result.trackChangeAuthors = trackChangeAuthors;
+  if (memoShapes.length > 0) result.memoShapes = memoShapes;
+  return result;
 }
 
 // ─── Internal helpers ────────────────────────────────────────────────
@@ -84,6 +96,8 @@ function parseRefList(refList: Record<string, unknown>): RefList {
   const fontFaces = parseFontFaces(findChild(refList, 'fontfaces') ?? {});
   const charProperties = parseCharProperties(findChildren(refList, 'charProperties'));
   const tabProperties = parseTabProperties(findChild(refList, 'tabProperties') ?? {});
+  const numberings = parseNumberings(findChild(refList, 'numberings') ?? {});
+  const bullets = parseBullets(findChild(refList, 'bullets') ?? {});
   const paraProperties = parseParaProperties(findChildren(refList, 'paraProperties'));
   const styles = parseStyles(findChild(refList, 'styles') ?? {});
   const borderFills = parseBorderFills(findChild(refList, 'borderFills') ?? {});
@@ -101,7 +115,7 @@ function parseRefList(refList: Record<string, unknown>): RefList {
     }
   }
 
-  return { fontFaces, charProperties, tabProperties, paraProperties, styles, borderFills, others };
+  return { fontFaces, charProperties, tabProperties, numberings, bullets, paraProperties, styles, borderFills, others };
 }
 
 function parseFontFaces(fontfaces: Record<string, unknown>): FontFaceDecl[] {
@@ -240,9 +254,10 @@ function parseParaProperties(containers: Record<string, unknown>[]): ParaPropert
       const headingEl = findChild(item, 'heading');
       if (headingEl) {
         const hType = getAttr(headingEl, 'type') ?? 'NONE';
+        const hIdRef = parseIntSafe(getAttr(headingEl, 'idRef'));
         const hLevel = parseIntSafe(getAttr(headingEl, 'level'));
         if (hType !== 'NONE') {
-          pp.heading = { type: hType, level: hLevel };
+          pp.heading = { type: hType, idRef: hIdRef, level: hLevel };
         }
       }
 
@@ -427,6 +442,56 @@ function findAllChildren(node: Record<string, unknown>): { localTag: string; nod
   return result;
 }
 
+/** Parse paraHead elements (shared by numbering and bullet) */
+function parseParaHeads(parent: Record<string, unknown>): ParaHead[] {
+  return findChildren(parent, 'paraHead').map((ph) => {
+    const a = getAttrs(ph);
+    const result: ParaHead = {
+      level: parseIntSafe(a.level),
+    };
+    if (a.start !== undefined) result.start = parseIntSafe(a.start);
+    if (a.align) result.align = a.align;
+    if (a.useInstWidth !== undefined) result.useInstWidth = parseBool(a.useInstWidth);
+    if (a.autoIndent !== undefined) result.autoIndent = parseBool(a.autoIndent);
+    if (a.widthAdjust !== undefined) result.widthAdjust = parseIntSafe(a.widthAdjust);
+    if (a.textOffsetType) result.textOffsetType = a.textOffsetType;
+    if (a.textOffset !== undefined) result.textOffset = parseIntSafe(a.textOffset);
+    if (a.numFormat) result.numFormat = a.numFormat;
+    if (a.charPrIDRef !== undefined) result.charPrIDRef = parseIntSafe(a.charPrIDRef);
+    if (a.checkable !== undefined) result.checkable = parseBool(a.checkable);
+    // Element text content (e.g. "^1.", "^2)")
+    const text = ph['#text'];
+    if (text !== undefined && text !== null) result.text = String(text);
+    return result;
+  });
+}
+
+/** Parse numbering definitions */
+function parseNumberings(node: Record<string, unknown>): NumberingProperty[] {
+  return findChildren(node, 'numbering').map((n) => {
+    const a = getAttrs(n);
+    return {
+      id: parseIntSafe(a.id),
+      start: parseIntSafe(a.start, 1),
+      levels: parseParaHeads(n),
+    };
+  });
+}
+
+/** Parse bullet definitions */
+function parseBullets(node: Record<string, unknown>): BulletProperty[] {
+  return findChildren(node, 'bullet').map((b) => {
+    const a = getAttrs(b);
+    const result: BulletProperty = {
+      id: parseIntSafe(a.id),
+      char: a.char ?? '',
+      levels: parseParaHeads(b),
+    };
+    if (a.useImage !== undefined) result.useImage = parseBool(a.useImage);
+    return result;
+  });
+}
+
 function parseStyles(stylesNode: Record<string, unknown>): StyleDecl[] {
   const items = findChildren(stylesNode, 'style');
   return items.map((s) => {
@@ -474,4 +539,55 @@ function toGenericElement(tag: string, value: unknown): GenericElement {
   const text = node['#text'] !== undefined ? String(node['#text']) : null;
   const children = childrenToGeneric(node);
   return { tag, attrs, children, text };
+}
+
+// ── Track Changes ──
+
+function parseTrackChanges(refList: Record<string, unknown>): TrackChangeEntry[] {
+  const container = findChild(refList, 'trackChanges');
+  if (!container) return [];
+  const items = findChildren(container, 'trackChange');
+  return items.map((item) => {
+    const attrs = getAttrs(item);
+    return {
+      id: parseIntSafe(attrs.id),
+      type: attrs.type ?? 'Unknown',
+      date: attrs.date ?? '',
+      authorID: parseIntSafe(attrs.authorID),
+      hide: parseBool(attrs.hide),
+    };
+  });
+}
+
+function parseTrackChangeAuthors(refList: Record<string, unknown>): TrackChangeAuthor[] {
+  const container = findChild(refList, 'trackChangeAuthors');
+  if (!container) return [];
+  const items = findChildren(container, 'trackChangeAuthor');
+  return items.map((item) => {
+    const attrs = getAttrs(item);
+    return {
+      id: parseIntSafe(attrs.id),
+      name: attrs.name ?? '',
+      mark: parseIntSafe(attrs.mark),
+    };
+  });
+}
+
+// ── Memo Shapes ──
+
+function parseMemoShapes(refList: Record<string, unknown>): MemoShape[] {
+  const container = findChild(refList, 'memoShapeList') ?? findChild(refList, 'MEMOSHAPELIST');
+  if (!container) return [];
+  const items = findChildren(container, 'memo') ?? findChildren(container, 'MEMO');
+  return items.map((item) => {
+    const attrs = getAttrs(item);
+    return {
+      id: parseIntSafe(attrs.id),
+      width: attrs.width !== undefined ? parseIntSafe(attrs.width) : undefined,
+      lineColor: attrs.lineColor || undefined,
+      lineType: attrs.lineType || undefined,
+      fillColor: attrs.fillColor || undefined,
+      memoType: attrs.MemoType || attrs.memoType || undefined,
+    };
+  });
 }

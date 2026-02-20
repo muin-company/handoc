@@ -7,9 +7,25 @@ import { extractImages, type ImageInfo } from './image-extractor';
 import { collectHeadersFooters, collectFootnotes, type HeaderFooter, type Footnote } from './annotation-parser';
 import { parseShape, type Shape } from './shape-parser';
 import { parseEquation, type Equation } from './equation-parser';
-import type { Section, RunChild } from './types';
+import type { Section, RunChild, Paragraph } from './types';
 import type { DocumentHeader } from './header-parser';
 import type { SectionProperties } from './section-props-parser';
+// Track change types (mirrored from document-model to avoid cross-package type resolution issues)
+interface TCEntry { id: number; type: string; date: string; authorID: number; hide: boolean; }
+interface TCAuthor { id: number; name: string; mark: number; }
+
+export interface TrackChange {
+  id: number;
+  type: string;
+  date: string;
+  author: string;
+  hide: boolean;
+}
+
+export interface HiddenComment {
+  text: string;
+  paragraphs: Paragraph[];
+}
 
 export interface HanDocMetadata {
   title?: string;
@@ -231,6 +247,53 @@ export class HanDoc {
       }
     }
     return this._equations;
+  }
+
+  /**
+   * Track changes found in the document header.
+   * Each entry includes the resolved author name.
+   */
+  get trackChanges(): TrackChange[] {
+    const h = this.header;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hdr = h as any;
+    const entries: TCEntry[] = hdr.trackChanges ?? [];
+    const authors: TCAuthor[] = hdr.trackChangeAuthors ?? [];
+    const authorMap = new Map<number, string>();
+    for (const a of authors) {
+      authorMap.set(a.id, a.name);
+    }
+    return entries.map((e) => ({
+      id: e.id,
+      type: e.type,
+      date: e.date,
+      author: authorMap.get(e.authorID) ?? `Author#${e.authorID}`,
+      hide: e.hide,
+    }));
+  }
+
+  /**
+   * Hidden comments (메모/주석) found inline in the document.
+   */
+  get hiddenComments(): HiddenComment[] {
+    const results: HiddenComment[] = [];
+    for (const section of this.sections) {
+      for (const para of section.paragraphs) {
+        for (const run of para.runs) {
+          for (const child of run.children) {
+            if (child.type === 'hiddenComment') {
+              const text = child.paragraphs
+                .flatMap((p) => p.runs.flatMap((r) => r.children
+                  .filter((c): c is { type: 'text'; content: string } => c.type === 'text')
+                  .map((c) => c.content)))
+                .join('');
+              results.push({ text, paragraphs: child.paragraphs });
+            }
+          }
+        }
+      }
+    }
+    return results;
   }
 
   /**

@@ -102,7 +102,20 @@ export function parseRunChild(key: string, value: unknown): RunChild[] {
   }
 
   if (TRACK_CHANGE_MARKS.has(key)) {
-    results.push({ type: 'trackChange', mark: key });
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    const attrs = getAttrs(node);
+    const tc: RunChild = { type: 'trackChange', mark: key };
+    if (attrs['Id']) tc.id = Number(attrs['Id']);
+    if (attrs['TcId']) tc.tcId = Number(attrs['TcId']);
+    if (attrs['paraend'] !== undefined) tc.paraEnd = attrs['paraend'] === '1';
+    results.push(tc);
+    return results;
+  }
+
+  if (key === 'hiddenComment' || key === 'HIDDENCOMMENT') {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    const paragraphs = parseHiddenCommentParagraphs(node);
+    results.push({ type: 'hiddenComment', paragraphs });
     return results;
   }
 
@@ -180,4 +193,22 @@ export function parseParagraph(node: Record<string, unknown>): Paragraph {
     runs,
     lineSegArray,
   };
+}
+
+// ── Hidden comment paragraphs ──
+
+function parseHiddenCommentParagraphs(node: Record<string, unknown>): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  // Hidden comments contain <hp:p> children
+  for (const key of Object.keys(node)) {
+    if (key.startsWith('@_') || key === '#text') continue;
+    const local = key.includes(':') ? key.split(':').pop()! : key;
+    if (local === 'p') {
+      const items = Array.isArray(node[key]) ? node[key] as Record<string, unknown>[] : [node[key] as Record<string, unknown>];
+      for (const item of items) {
+        paragraphs.push(parseParagraph(item));
+      }
+    }
+  }
+  return paragraphs;
 }

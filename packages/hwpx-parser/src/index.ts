@@ -1,4 +1,4 @@
-export { HanDoc, type HanDocMetadata } from './handoc';
+export { HanDoc, type HanDocMetadata, type TrackChange, type HiddenComment } from './handoc';
 export { extractImages, type ImageInfo } from './image-extractor';
 export { parseHeader } from './header-parser';
 export type { DocumentHeader } from './header-parser';

@@ -60,7 +60,8 @@ export type RunChild =
   | { type: 'inlineObject'; name: string; element: GenericElement }
   | { type: 'shape'; name: string; element: GenericElement }
   | { type: 'equation'; element: GenericElement }
-  | { type: 'trackChange'; mark: string };
+  | { type: 'trackChange'; mark: string; id?: number; tcId?: number; paraEnd?: boolean }
+  | { type: 'hiddenComment'; paragraphs: Paragraph[] };
 
 // ── LineSeg ──
 

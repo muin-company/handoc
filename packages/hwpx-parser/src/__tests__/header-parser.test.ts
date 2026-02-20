@@ -51,6 +51,44 @@ describe('parseHeader', () => {
     expect(header.refList.borderFills.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('parses numbering properties from simple-text-header.xml', () => {
+    const xml = loadFixture('simple-text-header.xml');
+    const header = parseHeader(xml);
+
+    expect(header.refList.numberings.length).toBe(1);
+    const num = header.refList.numberings[0];
+    expect(num.id).toBe(1);
+    expect(num.start).toBe(0);
+    expect(num.levels.length).toBe(10);
+
+    // Level 1: DIGIT format, text "^1."
+    expect(num.levels[0].level).toBe(1);
+    expect(num.levels[0].numFormat).toBe('DIGIT');
+    expect(num.levels[0].text).toBe('^1.');
+
+    // Level 2: HANGUL_SYLLABLE
+    expect(num.levels[1].level).toBe(2);
+    expect(num.levels[1].numFormat).toBe('HANGUL_SYLLABLE');
+    expect(num.levels[1].text).toBe('^2.');
+
+    // Level 7: CIRCLED_DIGIT
+    expect(num.levels[6].level).toBe(7);
+    expect(num.levels[6].numFormat).toBe('CIRCLED_DIGIT');
+    expect(num.levels[6].checkable).toBe(true);
+  });
+
+  it('parses bullet properties from simple-text-header.xml', () => {
+    const xml = loadFixture('simple-text-header.xml');
+    const header = parseHeader(xml);
+
+    expect(header.refList.bullets.length).toBe(1);
+    const bullet = header.refList.bullets[0];
+    expect(bullet.id).toBe(1);
+    expect(bullet.char).toBe('●');
+    expect(bullet.useImage).toBe(false);
+    expect(bullet.levels.length).toBe(1);
+  });
+
   for (const file of FIXTURE_FILES) {
     it(`parses ${file} without error`, () => {
       const xml = loadFixture(file);
