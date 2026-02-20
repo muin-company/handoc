@@ -274,6 +274,8 @@
 | TASK-019 | HTML 독립 내보내기 (시맨틱 태그, print CSS, a11y) | 2026-02-21 |
 | **TASK-021** | **Editor 스키마 완성 (CharPr/ParaPr → ProseMirror marks/align)** | **2026-02-21** |
 | **TASK-023** | **도형/수식 Writer (shape/equation 전용 직렬화)** | **2026-02-21** |
+| **TASK-024** | **Editor 표 편집 UI (prosemirror-tables 통합)** | **2026-02-21** |
+| **TASK-025** | **Editor 이미지 삽입/편집 (base64 임베딩)** | **2026-02-21** |
 | — | pdf-export (HWPX → PDF) | 2026-02-20 |
 | — | viewer (React 컴포넌트) | 2026-02-20 |
 | — | editor (ProseMirror 프로토타입) | 2026-02-20 |
@@ -293,15 +295,7 @@
 ### 🟡 P2: 중간
 
 ```
-[TASK-024] Editor 표 편집 UI
-  - 작업: 표 삽입, 행/열 추가/삭제, 셀 병합
-  - 예상 시간: 12시간
-
-[TASK-025] Editor 이미지 삽입/편집
-  - 작업: 이미지 업로드, 크기 조절, 정렬
-  - 예상 시간: 8시간
-
-[TASK-026] HTML → HWPX 역변환
+[TASK-026] HTML → HWPX 역변환 (진행 중)
   - 작업: HTML 파싱 → document-model → HWPX
   - 예상 시간: 10시간
 ```
