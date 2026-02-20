@@ -1,6 +1,6 @@
 # HanDoc Format Audit Results
 
-> Generated: 2026-02-20T15:07:02.116Z
+> Generated: 2026-02-20T15:09:13.460Z
 > Fixture directory: `/Users/mj/handoc-fixtures/real-world`
 
 ## Summary
@@ -16,8 +16,8 @@
 
 | Property | Files using it |
 |----------|---------------|
-| Bold | 0 (0.0%) |
-| Italic | 0 (0.0%) |
+| Bold | 238 (68.2%) |
+| Italic | 24 (6.9%) |
 | Underline | 115 (33.0%) |
 | Strikeout | 40 (11.5%) |
 | Non-black text color | 336 (96.3%) |

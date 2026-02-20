@@ -1,6 +1,6 @@
 # HanDoc Roundtrip Format Audit
 
-> Generated: 2026-02-20T15:07:23.037Z
+> Generated: 2026-02-20T15:09:37.392Z
 > Test: parse → write → parse, then compare
 
 ## Summary

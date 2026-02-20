@@ -58,28 +58,28 @@ function parseFaceName(data: Uint8Array): string | null {
 
 /**
  * Parse HWPTAG_CHAR_SHAPE record.
- * Layout (first 72+ bytes):
+ * Layout:
  *   0–13:  7 x uint16 font ID references (per language group)
- *   14–27: 7 x uint16 font width ratios
- *   28–41: 7 x uint16 font char spacing
- *   42–55: 7 x uint16 font relative sizes
- *   56–69: 7 x int16 font char offsets
- *   70–73: int32 height (HU)
- *   74–77: uint32 properties (bit 0=italic, bit 1=bold)
- *   ...
- *   Color at offset 82: uint32 (0xBBGGRR)
+ *   14–20: 7 x uint8 font width ratios
+ *   21–27: 7 x int8 font char spacing
+ *   28–34: 7 x uint8 font relative sizes
+ *   35–41: 7 x int8 font char offsets
+ *   42–45: int32 height (HU, divide by 100 for pt)
+ *   46–49: uint32 properties (bit 0=italic, bit 1=bold, bit 2=underline, ...)
+ *   50–53: shadow spacing
+ *   54–57: uint32 text color (0x00BBGGRR)
  */
 function parseCharShape(data: Uint8Array): CharShape | null {
-  if (data.byteLength < 86) return null;
+  if (data.byteLength < 58) return null;
   const fontId: number[] = [];
   for (let i = 0; i < 7; i++) {
     fontId.push(readUint16LE(data, i * 2));
   }
-  const height = readUint32LE(data, 70);
-  const props = readUint32LE(data, 74);
-  const italic = !!(props & 1);
-  const bold = !!(props & 2);
-  const color = readUint32LE(data, 82);
+  const height = readUint32LE(data, 42);
+  const props = readUint32LE(data, 46);
+  const italic = !!(props & (1 << 0));
+  const bold = !!(props & (1 << 1));
+  const color = readUint32LE(data, 54);
   return { fontId, height, bold, italic, color };
 }
 
