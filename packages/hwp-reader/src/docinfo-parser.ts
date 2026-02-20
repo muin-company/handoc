@@ -95,12 +95,9 @@ function parseParaShape(data: Uint8Array): ParaShape | null {
   if (data.byteLength < 8) return null;
   const props1 = readUint32LE(data, 0);
   const align = (props1 >> 2) & 0x7;
-  // Line spacing: offset 16 = lineSpacingType(4 bytes not always present),
-  // in practice line spacing value is at different offsets per version.
-  // Simple approach: try to get from a known offset.
   let lineSpacing = 160; // default 160%
-  if (data.byteLength >= 24) {
-    lineSpacing = readUint32LE(data, 20);
+  if (data.byteLength >= 28) {
+    lineSpacing = readUint32LE(data, 24);
   }
   return { align, lineSpacing };
 }

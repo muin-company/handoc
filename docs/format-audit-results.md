@@ -1,6 +1,6 @@
 # HanDoc Format Audit Results
 
-> Generated: 2026-02-20T15:09:13.460Z
+> Generated: 2026-02-20T15:09:57.813Z
 > Fixture directory: `/Users/mj/handoc-fixtures/real-world`
 
 ## Summary
