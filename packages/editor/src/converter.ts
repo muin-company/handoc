@@ -8,6 +8,9 @@ import { HwpxBuilder } from '@handoc/hwpx-writer';
 import type { Section, Paragraph, Run, RunChild, CharProperty, ParaProperty, GenericElement } from '@handoc/document-model';
 import { hanDocSchema } from './schema';
 
+// Store HanDoc instance for image lookups
+let currentHanDoc: HanDoc | null = null;
+
 /**
  * Convert a parsed Section array into ProseMirror doc node.
  */
@@ -15,8 +18,14 @@ function sectionsToDoc(
   sections: Section[],
   charProperties: CharProperty[],
   paraProperties: ParaProperty[],
+  hanDoc?: HanDoc,
 ): PMNode {
   const schema = hanDocSchema;
+  
+  // Store hanDoc reference for image lookups
+  if (hanDoc) {
+    currentHanDoc = hanDoc;
+  }
 
   const sectionNodes = sections.map(section => {
     const blockNodes: PMNode[] = [];
@@ -167,15 +176,84 @@ function tableElementToNode(
 function imageElementToNode(element: GenericElement): PMNode | null {
   const schema = hanDocSchema;
   
-  // Extract image properties from the element
-  // This is simplified - real implementation would extract actual image data
-  const src = element.attrs?.href || element.attrs?.src || null;
-  const width = element.attrs?.width || null;
-  const height = element.attrs?.height || null;
+  // Extract image properties from the hp:pic element structure:
+  // <hp:pic>
+  //   <hp:sz width="..." height="..." />
+  //   <hp:img binaryItemIDRef="BinData/image0.png" />
+  // </hp:pic>
   
-  if (!src) return null;
+  let width: number | null = null;
+  let height: number | null = null;
+  let binPath: string | null = null;
   
-  return schema.nodes.image.create({ src, width, height, alt: null });
+  // Extract size and binary path from children
+  for (const child of element.children || []) {
+    if (child.tag === 'sz' || child.tag === 'hp:sz') {
+      width = child.attrs?.width ? parseInt(child.attrs.width, 10) : null;
+      height = child.attrs?.height ? parseInt(child.attrs.height, 10) : null;
+    } else if (child.tag === 'img' || child.tag === 'hp:img') {
+      binPath = child.attrs?.binaryItemIDRef || null;
+    }
+  }
+  
+  if (!binPath) return null;
+  
+  // Get image data from HanDoc and convert to base64 data URL
+  let src: string | null = null;
+  if (currentHanDoc) {
+    const imageData = currentHanDoc.getImage(binPath);
+    if (imageData) {
+      // Determine MIME type from extension
+      const ext = binPath.split('.').pop()?.toLowerCase() || 'png';
+      const mimeType = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'bmp': 'image/bmp',
+      }[ext] || 'image/png';
+      
+      // Convert Uint8Array to base64
+      const base64 = uint8ArrayToBase64(imageData);
+      src = `data:${mimeType};base64,${base64}`;
+    }
+  }
+  
+  // Fallback to binPath if we couldn't get the data
+  if (!src) {
+    src = binPath;
+  }
+  
+  return schema.nodes.image.create({ 
+    src, 
+    width: width?.toString() || null, 
+    height: height?.toString() || null, 
+    alt: null 
+  });
+}
+
+/**
+ * Convert Uint8Array to base64 string
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const len = bytes.length;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Convert base64 string to Uint8Array
+ */
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 function extractParagraphFromElement(element: GenericElement): Paragraph | null {
@@ -315,7 +393,7 @@ export async function hwpxToEditorState(buffer: Uint8Array): Promise<EditorState
   const charProperties = header.refList.charProperties;
   const paraProperties = header.refList.paraProperties;
 
-  const pmDoc = sectionsToDoc(sections, charProperties, paraProperties);
+  const pmDoc = sectionsToDoc(sections, charProperties, paraProperties, doc);
 
   return EditorState.create({
     doc: pmDoc,
@@ -377,6 +455,29 @@ export async function editorStateToHwpx(state: EditorState): Promise<Uint8Array>
         const level = blockNode.attrs.level as number;
         const text = blockNode.textContent;
         builder.addHeading(level, text);
+      } else if (blockNode.type.name === 'image') {
+        // Extract image data from data URL
+        const src = blockNode.attrs.src as string;
+        const width = blockNode.attrs.width ? parseInt(blockNode.attrs.width, 10) : undefined;
+        const height = blockNode.attrs.height ? parseInt(blockNode.attrs.height, 10) : undefined;
+        
+        if (src && src.startsWith('data:')) {
+          // Parse data URL: data:image/png;base64,iVBORw0KG...
+          const match = src.match(/^data:image\/([^;]+);base64,(.+)$/);
+          if (match) {
+            const ext = match[1];
+            const base64 = match[2];
+            
+            // Convert base64 to Uint8Array
+            const imageData = base64ToUint8Array(base64);
+            
+            // Use default size if not specified (in HWP units)
+            const imgWidth = width || 7200;  // ~1 inch
+            const imgHeight = height || 7200;
+            
+            builder.addImage(imageData, ext, imgWidth, imgHeight);
+          }
+        }
       } else if (blockNode.type.name === 'table') {
         // Convert table node to rows array
         const rows: string[][] = [];

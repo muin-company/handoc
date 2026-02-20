@@ -7,8 +7,10 @@ import { EditorView } from 'prosemirror-view';
 import { keymap } from 'prosemirror-keymap';
 import { baseKeymap } from 'prosemirror-commands';
 import { history, undo, redo } from 'prosemirror-history';
+import { columnResizing, tableEditing } from 'prosemirror-tables';
 import { hanDocSchema } from './schema';
 import { hwpxToEditorState, editorStateToHwpx } from './converter';
+import { tableKeymap } from './commands';
 
 export interface HanDocEditorProps {
   /** HWPX file as binary buffer. If provided, initializes the editor with this document. */
@@ -32,7 +34,10 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
         ]),
       ]),
       plugins: [
+        columnResizing(),
+        tableEditing(),
         history(),
+        keymap(tableKeymap()),
         keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
         keymap(baseKeymap),
       ],
@@ -55,7 +60,10 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
             doc: state.doc,
             schema: hanDocSchema,
             plugins: [
+              columnResizing(),
+              tableEditing(),
               history(),
+              keymap(tableKeymap()),
               keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
               keymap(baseKeymap),
             ],

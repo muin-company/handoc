@@ -10,6 +10,10 @@ import type {
   ParaProperty,
   StyleDecl,
   GenericElement,
+  NumberingProperty,
+  BulletProperty,
+  ParaHead,
+  TabProperty,
 } from '@handoc/document-model';
 import { escapeXml, writeGenericElement } from './xml-helpers';
 
@@ -103,13 +107,22 @@ function writeRefList(ref: RefList): string {
   // charProperties
   xml += writeCharProperties(ref.charProperties);
 
+  // tabProperties
+  xml += writeTabProperties(ref.tabProperties ?? []);
+
+  // numberings
+  xml += writeNumberings(ref.numberings ?? []);
+
+  // bullets
+  xml += writeBullets(ref.bullets ?? []);
+
   // paraProperties
   xml += writeParaProperties(ref.paraProperties);
 
   // styles
   xml += writeStyles(ref.styles);
 
-  // others (tabProperties, numberings, bullets, etc.)
+  // others (remaining unknown elements)
   for (const el of ref.others) {
     xml += writeGenericElement(el, 'hh');
   }
@@ -165,19 +178,137 @@ function writeParaProperties(paraProps: ParaProperty[]): string {
   let xml = open('hh:paraProperties', { itemCnt: String(paraProps.length) });
 
   for (const pp of paraProps) {
-    if (pp.children.length === 0) {
+    const hasChildren = pp.children.length > 0;
+    const hasHeading = pp.heading !== undefined;
+    
+    // Check if heading is already in children (from parsing)
+    const headingInChildren = pp.children.some(c => c.tag.toLowerCase().endsWith('heading'));
+    const needsHeading = hasHeading && !headingInChildren;
+    
+    const needsOpen = hasChildren || needsHeading;
+
+    if (!needsOpen) {
       xml += selfClose('hh:paraPr', pp.attrs);
     } else {
       xml += open('hh:paraPr', pp.attrs);
+      
+      // Serialize children
       for (const child of pp.children) {
         xml += writeGenericElement(child, 'hh');
       }
+      
+      // Only add heading if it's not already in children
+      if (needsHeading) {
+        const headingAttrs: Record<string, string> = {
+          type: pp.heading!.type,
+          idRef: String(pp.heading!.idRef),
+          level: String(pp.heading!.level),
+        };
+        xml += selfClose('hh:heading', headingAttrs);
+      }
+      
       xml += close('hh:paraPr');
     }
   }
 
   xml += close('hh:paraProperties');
   return xml;
+}
+
+function writeTabProperties(tabProps: TabProperty[]): string {
+  if (tabProps.length === 0) return '';
+  let xml = open('hh:tabProperties', { itemCnt: String(tabProps.length) });
+
+  for (const tp of tabProps) {
+    const tpAttrs: Record<string, string> = { id: String(tp.id) };
+    if (tp.autoTabLeft !== undefined) tpAttrs.autoTabLeft = tp.autoTabLeft ? '1' : '0';
+    if (tp.autoTabRight !== undefined) tpAttrs.autoTabRight = tp.autoTabRight ? '1' : '0';
+
+    if (tp.tabStops.length === 0) {
+      xml += selfClose('hh:tabPr', tpAttrs);
+    } else {
+      xml += open('hh:tabPr', tpAttrs);
+      for (const ts of tp.tabStops) {
+        const tsAttrs: Record<string, string> = { pos: String(ts.pos) };
+        if (ts.type) tsAttrs.type = ts.type;
+        if (ts.leader) tsAttrs.leader = ts.leader;
+        if (ts.unit) tsAttrs.unit = ts.unit;
+        xml += selfClose('hh:tabItem', tsAttrs);
+      }
+      xml += close('hh:tabPr');
+    }
+  }
+
+  xml += close('hh:tabProperties');
+  return xml;
+}
+
+function writeNumberings(numberings: NumberingProperty[]): string {
+  if (numberings.length === 0) return '';
+  let xml = open('hh:numberings', { itemCnt: String(numberings.length) });
+
+  for (const num of numberings) {
+    const numAttrs: Record<string, string> = {
+      id: String(num.id),
+      start: String(num.start),
+    };
+    xml += open('hh:numbering', numAttrs);
+    
+    for (const level of num.levels) {
+      xml += writeParaHead(level);
+    }
+    
+    xml += close('hh:numbering');
+  }
+
+  xml += close('hh:numberings');
+  return xml;
+}
+
+function writeBullets(bullets: BulletProperty[]): string {
+  if (bullets.length === 0) return '';
+  let xml = open('hh:bullets', { itemCnt: String(bullets.length) });
+
+  for (const bul of bullets) {
+    const bulAttrs: Record<string, string> = {
+      id: String(bul.id),
+      char: bul.char,
+    };
+    if (bul.useImage !== undefined) bulAttrs.useImage = bul.useImage ? '1' : '0';
+    
+    xml += open('hh:bullet', bulAttrs);
+    
+    for (const level of bul.levels) {
+      xml += writeParaHead(level);
+    }
+    
+    xml += close('hh:bullet');
+  }
+
+  xml += close('hh:bullets');
+  return xml;
+}
+
+function writeParaHead(ph: ParaHead): string {
+  const phAttrs: Record<string, string> = {
+    level: String(ph.level),
+  };
+  if (ph.start !== undefined) phAttrs.start = String(ph.start);
+  if (ph.align) phAttrs.align = ph.align;
+  if (ph.useInstWidth !== undefined) phAttrs.useInstWidth = ph.useInstWidth ? '1' : '0';
+  if (ph.autoIndent !== undefined) phAttrs.autoIndent = ph.autoIndent ? '1' : '0';
+  if (ph.widthAdjust !== undefined) phAttrs.widthAdjust = String(ph.widthAdjust);
+  if (ph.textOffsetType) phAttrs.textOffsetType = ph.textOffsetType;
+  if (ph.textOffset !== undefined) phAttrs.textOffset = String(ph.textOffset);
+  if (ph.numFormat) phAttrs.numFormat = ph.numFormat;
+  if (ph.charPrIDRef !== undefined) phAttrs.charPrIDRef = String(ph.charPrIDRef);
+  if (ph.checkable !== undefined) phAttrs.checkable = ph.checkable ? '1' : '0';
+
+  if (ph.text) {
+    return `<hh:paraHead${attrs(phAttrs)}>${escapeXml(ph.text)}</hh:paraHead>`;
+  } else {
+    return selfClose('hh:paraHead', phAttrs);
+  }
 }
 
 function writeStyles(styles: StyleDecl[]): string {

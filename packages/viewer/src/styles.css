@@ -141,6 +141,62 @@
   color: #c00;
 }
 
+/* Header/Footer */
+.handoc-header,
+.handoc-footer {
+  padding: 8px 0;
+  font-size: 0.9em;
+  color: #666;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 12px;
+}
+
+.handoc-footer {
+  border-bottom: none;
+  border-top: 1px solid #ddd;
+  margin-bottom: 0;
+  margin-top: 12px;
+}
+
+.handoc-header .handoc-para,
+.handoc-footer .handoc-para {
+  font-size: 0.95em;
+  color: #555;
+}
+
+/* Footnotes */
+.handoc-footnote-ref {
+  font-size: 0.8em;
+  vertical-align: super;
+  color: #0066cc;
+  cursor: help;
+  margin: 0 1px;
+}
+
+.handoc-footnotes {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #999;
+  font-size: 0.9em;
+}
+
+.handoc-footnote-item {
+  margin-bottom: 6px;
+  padding-left: 1em;
+  text-indent: -1em;
+}
+
+.handoc-footnote-item sup {
+  color: #0066cc;
+  margin-right: 4px;
+}
+
+.handoc-footnote-item .handoc-para {
+  display: inline;
+  font-size: 0.95em;
+  color: #333;
+}
+
 /* Print styles */
 @media print {
   .handoc-viewer {

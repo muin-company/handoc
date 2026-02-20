@@ -261,3 +261,202 @@ describe('equation rendering', () => {
     expect(html).toContain('[equation]');
   });
 });
+
+describe('header/footer rendering', () => {
+  it('renders header', () => {
+    const ctx: RenderContext = {
+      headers: [{
+        type: 'header',
+        applyPageType: 'BOTH',
+        paragraphs: [makePara([makeRun('Header text')])],
+      }],
+    };
+    const section: Section = {
+      paragraphs: [makePara([makeRun('Body text')])],
+    };
+    const html = sectionToHtml(section, ctx, 0);
+    expect(html).toContain('handoc-header');
+    expect(html).toContain('Header text');
+    expect(html).toContain('Body text');
+  });
+
+  it('renders footer', () => {
+    const ctx: RenderContext = {
+      footers: [{
+        type: 'footer',
+        applyPageType: 'BOTH',
+        paragraphs: [makePara([makeRun('Footer text')])],
+      }],
+    };
+    const section: Section = {
+      paragraphs: [makePara([makeRun('Body text')])],
+    };
+    const html = sectionToHtml(section, ctx, 0);
+    expect(html).toContain('handoc-footer');
+    expect(html).toContain('Footer text');
+    expect(html).toContain('Body text');
+  });
+});
+
+describe('footnote rendering', () => {
+  it('renders footnote reference and content', () => {
+    const footnoteEl: GenericElement = {
+      tag: 'footnote',
+      attrs: {},
+      children: [{
+        tag: 'subList',
+        attrs: {},
+        children: [{
+          tag: 'p',
+          attrs: { id: '0', paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' },
+          children: [{
+            tag: 'run',
+            attrs: { charPrIDRef: '0' },
+            children: [{ tag: 't', attrs: {}, children: [], text: 'Footnote content' }],
+            text: null,
+          }],
+          text: null,
+        }],
+        text: null,
+      }],
+      text: null,
+    };
+    
+    const ctx: RenderContext = {};
+    const ctrlChild: RunChild = { type: 'ctrl', element: footnoteEl };
+    
+    const section: Section = {
+      paragraphs: [
+        makePara([
+          { charPrIDRef: null, children: [
+            { type: 'text', content: 'Text with footnote' },
+            ctrlChild,
+          ]},
+        ]),
+      ],
+    };
+    
+    const html = sectionToHtml(section, ctx, 0);
+    expect(html).toContain('handoc-footnote-ref');
+    expect(html).toContain('handoc-footnotes');
+    expect(html).toContain('Footnote content');
+    expect(html).toContain('data-footnote="1"');
+  });
+});
+
+describe('numbering rendering', () => {
+  it('renders numbering prefix for OUTLINE heading', () => {
+    const ctx: RenderContext = {
+      header: {
+        version: '1.0',
+        secCnt: 1,
+        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+        refList: {
+          fontFaces: [],
+          borderFills: [],
+          charProperties: [],
+          tabProperties: [],
+          numberings: [
+            {
+              id: 0,
+              start: 1,
+              levels: [
+                { level: 0, text: '^1.', numFormat: 'DIGIT' },
+                { level: 1, text: '^2)', numFormat: 'DIGIT' },
+              ],
+            },
+          ],
+          bullets: [],
+          paraProperties: [
+            {
+              id: 0,
+              heading: { type: 'OUTLINE', idRef: 0, level: 0 },
+              attrs: {},
+              children: [],
+            },
+          ],
+          styles: [],
+          others: [],
+        },
+      },
+    };
+    const para = makePara([makeRun('First item')], { paraPrIDRef: 0 });
+    const html = paragraphToHtml(para, ctx);
+    expect(html).toContain('handoc-numbering');
+    expect(html).toContain('1.');
+    expect(html).toContain('First item');
+  });
+
+  it('renders bullet prefix for bullet heading', () => {
+    const ctx: RenderContext = {
+      header: {
+        version: '1.0',
+        secCnt: 1,
+        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+        refList: {
+          fontFaces: [],
+          borderFills: [],
+          charProperties: [],
+          tabProperties: [],
+          numberings: [],
+          bullets: [
+            {
+              id: 1,
+              char: '●',
+              levels: [
+                { level: 0, text: '●' },
+                { level: 1, text: '○' },
+              ],
+            },
+          ],
+          paraProperties: [
+            {
+              id: 1,
+              heading: { type: 'OUTLINE', idRef: 1, level: 0 },
+              attrs: {},
+              children: [],
+            },
+          ],
+          styles: [],
+          others: [],
+        },
+      },
+    };
+    const para = makePara([makeRun('Bullet item')], { paraPrIDRef: 1 });
+    const html = paragraphToHtml(para, ctx);
+    expect(html).toContain('handoc-numbering');
+    expect(html).toContain('●');
+    expect(html).toContain('Bullet item');
+  });
+
+  it('does not render prefix for non-OUTLINE paragraphs', () => {
+    const ctx: RenderContext = {
+      header: {
+        version: '1.0',
+        secCnt: 1,
+        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+        refList: {
+          fontFaces: [],
+          borderFills: [],
+          charProperties: [],
+          tabProperties: [],
+          numberings: [],
+          bullets: [],
+          paraProperties: [
+            {
+              id: 2,
+              attrs: {},
+              children: [],
+            },
+          ],
+          styles: [],
+          others: [],
+        },
+      },
+    };
+    const para = makePara([makeRun('Normal text')], { paraPrIDRef: 2 });
+    const html = paragraphToHtml(para, ctx);
+    expect(html).not.toContain('handoc-numbering');
+    expect(html).toContain('Normal text');
+  });
+});

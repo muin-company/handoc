@@ -85,7 +85,7 @@ const nodes: Record<string, NodeSpec> = {
     toDOM() { return ['table', ['tbody', 0]]; },
   },
   table_row: {
-    content: 'table_cell+',
+    content: '(table_cell | table_header)+',
     tableRole: 'row',
     parseDOM: [{ tag: 'tr' }],
     toDOM() { return ['tr', 0]; },
@@ -95,20 +95,55 @@ const nodes: Record<string, NodeSpec> = {
     attrs: {
       colspan: { default: 1 },
       rowspan: { default: 1 },
+      colwidth: { default: null },
     },
     tableRole: 'cell',
+    isolating: true,
     parseDOM: [{ tag: 'td', getAttrs(dom) {
       const el = dom as unknown as { getAttribute(n: string): string | null };
+      const colwidth = el.getAttribute('colwidth');
       return {
         colspan: Number(el.getAttribute('colspan') || 1),
         rowspan: Number(el.getAttribute('rowspan') || 1),
+        colwidth: colwidth ? colwidth.split(',').map(Number) : null,
       };
     }}],
     toDOM(node) {
       const attrs: Record<string, string> = {};
       if (node.attrs.colspan > 1) attrs.colspan = String(node.attrs.colspan);
       if (node.attrs.rowspan > 1) attrs.rowspan = String(node.attrs.rowspan);
+      if (node.attrs.colwidth) {
+        attrs.colwidth = node.attrs.colwidth.join(',');
+      }
       return ['td', attrs, 0];
+    },
+  },
+  table_header: {
+    content: '(paragraph | heading)+',
+    attrs: {
+      colspan: { default: 1 },
+      rowspan: { default: 1 },
+      colwidth: { default: null },
+    },
+    tableRole: 'header_cell',
+    isolating: true,
+    parseDOM: [{ tag: 'th', getAttrs(dom) {
+      const el = dom as unknown as { getAttribute(n: string): string | null };
+      const colwidth = el.getAttribute('colwidth');
+      return {
+        colspan: Number(el.getAttribute('colspan') || 1),
+        rowspan: Number(el.getAttribute('rowspan') || 1),
+        colwidth: colwidth ? colwidth.split(',').map(Number) : null,
+      };
+    }}],
+    toDOM(node) {
+      const attrs: Record<string, string> = {};
+      if (node.attrs.colspan > 1) attrs.colspan = String(node.attrs.colspan);
+      if (node.attrs.rowspan > 1) attrs.rowspan = String(node.attrs.rowspan);
+      if (node.attrs.colwidth) {
+        attrs.colwidth = node.attrs.colwidth.join(',');
+      }
+      return ['th', attrs, 0];
     },
   },
 };

@@ -57,6 +57,9 @@ export function HanDocViewer({
         const ctx: RenderContext = {
           header: doc.header,
           images: doc.images,
+          headers: doc.headers,
+          footers: doc.footers,
+          footnotes: doc.footnotes,
         };
         const result = documentToHtml(doc.sections, ctx);
         setHtml(result);

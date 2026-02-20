@@ -2,14 +2,20 @@ import type {
   Section, Paragraph, Run, RunChild, GenericElement,
 } from '@handoc/document-model';
 import type {
-  CharProperty, ParaProperty, DocumentHeader,
+  CharProperty, ParaProperty, DocumentHeader, NumberingProperty, BulletProperty,
 } from '@handoc/document-model';
-import type { ImageInfo } from '@handoc/hwpx-parser';
+import type { ImageInfo, HeaderFooter, Footnote } from '@handoc/hwpx-parser';
+import { parseFootnote, parseHeaderFooter, extractAnnotationText } from '@handoc/hwpx-parser';
 import { hwpUnitToMm, hwpUnitToPt, fontHeightToPt } from '@handoc/document-model';
 
 export interface RenderContext {
   header?: DocumentHeader;
   images?: ImageInfo[];
+  headers?: HeaderFooter[];
+  footers?: HeaderFooter[];
+  footnotes?: Footnote[];
+  footnoteCounter?: { value: number }; // Mutable counter for footnote numbering
+  footnoteRefs?: Map<number, Footnote>; // Map footnote number to content
 }
 
 function escapeHtml(s: string): string {
@@ -80,6 +86,47 @@ function resolveCharProp(run: Run, ctx: RenderContext): CharProperty | undefined
   const id = run.charPrIDRef;
   if (id == null) return undefined;
   return ctx.header.refList.charProperties.find(c => c.id === id);
+}
+
+// ── Numbering helpers ──
+
+function getNumberingPrefix(para: Paragraph, ctx: RenderContext): string {
+  const pp = resolveParaProp(para, ctx);
+  if (!pp?.heading) return '';
+  
+  const { type, idRef, level } = pp.heading;
+  if (type !== 'OUTLINE' && type !== 'NUMBER') return '';
+  
+  const refList = ctx.header?.refList;
+  if (!refList) return '';
+  
+  // Check numberings first
+  const numbering = refList.numberings?.find(n => n.id === idRef);
+  if (numbering) {
+    const paraHead = numbering.levels.find(l => l.level === level);
+    if (paraHead?.text) {
+      // Parse the text pattern (e.g., "^1.", "^2)", "가.")
+      // Replace ^N with actual number placeholder
+      const prefix = paraHead.text.replace(/\^[0-9]+/, '1');
+      return prefix.endsWith(' ') ? prefix : prefix + ' ';
+    }
+  }
+  
+  // Check bullets
+  const bullet = refList.bullets?.find(b => b.id === idRef);
+  if (bullet) {
+    const paraHead = bullet.levels.find(l => l.level === level);
+    if (paraHead?.text) {
+      const prefix = paraHead.text;
+      return prefix.endsWith(' ') ? prefix : prefix + ' ';
+    }
+    // Fallback to bullet char
+    if (bullet.char) {
+      return bullet.char + ' ';
+    }
+  }
+  
+  return '';
 }
 
 // ── Table rendering ──
@@ -244,6 +291,15 @@ export function runChildToHtml(child: RunChild, ctx: RenderContext): string {
     case 'ctrl':
       // Check if it's a table or image inside ctrl
       if (child.element.tag.toLowerCase().includes('tbl')) return tableToHtml(child.element);
+      
+      // Check for footnote/endnote
+      const footnote = parseFootnote(child.element);
+      if (footnote && ctx.footnoteCounter && ctx.footnoteRefs) {
+        const num = ++ctx.footnoteCounter.value;
+        ctx.footnoteRefs.set(num, footnote);
+        return `<sup class="handoc-footnote-ref" data-footnote="${num}">${num}</sup>`;
+      }
+      
       return ''; // ignore other ctrl
     case 'secPr':
     case 'trackChange':
@@ -255,6 +311,13 @@ export function runChildToHtml(child: RunChild, ctx: RenderContext): string {
 
 export function paragraphToHtml(para: Paragraph, ctx: RenderContext): string {
   let inner = '';
+  
+  // Add numbering/bullet prefix
+  const prefix = getNumberingPrefix(para, ctx);
+  if (prefix) {
+    inner += `<span class="handoc-numbering">${escapeHtml(prefix)}</span>`;
+  }
+  
   for (const run of para.runs) {
     const style = runStyle(run, ctx);
     let runHtml = '';
@@ -282,8 +345,49 @@ export function sectionToHtml(section: Section, ctx: RenderContext, sectionIndex
     const m = sp.margins;
     style = ` style="width:${w.toFixed(1)}mm;padding:${hwpUnitToMm(m.top).toFixed(1)}mm ${hwpUnitToMm(m.right).toFixed(1)}mm ${hwpUnitToMm(m.bottom).toFixed(1)}mm ${hwpUnitToMm(m.left).toFixed(1)}mm"`;
   }
+  
+  // Initialize footnote tracking for this section
+  if (!ctx.footnoteCounter) ctx.footnoteCounter = { value: 0 };
+  if (!ctx.footnoteRefs) ctx.footnoteRefs = new Map();
+  const footnotesBefore = ctx.footnoteCounter.value;
+  
+  // Render header if available
+  let headerHtml = '';
+  if (ctx.headers && ctx.headers.length > 0) {
+    const header = ctx.headers[0]; // Use first header for now (can be enhanced for BOTH/EVEN/ODD)
+    const headerParas = header.paragraphs.map(p => paragraphToHtml(p, ctx)).join('\n');
+    headerHtml = `<div class="handoc-header">\n${headerParas}\n</div>\n`;
+  }
+  
+  // Render main content
   const paragraphs = section.paragraphs.map(p => paragraphToHtml(p, ctx)).join('\n');
-  return `<div class="handoc-page"${style}>\n${paragraphs}\n</div>`;
+  
+  // Render footer if available
+  let footerHtml = '';
+  if (ctx.footers && ctx.footers.length > 0) {
+    const footer = ctx.footers[0]; // Use first footer for now
+    const footerParas = footer.paragraphs.map(p => paragraphToHtml(p, ctx)).join('\n');
+    footerHtml = `<div class="handoc-footer">\n${footerParas}\n</div>\n`;
+  }
+  
+  // Render footnotes collected in this section
+  let footnotesHtml = '';
+  const footnotesAfter = ctx.footnoteCounter.value;
+  if (footnotesAfter > footnotesBefore) {
+    const items: string[] = [];
+    for (let i = footnotesBefore + 1; i <= footnotesAfter; i++) {
+      const fn = ctx.footnoteRefs!.get(i);
+      if (fn) {
+        const fnParas = fn.paragraphs.map(p => paragraphToHtml(p, ctx)).join('\n');
+        items.push(`<div class="handoc-footnote-item" data-footnote="${i}"><sup>${i}</sup> ${fnParas}</div>`);
+      }
+    }
+    if (items.length > 0) {
+      footnotesHtml = `<div class="handoc-footnotes">\n${items.join('\n')}\n</div>\n`;
+    }
+  }
+  
+  return `<div class="handoc-page"${style}>\n${headerHtml}${paragraphs}\n${footnotesHtml}${footerHtml}</div>`;
 }
 
 export function documentToHtml(sections: Section[], ctx: RenderContext): string {

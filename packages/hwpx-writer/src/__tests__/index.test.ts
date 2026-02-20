@@ -31,6 +31,9 @@ describe('header round-trip', () => {
       expect(parsed2.beginNum).toEqual(parsed1.beginNum);
       expect(parsed2.refList.fontFaces).toEqual(parsed1.refList.fontFaces);
       expect(parsed2.refList.charProperties).toEqual(parsed1.refList.charProperties);
+      expect(parsed2.refList.tabProperties).toEqual(parsed1.refList.tabProperties);
+      expect(parsed2.refList.numberings).toEqual(parsed1.refList.numberings);
+      expect(parsed2.refList.bullets).toEqual(parsed1.refList.bullets);
       expect(parsed2.refList.paraProperties).toEqual(parsed1.refList.paraProperties);
       expect(parsed2.refList.styles).toEqual(parsed1.refList.styles);
       expect(parsed2.refList.borderFills).toEqual(parsed1.refList.borderFills);

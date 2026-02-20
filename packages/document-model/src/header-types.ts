@@ -44,9 +44,9 @@ export interface RefList {
   fontFaces: FontFaceDecl[];
   borderFills: GenericElement[];
   charProperties: CharProperty[];
-  tabProperties: TabProperty[];
-  numberings: NumberingProperty[];
-  bullets: BulletProperty[];
+  tabProperties?: TabProperty[];
+  numberings?: NumberingProperty[];
+  bullets?: BulletProperty[];
   paraProperties: ParaProperty[];
   styles: StyleDecl[];
   others: GenericElement[];

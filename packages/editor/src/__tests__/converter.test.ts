@@ -204,4 +204,96 @@ describe('converter', () => {
     expect(state2.doc.textContent).toContain('Centered');
     expect(state2.doc.textContent).toContain('Subheading');
   });
+
+  it('should preserve table with cell text content', async () => {
+    const original = HwpxBuilder.create()
+      .addTable([
+        ['Name', 'Age', 'City'],
+        ['Alice', '25', 'Seoul'],
+        ['Bob', '30', 'Busan'],
+      ])
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    
+    // Check all cell contents are present
+    expect(state.doc.textContent).toContain('Name');
+    expect(state.doc.textContent).toContain('Age');
+    expect(state.doc.textContent).toContain('City');
+    expect(state.doc.textContent).toContain('Alice');
+    expect(state.doc.textContent).toContain('25');
+    expect(state.doc.textContent).toContain('Seoul');
+
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    // Verify all content preserved after roundtrip
+    expect(state2.doc.textContent).toContain('Name');
+    expect(state2.doc.textContent).toContain('Alice');
+    expect(state2.doc.textContent).toContain('Busan');
+  });
+
+  it('should handle empty table cells', async () => {
+    const original = HwpxBuilder.create()
+      .addTable([
+        ['A', ''],
+        ['', 'D'],
+      ])
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    let cellCount = 0;
+    state2.doc.descendants(node => {
+      if (node.type.name === 'table_cell') cellCount++;
+    });
+
+    expect(cellCount).toBe(4); // All 4 cells should be preserved
+  });
+
+  it('should handle table followed by paragraph', async () => {
+    const original = HwpxBuilder.create()
+      .addTable([['A', 'B']])
+      .addParagraph('After table')
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    expect(state.doc.textContent).toContain('A');
+    expect(state.doc.textContent).toContain('After table');
+
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    expect(state2.doc.textContent).toContain('A');
+    expect(state2.doc.textContent).toContain('After table');
+  });
+
+  it('should handle multiple tables in document', async () => {
+    const original = HwpxBuilder.create()
+      .addTable([['Table 1']])
+      .addParagraph('Between tables')
+      .addTable([['Table 2']])
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    
+    let tableCount = 0;
+    state.doc.descendants(node => {
+      if (node.type.name === 'table') tableCount++;
+    });
+
+    expect(tableCount).toBe(2);
+
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    tableCount = 0;
+    state2.doc.descendants(node => {
+      if (node.type.name === 'table') tableCount++;
+    });
+
+    expect(tableCount).toBe(2);
+  });
 });
