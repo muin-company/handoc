@@ -1,6 +1,6 @@
 # HanDoc Roundtrip Format Audit
 
-> Generated: 2026-02-20T15:10:19.121Z
+> Generated: 2026-02-20T16:49:37.738Z
 > Test: parse → write → parse, then compare
 
 ## Summary
@@ -77,6 +77,16 @@
 | CharProp count | ✅ |
 | ParaProp count | ✅ |
 
+### ✅ PASS `20260220/2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.hwpx`
+
+| Check | Result |
+|-------|--------|
+| Text match | ✅ |
+| Section count | ✅ |
+| Paragraph count | ✅ |
+| CharProp count | ✅ |
+| ParaProp count | ✅ |
+
 ### ✅ PASS `education/연구_2024학년도 2학기 역곡중 전교과 교수학습 및 평가 운영 계획(최종결재).hwpx`
 
 | Check | Result |
@@ -88,16 +98,6 @@
 | ParaProp count | ✅ |
 
 ### ✅ PASS `opensource/2015년_12월_재난안전종합상황_분석_및_전망.hwpx`
-
-| Check | Result |
-|-------|--------|
-| Text match | ✅ |
-| Section count | ✅ |
-| Paragraph count | ✅ |
-| CharProp count | ✅ |
-| ParaProp count | ✅ |
-
-### ✅ PASS `20260220/2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.hwpx`
 
 | Check | Result |
 |-------|--------|

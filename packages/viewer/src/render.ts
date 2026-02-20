@@ -167,7 +167,7 @@ function flatFind(el: GenericElement, tag: string): GenericElement[] {
 }
 
 function tableRowsToHtml(rows: GenericElement[]): string {
-  let html = '<table class="handoc-table"><tbody>';
+  let html = '<div class="handoc-table-wrapper"><table class="handoc-table"><tbody>';
   for (const row of rows) {
     html += '<tr>';
     const cells = findChildren(row, 'tc');
@@ -182,7 +182,7 @@ function tableRowsToHtml(rows: GenericElement[]): string {
     }
     html += '</tr>';
   }
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   return html;
 }
 

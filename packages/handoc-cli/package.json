@@ -18,6 +18,8 @@
     "@handoc/docx-writer": "workspace:*",
     "@handoc/docx-reader": "workspace:*",
     "@handoc/pdf-export": "workspace:*",
+    "@handoc/html-reader": "workspace:*",
+    "@handoc/document-model": "workspace:*",
     "commander": "^13.0.0"
   },
   "devDependencies": {

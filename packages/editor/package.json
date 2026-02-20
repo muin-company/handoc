@@ -38,7 +38,8 @@
   "devDependencies": {
     "@types/node": "^25.3.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^28.1.0"
   },
   "description": "ProseMirror-based HWPX document editor",
   "keywords": [

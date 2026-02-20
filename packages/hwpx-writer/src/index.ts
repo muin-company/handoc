@@ -6,6 +6,7 @@ export { writeHeader } from './header-writer';
 export { writeSection } from './section-writer';
 export { writeGenericElement, escapeXml } from './xml-helpers';
 export { HwpxBuilder } from './builder';
+export { sectionsToHwpx } from './sections-to-hwpx';
 export type {
   DocumentHeader, Section, Paragraph, Run, RunChild, LineSeg,
   GenericElement, BeginNum, RefList, FontFaceDecl, CharProperty,

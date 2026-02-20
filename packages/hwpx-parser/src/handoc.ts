@@ -139,6 +139,13 @@ export class HanDoc {
   }
 
   /**
+   * Whether the first section is in landscape orientation.
+   */
+  get landscape(): boolean {
+    return this.sectionProps?.landscape ?? false;
+  }
+
+  /**
    * Page size in mm (from the first section).
    * Returns { width: 210, height: 297 } for A4.
    */

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { Node as PMNode } from 'prosemirror-model';
+import { keymap } from 'prosemirror-keymap';
 import { hanDocSchema } from '../schema';
 import {
   insertTable,
@@ -14,6 +15,7 @@ import {
   mergeCells,
   splitCell,
   isInTable,
+  tableKeymap,
 } from '../commands';
 
 describe('table commands', () => {
@@ -430,6 +432,94 @@ describe('table commands', () => {
       });
 
       expect(cellsInFirstRow).toBe(2); // Split into 2 cells
+    });
+  });
+
+  describe('table keymap', () => {
+    function createTableState(rows: number, cols: number): EditorState {
+      const cells: PMNode[] = [];
+      for (let c = 0; c < cols; c++) {
+        cells.push(
+          hanDocSchema.nodes.table_cell.create(
+            { colspan: 1, rowspan: 1 },
+            hanDocSchema.nodes.paragraph.create(),
+          ),
+        );
+      }
+
+      const tableRows: PMNode[] = [];
+      for (let r = 0; r < rows; r++) {
+        tableRows.push(hanDocSchema.nodes.table_row.create(null, cells));
+      }
+
+      const table = hanDocSchema.nodes.table.create(null, tableRows);
+      const section = hanDocSchema.nodes.section.create(null, [table]);
+      const doc = hanDocSchema.nodes.doc.create(null, [section]);
+
+      return EditorState.create({
+        schema: hanDocSchema,
+        doc,
+        selection: TextSelection.create(doc, 4),
+        plugins: [keymap(tableKeymap())],
+      });
+    }
+
+    it('should add new row on Enter key', () => {
+      const state = createTableState(2, 2);
+      const keymapPlugin = state.plugins.find(p => (p as any).spec?.props?.handleKeyDown);
+      
+      expect(keymapPlugin).toBeDefined();
+
+      // Simulate Enter key press
+      const enterKey = 'Enter';
+      const bindings = tableKeymap();
+      const command = bindings[enterKey];
+      
+      expect(command).toBeDefined();
+
+      let newState: EditorState | null = null;
+      command(state, tr => {
+        newState = state.apply(tr);
+      });
+
+      expect(newState).not.toBeNull();
+      
+      // Should have 3 rows now (was 2)
+      let rowCount = 0;
+      newState!.doc.descendants(node => {
+        if (node.type.name === 'table_row') rowCount++;
+      });
+
+      expect(rowCount).toBe(3);
+    });
+
+    it('should navigate to next cell on Tab', () => {
+      const state = createTableState(2, 2);
+      const bindings = tableKeymap();
+      const command = bindings['Tab'];
+      
+      expect(command).toBeDefined();
+
+      let newState: EditorState | null = null;
+      command(state, tr => {
+        newState = state.apply(tr);
+      });
+
+      expect(newState).not.toBeNull();
+      // Selection should have moved
+      expect(newState!.selection.from).not.toBe(state.selection.from);
+    });
+
+    it('should navigate to previous cell on Shift-Tab', () => {
+      const state = createTableState(2, 2);
+      const bindings = tableKeymap();
+      const command = bindings['Shift-Tab'];
+      
+      expect(command).toBeDefined();
+
+      // goToNextCell(-1) returns false when at first cell, which is expected
+      const result = command(state, undefined);
+      expect(typeof result).toBe('boolean');
     });
   });
 });

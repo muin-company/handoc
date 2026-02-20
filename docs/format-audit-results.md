@@ -1,6 +1,6 @@
 # HanDoc Format Audit Results
 
-> Generated: 2026-02-20T15:09:57.813Z
+> Generated: 2026-02-20T16:49:16.492Z
 > Fixture directory: `/Users/mj/handoc-fixtures/real-world`
 
 ## Summary
@@ -55,35 +55,32 @@
 
 | Metric | Value |
 |--------|-------|
-| Files with images | 132 (37.8%) |
-| Total images | 970 |
+| Files with images | 136 (39.0%) |
+| Total images | 1675 |
 
 **Image types:**
-- ellipse: 302
+- tab: 600
+- fwspace: 418
+- linebreak: 242
 - bmp: 238
-- container: 226
 - pic: 152
 - jpg: 124
-- line: 53
-- rect: 44
+- nbspace: 62
 - png: 42
 - compose: 40
-- polygon: 17
 - wmf: 10
-- connectline: 4
+- markpenbegin: 6
+- markpenend: 6
+- titlemark: 6
 - ole: 3
 - jpeg: 2
 - switch: 1
-- arc: 1
 - btn: 1
 - checkbtn: 1
 - radiobtn: 1
 - combobox: 1
-- curve: 1
 - dutmal: 1
 - edit: 1
-- equation: 1
-- textart: 1
 - video: 1
 
 ## 머리말/꼬리말 (Header/Footer)
@@ -104,13 +101,13 @@
 
 | Metric | Value |
 |--------|-------|
-| Files with equations | 0 (0.0%) |
-| Total equations | 0 |
+| Files with equations | 1 (0.3%) |
+| Total equations | 1 |
 
 ## 도형 (Shapes/Drawing Objects)
 
 | Metric | Value |
 |--------|-------|
-| Files with shapes | 0 (0.0%) |
-| Total shapes | 0 |
+| Files with shapes | 63 (18.1%) |
+| Total shapes | 649 |
 

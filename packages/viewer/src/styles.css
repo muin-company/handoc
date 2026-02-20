@@ -6,6 +6,9 @@
   background: #e8e8e8;
   padding: 20px;
   --handoc-zoom: 1;
+  /* Enable smooth font rendering on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Zoom controls */
@@ -19,6 +22,10 @@
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  /* Sticky controls for mobile scrolling */
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .handoc-zoom-btn {
@@ -29,6 +36,9 @@
   cursor: pointer;
   font-size: 14px;
   min-width: 36px;
+  /* Better touch targets */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
 }
 
 .handoc-zoom-btn:hover:not(:disabled) {
@@ -84,16 +94,25 @@
   min-height: 1em;
 }
 
+/* Table wrapper for horizontal scroll on mobile */
+.handoc-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 8px 0;
+}
+
 .handoc-table {
   border-collapse: collapse;
   width: 100%;
-  margin: 8px 0;
+  margin: 0;
 }
 
 .handoc-table td {
   border: 1px solid #000;
   padding: 4px 6px;
   vertical-align: top;
+  /* Prevent cell content from breaking poorly */
+  min-width: 60px;
 }
 
 .handoc-image {
@@ -197,6 +216,142 @@
   color: #333;
 }
 
+/* Tablet responsiveness (768px and below) */
+@media (max-width: 768px) {
+  .handoc-viewer {
+    padding: 12px;
+  }
+
+  .handoc-page.handoc-page {
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    padding: 16mm 12mm;
+    margin-bottom: 16px;
+  }
+
+  .handoc-controls {
+    padding: 10px 8px;
+    gap: 10px;
+  }
+
+  .handoc-zoom-btn {
+    padding: 8px 14px;
+    font-size: 15px;
+    min-width: 40px;
+  }
+
+  .handoc-zoom-label {
+    font-size: 15px;
+    min-width: 52px;
+  }
+
+  /* Slightly larger base font for readability */
+  .handoc-para {
+    font-size: 1.05em;
+    line-height: 1.6;
+  }
+
+  .handoc-table td {
+    padding: 6px 8px;
+    font-size: 0.95em;
+  }
+}
+
+/* Mobile responsiveness (480px and below) */
+@media (max-width: 480px) {
+  .handoc-viewer {
+    padding: 8px;
+    background: #fff;
+  }
+
+  .handoc-page.handoc-page {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: none;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .handoc-page:last-child {
+    border-bottom: none;
+  }
+
+  /* Simplified controls for small screens */
+  .handoc-controls {
+    padding: 8px 6px;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .handoc-zoom-btn {
+    padding: 10px 12px;
+    font-size: 16px;
+    min-width: 44px;
+    /* Larger touch targets for mobile */
+  }
+
+  .handoc-zoom-label {
+    font-size: 16px;
+    min-width: 56px;
+  }
+
+  /* Mobile-optimized typography */
+  .handoc-para {
+    font-size: 1.1em;
+    line-height: 1.65;
+    margin-bottom: 0.5em;
+  }
+
+  /* Ensure tables are scrollable */
+  .handoc-table-wrapper {
+    margin: 12px -12px;
+    padding: 0 12px;
+  }
+
+  .handoc-table td {
+    padding: 8px;
+    font-size: 0.9em;
+    min-width: 80px;
+  }
+
+  /* Adjust images for mobile */
+  .handoc-image {
+    margin: 12px 0;
+    max-width: 100%;
+  }
+
+  /* Mobile-friendly header/footer */
+  .handoc-header,
+  .handoc-footer {
+    padding: 6px 0;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+  }
+
+  .handoc-footer {
+    margin-bottom: 0;
+    margin-top: 10px;
+  }
+
+  /* Footnotes on mobile */
+  .handoc-footnotes {
+    font-size: 0.85em;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .handoc-footnote-item {
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  /* Disable zoom transform on very small screens to prevent overflow */
+  .handoc-content {
+    transform: none;
+  }
+}
+
 /* Print styles */
 @media print {
   .handoc-viewer {
@@ -212,5 +367,9 @@
 
   .handoc-page:last-child {
     page-break-after: auto;
+  }
+
+  .handoc-controls {
+    display: none;
   }
 }

@@ -140,6 +140,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+      jsdom:
+        specifier: ^28.1.0
+        version: 28.1.0
 
   packages/handoc-cli:
     dependencies:
@@ -199,6 +202,15 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3
     devDependencies:
+      '@handoc/hwpx-parser':
+        specifier: workspace:*
+        version: link:../hwpx-parser
+      '@handoc/hwpx-writer':
+        specifier: workspace:*
+        version: link:../hwpx-writer
+      '@handoc/pdf-export':
+        specifier: workspace:*
+        version: link:../pdf-export
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.11
@@ -2137,14 +2149,6 @@ snapshots:
     optionalDependencies:
       vite: 7.3.1(@types/node@25.3.0)
 
-  '@vitest/mocker@4.0.18(vite@7.3.1(@types/node@22.19.11))':
-    dependencies:
-      '@vitest/spy': 4.0.18
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.1(@types/node@22.19.11)
-
   '@vitest/mocker@4.0.18(vite@7.3.1(@types/node@25.3.0))':
     dependencies:
       '@vitest/spy': 4.0.18
@@ -3061,7 +3065,7 @@ snapshots:
   vitest@4.0.18(@types/node@22.19.11)(jsdom@28.1.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@22.19.11))
+      '@vitest/mocker': 4.0.18(vite@7.3.1(@types/node@25.3.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18

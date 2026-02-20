@@ -1,6 +1,6 @@
 # HanDoc Full Corpus Test Results
 
-Generated: 2026-02-20 15:08:35
+Generated: 2026-02-20 16:46:47
 
 ## HWPX (349 files)
 
@@ -8,7 +8,7 @@ Generated: 2026-02-20 15:08:35
 |--------|-------|------|
 | HanDoc.open() | 349 | 100.0% |
 | extractText() | 349 | 100.0% |
-| Zero-text files | 7 | 2.0% |
+| Zero-text files | 19 | 5.4% |
 | writeHwpx() roundtrip | 349 | 100.0% |
 | Roundtrip text match | 349 | 100.0% |
 | Total images | 418 | — |
@@ -16,12 +16,24 @@ Generated: 2026-02-20 15:08:35
 | Total headers | 13 | — |
 | Total footers | 4 | — |
 
-### HWPX Zero-Text Files (7)
+### HWPX Zero-Text Files (19)
 
+- education/2025 역곡중 출결신고서 양식(간소화).hwpx
+- opensource/2022.hwpx
 - opensource/PageSize_Margin.hwpx
+- opensource/RectInRect.hwpx
 - opensource/SimpleButtons.hwpx
 - opensource/SimpleComboBox.hwpx
 - opensource/SimpleCompose.hwpx
+- opensource/SimpleConnectLine.hwpx
+- opensource/SimpleContainer.hwpx
+- opensource/SimpleCurve.hwpx
+- opensource/SimpleEllipse.hwpx
+- opensource/SimpleEquation.hwpx
+- opensource/SimpleLine.hwpx
+- opensource/SimplePolygon.hwpx
+- opensource/SimpleRectangle.hwpx
+- opensource/SimpleTextArt.hwpx
 - opensource/blank.hwpx
 - opensource/presentation오류.hwpx
 - opensource/pypandoc-blank.hwpx

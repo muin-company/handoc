@@ -7,6 +7,9 @@ import { convertHwpToHwpx } from '@handoc/hwp-reader';
 import { hwpxToDocx } from '@handoc/docx-writer';
 import { docxToHwpx } from '@handoc/docx-reader';
 import { hwpxToPdf, renderToHtml } from '@handoc/pdf-export';
+import { parseHTML } from '@handoc/html-reader';
+import { sectionsToHwpx } from '@handoc/hwpx-writer';
+import type { Section } from '@handoc/document-model';
 
 const program = new Command();
 
@@ -158,6 +161,21 @@ program
     const html = renderToHtml(doc);
     const outPath = opts.output || file.replace(/\.hwpx$/i, '.html');
     await writeFile(outPath, html);
+    console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
+  });
+
+// ── from-html ──
+program
+  .command('from-html')
+  .description('Convert HTML to HWPX')
+  .argument('<file>', 'HTML file path')
+  .option('-o, --output <path>', 'Output HWPX file path')
+  .action(async (file: string, opts: { output?: string }) => {
+    const html = await readFile(file, 'utf-8');
+    const sections = parseHTML(html);
+    const hwpx = sectionsToHwpx(sections);
+    const outPath = opts.output || file.replace(/\.html$/i, '.hwpx');
+    await writeFile(outPath, hwpx);
     console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
   });
 
