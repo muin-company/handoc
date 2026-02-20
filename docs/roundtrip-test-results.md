@@ -7,15 +7,9 @@
 | Metric | Value |
 |--------|-------|
 | Total files | 349 |
-| ✅ Success | 348 |
-| ❌ Failure | 1 |
-| Success rate | 99.7% |
-| - Parse/write errors | 1 |
+| ✅ Success | 349 |
+| ❌ Failure | 0 |
+| Success rate | 100.0% |
+| - Parse/write errors | 0 |
 | - Data mismatches | 0 |
-
-## Error Patterns
-
-### `Part not found: Contents/Custom/bibliography.xml` (1 files)
-
-- opensource/2022.hwpx
 

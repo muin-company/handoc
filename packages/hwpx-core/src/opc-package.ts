@@ -75,14 +75,16 @@ export class OpcPackage {
 
   getSectionPaths(): string[] {
     const m = this.ensureManifest();
-    const headerIds = new Set<string>();
+    // Only return items whose id starts with "section" (e.g. section0, section1)
+    // This excludes scripts, bibliography, settings, etc. from the spine.
+    const sectionItems = new Set<string>();
     for (const item of m.items) {
-      if (item.href.toLowerCase().includes('header')) {
-        headerIds.add(item.id);
+      if (/^section\d+$/i.test(item.id)) {
+        sectionItems.add(item.id);
       }
     }
     return m.spine
-      .filter((idref) => !headerIds.has(idref))
+      .filter((idref) => sectionItems.has(idref))
       .map((idref) => {
         const item = m.items.find((i) => i.id === idref);
         return item?.href ?? '';

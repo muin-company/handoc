@@ -196,4 +196,58 @@ describe('new document creation', () => {
 
     expect(zipBytes).toBeInstanceOf(Uint8Array);
   });
+
+  it('preserves custom parts from originalPackage', async () => {
+    const customContent = '<?xml version="1.0"?><bibliography/>';
+    const scriptContent = 'console.log("hello");';
+
+    // Build a fake original package with custom parts
+    const originalParts: Record<string, Uint8Array> = {};
+    const enc = new TextEncoder();
+    originalParts['mimetype'] = enc.encode('application/hwp+zip');
+    originalParts['version.xml'] = enc.encode('<?xml version="1.0"?><HWPVersion Major="1"/>');
+    originalParts['Contents/content.hpf'] = enc.encode(
+      '<?xml version="1.0"?><opf:package xmlns:opf="http://www.idpf.org/2007/opf/" version="" unique-identifier="" id="">' +
+      '<opf:metadata><opf:language>ko</opf:language></opf:metadata>' +
+      '<opf:manifest>' +
+      '<opf:item id="header" href="Contents/header.xml" media-type="application/xml"/>' +
+      '<opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/>' +
+      '<opf:item id="bibliography" href="Custom/bibliography.xml" media-type="application/xml"/>' +
+      '</opf:manifest>' +
+      '<opf:spine><opf:itemref idref="header" linear="yes"/><opf:itemref idref="section0" linear="yes"/></opf:spine>' +
+      '</opf:package>'
+    );
+    originalParts['Contents/header.xml'] = enc.encode('<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head"><hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/><hh:refList><hh:fontfaces/><hh:borderFills/><hh:charProperties/><hh:tabProperties/><hh:numberings/><hh:bullets/><hh:paraProperties/><hh:styles/><hh:memoProperties/></hh:refList><hh:compatibleDocument/><hh:docOption/></hh:head>');
+    originalParts['Contents/section0.xml'] = enc.encode('<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"/>');
+    originalParts['Custom/bibliography.xml'] = enc.encode(customContent);
+    originalParts['Scripts/headerScripts.js'] = enc.encode(scriptContent);
+
+    const { zipSync } = await import('fflate');
+    const originalZip = zipSync(originalParts);
+    const originalPkg = await OpcPackage.open(originalZip);
+
+    // Use parseHeader to get a valid header from the original package
+    const { parseHeader } = await import('@handoc/hwpx-parser');
+    const headerXml = originalPkg.getPartAsText('Contents/header.xml');
+    const header = parseHeader(headerXml);
+
+    const doc = {
+      header,
+      sections: [{ paragraphs: [] }],
+    };
+
+    const result = writeHwpx(doc, originalPkg);
+    const resultPkg = await OpcPackage.open(result);
+
+    // Custom parts should be preserved
+    expect(resultPkg.hasPart('Custom/bibliography.xml')).toBe(true);
+    expect(resultPkg.getPartAsText('Custom/bibliography.xml')).toBe(customContent);
+    expect(resultPkg.hasPart('Scripts/headerScripts.js')).toBe(true);
+    expect(resultPkg.getPartAsText('Scripts/headerScripts.js')).toBe(scriptContent);
+
+    // Original manifest should be preserved
+    expect(resultPkg.hasPart('Contents/content.hpf')).toBe(true);
+    const manifest = resultPkg.getPartAsText('Contents/content.hpf');
+    expect(manifest).toContain('bibliography');
+  });
 });
