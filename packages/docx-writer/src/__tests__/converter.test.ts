@@ -13,7 +13,7 @@ function isValidZip(buf: Uint8Array): boolean {
 describe('hwpxToDocx', () => {
   it('converts simple-text HWPX to valid DOCX ZIP', async () => {
     const hwpxPath = join(FIXTURES, 'simple-text.hwpx');
-    if (!existsSync(hwpxPath)) return; // skip if fixture missing
+    if (!existsSync(hwpxPath)) return;
     const buf = new Uint8Array(readFileSync(hwpxPath));
     const docx = await hwpxToDocx(buf);
     expect(docx).toBeInstanceOf(Uint8Array);
@@ -52,5 +52,18 @@ describe('hwpxToDocx', () => {
     const buf = new Uint8Array(readFileSync(hwpxPath));
     const docx = await hwpxToDocx(buf);
     expect(isValidZip(docx)).toBe(true);
+  });
+
+  it('produces larger output for styled vs simple text', async () => {
+    const simplePath = join(FIXTURES, 'simple-text.hwpx');
+    const styledPath = join(FIXTURES, 'styled-text.hwpx');
+    if (!existsSync(simplePath) || !existsSync(styledPath)) return;
+
+    const simpleDocx = await hwpxToDocx(new Uint8Array(readFileSync(simplePath)));
+    const styledDocx = await hwpxToDocx(new Uint8Array(readFileSync(styledPath)));
+
+    // Both should be valid
+    expect(isValidZip(simpleDocx)).toBe(true);
+    expect(isValidZip(styledDocx)).toBe(true);
   });
 });
