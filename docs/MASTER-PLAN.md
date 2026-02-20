@@ -18,7 +18,7 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
 | M3 | HWPX 본문 파싱 (텍스트, 서식, 표) | hwpx-parser | 텍스트 추출 성공률 ≥ 95% | ✅ 100% (349/349) |
 | M4 | HWPX 파일 쓰기 (문서모델→ZIP) | hwpx-writer | 라운드트립 성공률 ≥ 80% | ✅ 라운드트립 성공 |
 | M5 | HwpxBuilder API (프로그래매틱 문서 생성) | hwpx-writer | 생성 파일 한컴오피스 열기 성공 | ⬜ 미검증 |
-| M6 | npm 배포 | 전체 | `@handoc/*` 4개 패키지 npm 퍼블리시 완료 | ⬜ 미배포 |
+| M6 | npm 배포 | 전체 | `@handoc/*` 4개 패키지 npm 퍼블리시 완료 | ⬜ **최종 단계** — Level 1 기능 안정화 후 배포. 지금은 API 변경 가능성 있어 조기 배포 불필요 |
 
 ### 1.2 선택 기능 (Nice to Have — Level 1에서 하면 좋지만 필수 아님)
 
@@ -159,7 +159,7 @@ Level 1 = **HWPX 읽기/쓰기 + HWP 5.x 읽기 + HWP→HWPX 변환** TypeScript
   - 완료 기준: 페이지 크기/여백을 mm 단위로 가져올 수 있음
   - 예상 시간: 4시간
 
-[TASK-012] npm 0.1.0 배포
+[TASK-012] npm 0.1.0 배포 (Level 1 최종 단계 — 기능 안정화 후)
   - 의존: TASK-008 (라운드트립 검증 완료 후)
   - 작업: README, CHANGELOG, package.json 메타데이터, npm publish
   - 완료 기준: `npm publish --dry-run` 성공
