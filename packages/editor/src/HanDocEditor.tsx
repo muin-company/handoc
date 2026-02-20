@@ -1,7 +1,7 @@
 /**
  * React wrapper around ProseMirror for editing HWPX documents.
  */
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { keymap } from 'prosemirror-keymap';
@@ -12,17 +12,24 @@ import { hanDocSchema } from './schema';
 import { hwpxToEditorState, editorStateToHwpx } from './converter';
 import { tableKeymap } from './commands';
 import { imagePlugin } from './imagePlugin';
+import { toggleBold, toggleItalic, toggleUnderline } from './markCommands';
+import { Toolbar } from './Toolbar';
 
 export interface HanDocEditorProps {
   /** HWPX file as binary buffer. If provided, initializes the editor with this document. */
   buffer?: Uint8Array;
   /** Called when the document changes, with the updated HWPX binary. */
   onChange?: (hwpx: Uint8Array) => void;
+  /** Show toolbar. Default: true */
+  showToolbar?: boolean;
+  /** Callback when export button is clicked */
+  onExport?: (hwpx: Uint8Array) => void;
 }
 
-export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
+export function HanDocEditor({ buffer, onChange, showToolbar = true, onExport }: HanDocEditorProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const [view, setView] = useState<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -39,6 +46,11 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
         tableEditing(),
         imagePlugin(hanDocSchema),
         history(),
+        keymap({
+          'Mod-b': toggleBold,
+          'Mod-i': toggleItalic,
+          'Mod-u': toggleUnderline,
+        }),
         keymap(tableKeymap()),
         keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
         keymap(baseKeymap),
@@ -66,6 +78,11 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
               tableEditing(),
               imagePlugin(hanDocSchema),
               history(),
+              keymap({
+                'Mod-b': toggleBold,
+                'Mod-i': toggleItalic,
+                'Mod-u': toggleUnderline,
+              }),
               keymap(tableKeymap()),
               keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
               keymap(baseKeymap),
@@ -80,11 +97,11 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
 
       if (cancelled) return;
 
-      const view = new EditorView(mountRef.current!, {
+      const newView = new EditorView(mountRef.current!, {
         state,
         dispatchTransaction(tr) {
-          const newState = view.state.apply(tr);
-          view.updateState(newState);
+          const newState = newView.state.apply(tr);
+          newView.updateState(newState);
 
           if (tr.docChanged && onChangeRef.current) {
             editorStateToHwpx(newState).then(hwpx => {
@@ -94,7 +111,8 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
         },
       });
 
-      viewRef.current = view;
+      viewRef.current = newView;
+      setView(newView);
     };
 
     init();
@@ -103,8 +121,14 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
       cancelled = true;
       viewRef.current?.destroy();
       viewRef.current = null;
+      setView(null);
     };
   }, [buffer, createDefaultState]);
 
-  return <div ref={mountRef} className="handoc-editor" />;
+  return (
+    <div className="handoc-editor-container">
+      {showToolbar && <Toolbar view={view} onExport={onExport} />}
+      <div ref={mountRef} className="handoc-editor" />
+    </div>
+  );
 }

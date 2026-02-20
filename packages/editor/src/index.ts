@@ -1,6 +1,7 @@
 export { hanDocSchema } from './schema';
 export { hwpxToEditorState, editorStateToHwpx } from './converter';
 export { HanDocEditor, type HanDocEditorProps } from './HanDocEditor';
+export { Toolbar, type ToolbarProps } from './Toolbar';
 export { imagePlugin } from './imagePlugin';
 export { 
   // Image commands
@@ -29,3 +30,14 @@ export {
   goToNextCell,
   tableKeymap,
 } from './commands';
+export {
+  // Mark commands
+  toggleBold,
+  toggleItalic,
+  toggleUnderline,
+  toggleStrikeout,
+  isMarkActive,
+  setAlignment,
+  setHeading,
+  setParagraph,
+} from './markCommands';
