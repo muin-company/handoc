@@ -2,6 +2,7 @@ import { parseXml, getAttr, getAttrs, parseBool, parseIntSafe } from './xml-util
 import type {
   DocumentHeader, BeginNum, RefList,
   FontFaceDecl, CharProperty, ParaProperty, StyleDecl,
+  TabProperty, TabStop,
 } from '@handoc/document-model';
 import type { GenericElement, WarningCollector } from '@handoc/document-model';
 
@@ -82,6 +83,7 @@ function parseBeginNum(head: Record<string, unknown>): BeginNum {
 function parseRefList(refList: Record<string, unknown>): RefList {
   const fontFaces = parseFontFaces(findChild(refList, 'fontfaces') ?? {});
   const charProperties = parseCharProperties(findChildren(refList, 'charProperties'));
+  const tabProperties = parseTabProperties(findChild(refList, 'tabProperties') ?? {});
   const paraProperties = parseParaProperties(findChildren(refList, 'paraProperties'));
   const styles = parseStyles(findChild(refList, 'styles') ?? {});
   const borderFills = parseBorderFills(findChild(refList, 'borderFills') ?? {});
@@ -99,7 +101,7 @@ function parseRefList(refList: Record<string, unknown>): RefList {
     }
   }
 
-  return { fontFaces, charProperties, paraProperties, styles, borderFills, others };
+  return { fontFaces, charProperties, tabProperties, paraProperties, styles, borderFills, others };
 }
 
 function parseFontFaces(fontfaces: Record<string, unknown>): FontFaceDecl[] {
@@ -154,6 +156,37 @@ function parseCharProperties(containers: Record<string, unknown>[]): CharPropert
         }
       }
 
+      // Extract per-language numeric maps: spacing, ratio, offset, relSz
+      const spacing = parseLangNumericMap(findChild(item, 'spacing'));
+      const ratio = parseLangNumericMap(findChild(item, 'ratio'));
+      const offset = parseLangNumericMap(findChild(item, 'offset'));
+      const relSz = parseLangNumericMap(findChild(item, 'relSz'));
+
+      // Extract outline
+      const outlineEl = findChild(item, 'outline');
+      const outlineType = outlineEl ? (getAttr(outlineEl, 'type') ?? undefined) : undefined;
+
+      // Extract shadow
+      const shadowEl = findChild(item, 'shadow');
+      let shadow: CharProperty['shadow'] | undefined;
+      if (shadowEl) {
+        const sType = getAttr(shadowEl, 'type') ?? 'NONE';
+        if (sType !== 'NONE') {
+          shadow = {
+            type: sType,
+            color: getAttr(shadowEl, 'color') ?? undefined,
+            offsetX: parseIntSafe(getAttr(shadowEl, 'offsetX')),
+            offsetY: parseIntSafe(getAttr(shadowEl, 'offsetY')),
+          };
+        }
+      }
+
+      // Extract kerning/fontSpace/symMark/borderFillIDRef from attrs
+      const useKerning = attrs.useKerning !== undefined ? parseBool(attrs.useKerning) : undefined;
+      const useFontSpace = attrs.useFontSpace !== undefined ? parseBool(attrs.useFontSpace) : undefined;
+      const symMark = attrs.symMark && attrs.symMark !== 'NONE' ? attrs.symMark : undefined;
+      const borderFillIDRef = attrs.borderFillIDRef !== undefined ? parseIntSafe(attrs.borderFillIDRef) : undefined;
+
       const cp: CharProperty = { id, height, attrs, children: childrenToGeneric(item) };
       if (bold !== undefined) cp.bold = bold;
       if (italic !== undefined) cp.italic = italic;
@@ -163,6 +196,16 @@ function parseCharProperties(containers: Record<string, unknown>[]): CharPropert
       if (shadeColor) cp.shadeColor = shadeColor;
       if (highlightColor) cp.highlightColor = highlightColor;
       if (fontRef) cp.fontRef = fontRef;
+      if (spacing) cp.spacing = spacing;
+      if (ratio) cp.ratio = ratio;
+      if (offset) cp.offset = offset;
+      if (relSz) cp.relSz = relSz;
+      if (useKerning) cp.useKerning = useKerning;
+      if (useFontSpace) cp.useFontSpace = useFontSpace;
+      if (symMark) cp.symMark = symMark;
+      if (borderFillIDRef !== undefined) cp.borderFillIDRef = borderFillIDRef;
+      if (outlineType && outlineType !== 'NONE') cp.outline = outlineType;
+      if (shadow) cp.shadow = shadow;
 
       result.push(cp);
     }
@@ -227,10 +270,114 @@ function parseParaProperties(containers: Record<string, unknown>[]): ParaPropert
         if (Object.keys(margin).length > 0) pp.margin = margin;
       }
 
+      // Extract tabPrIDRef
+      if (attrs.tabPrIDRef !== undefined) pp.tabPrIDRef = parseIntSafe(attrs.tabPrIDRef);
+
+      // Extract condense
+      const condenseVal = parseIntSafe(attrs.condense);
+      if (condenseVal > 0) pp.condense = condenseVal;
+
+      // Extract border
+      const borderEl = findChild(item, 'border');
+      if (borderEl) {
+        const bAttrs = getAttrs(borderEl);
+        pp.border = {
+          borderFillIDRef: parseIntSafe(bAttrs.borderFillIDRef),
+          offsetLeft: parseIntSafe(bAttrs.offsetLeft),
+          offsetRight: parseIntSafe(bAttrs.offsetRight),
+          offsetTop: parseIntSafe(bAttrs.offsetTop),
+          offsetBottom: parseIntSafe(bAttrs.offsetBottom),
+          connect: parseBool(bAttrs.connect),
+          ignoreMargin: parseBool(bAttrs.ignoreMargin),
+        };
+      }
+
+      // Extract breakSetting
+      const breakEl = findChild(item, 'breakSetting');
+      if (breakEl) {
+        const bsAttrs = getAttrs(breakEl);
+        pp.breakSetting = {
+          breakLatinWord: bsAttrs.breakLatinWord,
+          breakNonLatinWord: bsAttrs.breakNonLatinWord,
+          widowOrphan: parseBool(bsAttrs.widowOrphan),
+          keepWithNext: parseBool(bsAttrs.keepWithNext),
+          keepLines: parseBool(bsAttrs.keepLines),
+          pageBreakBefore: parseBool(bsAttrs.pageBreakBefore),
+          lineWrap: bsAttrs.lineWrap,
+        };
+      }
+
+      // Extract autoSpacing
+      const autoSpacingEl = findChild(item, 'autoSpacing');
+      if (autoSpacingEl) {
+        const asAttrs = getAttrs(autoSpacingEl);
+        pp.autoSpacing = {
+          eAsianEng: parseBool(asAttrs.eAsianEng),
+          eAsianNum: parseBool(asAttrs.eAsianNum),
+        };
+      }
+
       result.push(pp);
     }
   }
   return result;
+}
+
+/** Parse per-language numeric map from element attributes (e.g. <hh:spacing hangul="0" latin="-5" ...>) */
+function parseLangNumericMap(el: Record<string, unknown> | undefined): Record<string, number> | undefined {
+  if (!el) return undefined;
+  const elAttrs = getAttrs(el);
+  const map: Record<string, number> = {};
+  let hasNonZero = false;
+  for (const [lang, val] of Object.entries(elAttrs)) {
+    const n = parseIntSafe(val);
+    map[lang] = n;
+    if (n !== 0) hasNonZero = true;
+  }
+  // Only return if there's at least one non-default value, or for ratio where 100 is default
+  return Object.keys(map).length > 0 ? map : undefined;
+}
+
+/** Parse tab properties */
+function parseTabProperties(tabPropsNode: Record<string, unknown>): TabProperty[] {
+  const items = findChildren(tabPropsNode, 'tabPr');
+  return items.map((item) => {
+    const tAttrs = getAttrs(item);
+    const tabStops: TabStop[] = [];
+
+    // tabItem can be direct child or inside switch/case/default
+    const collectTabItems = (node: Record<string, unknown>) => {
+      for (const ti of findChildren(node, 'tabItem')) {
+        const tiAttrs = getAttrs(ti);
+        tabStops.push({
+          pos: parseIntSafe(tiAttrs.pos),
+          type: tiAttrs.type,
+          leader: tiAttrs.leader,
+          unit: tiAttrs.unit,
+        });
+      }
+    };
+
+    collectTabItems(item);
+
+    // Check inside switch > case (prefer) or default
+    const sw = findChild(item, 'switch');
+    if (sw) {
+      const cs = findChild(sw, 'case');
+      if (cs) collectTabItems(cs);
+      else {
+        const df = findChild(sw, 'default');
+        if (df) collectTabItems(df);
+      }
+    }
+
+    return {
+      id: parseIntSafe(tAttrs.id),
+      autoTabLeft: tAttrs.autoTabLeft !== undefined ? parseBool(tAttrs.autoTabLeft) : undefined,
+      autoTabRight: tAttrs.autoTabRight !== undefined ? parseBool(tAttrs.autoTabRight) : undefined,
+      tabStops,
+    };
+  });
 }
 
 /** Walk into hp:switch > hp:case (first) or hp:default to find lineSpacing */

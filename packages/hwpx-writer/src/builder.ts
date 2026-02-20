@@ -328,6 +328,7 @@ export class HwpxBuilder {
         fontFaces,
         borderFills: [],
         charProperties,
+        tabProperties: [],
         paraProperties,
         styles,
         others: [],

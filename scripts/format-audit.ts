@@ -120,28 +120,22 @@ function walkRunChildren(children: RunChild[], stats: FileStats) {
     if (child.type === 'table') {
       stats.tableCount++;
       if (hasColSpanOrRowSpan(child.element)) stats.mergedTableCount++;
+    } else if (child.type === 'shape') {
+      stats.shapeCount++;
+    } else if (child.type === 'equation') {
+      stats.equationCount++;
     } else if (child.type === 'inlineObject') {
       stats.imageCount++;
       const ext = (child.name || '').split('.').pop()?.toLowerCase() || 'unknown';
       stats.imageTypes.set(ext, (stats.imageTypes.get(ext) || 0) + 1);
     } else if (child.type === 'ctrl') {
-      const local = child.element.tag.includes(':')
-        ? child.element.tag.split(':').pop()!
-        : child.element.tag;
-      // Check for header/footer/footnote/endnote/equation/shape inside ctrl
+      // Check for header/footer/footnote/endnote inside ctrl
       for (const gc of child.element.children) {
         const gcLocal = gc.tag.includes(':') ? gc.tag.split(':').pop()! : gc.tag;
         if (gcLocal === 'header') stats.hasHeader = true;
         if (gcLocal === 'footer') stats.hasFooter = true;
         if (gcLocal === 'footnote') stats.hasFootnote = true;
         if (gcLocal === 'endnote') stats.hasEndnote = true;
-        if (gcLocal === 'equation') stats.equationCount++;
-        if (gcLocal === 'pic' || gcLocal === 'container' || gcLocal === 'drawText'
-          || gcLocal === 'line' || gcLocal === 'rect' || gcLocal === 'ellipse'
-          || gcLocal === 'arc' || gcLocal === 'polygon' || gcLocal === 'curve'
-          || gcLocal === 'connectLine') {
-          stats.shapeCount++;
-        }
       }
     }
   }

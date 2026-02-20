@@ -27,6 +27,7 @@ export interface RefList {
   fontFaces: FontFaceDecl[];
   borderFills: GenericElement[];
   charProperties: CharProperty[];
+  tabProperties: TabProperty[];
   paraProperties: ParaProperty[];
   styles: StyleDecl[];
   others: GenericElement[];

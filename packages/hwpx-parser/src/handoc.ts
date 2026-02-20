@@ -5,7 +5,9 @@ import { parseHeader } from './header-parser';
 import { parseSection, extractText } from './section-parser';
 import { extractImages, type ImageInfo } from './image-extractor';
 import { collectHeadersFooters, collectFootnotes, type HeaderFooter, type Footnote } from './annotation-parser';
-import type { Section } from './types';
+import { parseShape, type Shape } from './shape-parser';
+import { parseEquation, type Equation } from './equation-parser';
+import type { Section, RunChild } from './types';
 import type { DocumentHeader } from './header-parser';
 import type { SectionProperties } from './section-props-parser';
 
@@ -31,6 +33,8 @@ export class HanDoc {
   private _headers: HeaderFooter[] | null = null;
   private _footers: HeaderFooter[] | null = null;
   private _footnotes: Footnote[] | null = null;
+  private _shapes: Shape[] | null = null;
+  private _equations: Equation[] | null = null;
   private _warnings = new WarningCollector();
 
   private constructor(pkg: OpcPackage) {
@@ -185,6 +189,48 @@ export class HanDoc {
       this._footnotes = collectFootnotes(this.sections);
     }
     return this._footnotes;
+  }
+
+  /**
+   * All shapes (rect, ellipse, line, etc.) found in document paragraphs.
+   */
+  get shapes(): Shape[] {
+    if (!this._shapes) {
+      this._shapes = [];
+      for (const section of this.sections) {
+        for (const para of section.paragraphs) {
+          for (const run of para.runs) {
+            for (const child of run.children) {
+              if (child.type === 'shape') {
+                this._shapes.push(parseShape(child.element));
+              }
+            }
+          }
+        }
+      }
+    }
+    return this._shapes;
+  }
+
+  /**
+   * All equations found in document paragraphs.
+   */
+  get equations(): Equation[] {
+    if (!this._equations) {
+      this._equations = [];
+      for (const section of this.sections) {
+        for (const para of section.paragraphs) {
+          for (const run of para.runs) {
+            for (const child of run.children) {
+              if (child.type === 'equation') {
+                this._equations.push(parseEquation(child.element));
+              }
+            }
+          }
+        }
+      }
+    }
+    return this._equations;
   }
 
   /**
