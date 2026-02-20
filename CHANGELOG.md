@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.0 (2026-02-21)
+
+### @handoc/hwp-reader
+- **IMPROVED**: HWP→HWPX conversion now preserves font and formatting (TASK-013)
+  - Extract font information from DocInfo (HWPTAG_FACE_NAME)
+  - Extract character styles: bold, italic, font size, font family (HWPTAG_CHAR_SHAPE)
+  - Extract paragraph styles: alignment, line spacing (HWPTAG_PARA_SHAPE)
+  - Pass style information to HwpxBuilder for proper rendering
+  - Added test for font/style preservation
+
+### @handoc/pdf-export
+- **VERIFIED**: HTML renderer supports tables and images (TASK-019)
+  - `renderToHtml()` includes table rendering with proper borders
+  - Images embedded as base64 data URIs
+  - Full conversion chain working: HWP→HWPX→HTML
+
+### @handoc/cli
+- **VERIFIED**: `handoc to-html` command works correctly
+  - Converts HWPX to standalone HTML with embedded styles
+  - Tested with real-world HWP files
+
 ## v0.1.0 (2026-02-20)
 
 Initial release. 🎉
