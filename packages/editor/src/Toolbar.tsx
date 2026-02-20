@@ -60,7 +60,7 @@ export function Toolbar({ view, onExport }: ToolbarProps) {
         onExport(hwpx);
       } else {
         // Default: download as file
-        const blob = new Blob([hwpx], { type: 'application/vnd.hancom.hwpx' });
+        const blob = new Blob([new Uint8Array(hwpx)], { type: 'application/vnd.hancom.hwpx' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

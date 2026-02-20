@@ -11,10 +11,10 @@
 
 | 항목 | 수치 |
 |------|------|
-| 패키지 수 | **11개** |
-| 소스 코드 | **7,809줄** (TypeScript) |
-| 테스트 | **469개** (전체 통과) |
-| 빌드 | **11/11 패키지** ✅ |
+| 패키지 수 | **12개** |
+| 소스 코드 | **~9,000줄** (TypeScript, 추정) |
+| 테스트 | **500개+** (전체 통과) |
+| 빌드 | **12/12 패키지** ✅ |
 | 실제 문서 파싱 | **570/570** (100%, 349 HWPX + 221 HWP) |
 
 ### 레벨별 진행 상태
@@ -22,10 +22,10 @@
 | Level | 내용 | 상태 |
 |-------|------|------|
 | **Level 1** | HWPX 읽기/쓰기 + HWP 5.x 읽기 | ✅ **완료** |
-| **Level 2** | Format Converter (DOCX/HTML) | ✅ **완료** — DOCX 양방향, HTML 단방향 |
-| **Level 3** | PDF Export | ✅ **완료** — HTML 렌더링 + Puppeteer |
-| **Level 4** | Web Viewer | ✅ **완료** — React 컴포넌트 (235줄) |
-| **Level 5** | Web Editor | 🟡 **진행 중** — ProseMirror 기반 (271줄, 21 tests) |
+| **Level 2** | Format Converter (DOCX/HTML) | ✅ **완료** — DOCX/HTML 양방향 |
+| **Level 3** | PDF Export | ✅ **완료** — HTML 렌더링 + Puppeteer + 레이아웃 제어 |
+| **Level 4** | Web Viewer | ✅ **완료** — React 컴포넌트 + 모바일 반응형 |
+| **Level 5** | Web Editor | ✅ **완료** — ProseMirror (텍스트/서식/표/이미지) |
 
 ---
 
@@ -112,15 +112,17 @@
 
 ---
 
-## 6. Level 5: Web Editor 🟡 진행 중
+## 6. Level 5: Web Editor ✅ 완료
 
 ### 6.1 구현 완료
 
 | 패키지 | 기능 | 상태 |
 |--------|------|------|
-| **@handoc/editor** | ProseMirror 기반 HWPX 에디터 | ✅ 기본 기능 완료 (14 tests, 267 total tests) |
+| **@handoc/editor** | ProseMirror 기반 HWPX 에디터 | ✅ 완료 (40+ tests) |
 | **스키마 매핑** | HWPX ↔ ProseMirror 변환 | ✅ CharPr/ParaPr → marks/align |
-| **편집 기능** | 텍스트/서식/정렬 편집 | ✅ bold/italic/underline/fontSize/color/align |
+| **텍스트 편집** | 서식/정렬 편집 | ✅ bold/italic/underline/fontSize/color/align |
+| **표 편집** | 삽입/행열/셀 병합 | ✅ prosemirror-tables 통합 (TASK-024) |
+| **이미지 편집** | 업로드/base64 임베딩 | ✅ 완료 (TASK-025) |
 | **라운드트립** | 편집 → HWPX 저장 | ✅ 검증 완료 |
 
 ### 6.2 아키텍처 결정
@@ -129,22 +131,23 @@
 |------|------|------|
 | 편집 엔진 | **ProseMirror** | 확장성, 문서 구조 매핑 우수 |
 | 협업 | 미정 | 추후 필요시 Y.js (CRDT) 고려 |
-| 편집 범위 | 텍스트 + 서식 우선 | 표/이미지는 후속 작업 |
+| 편집 범위 | 텍스트 + 서식 + 표 + 이미지 | ✅ 핵심 기능 완료 |
 | Undo/Redo | ProseMirror 내장 | prosemirror-history |
 
-### 6.3 미완료
+### 6.3 완료 현황
 
 | # | 항목 | 상태 |
 |---|------|------|
 | L5-1 | HWPX ↔ ProseMirror 스키마 완전 매핑 | ✅ **완료 (TASK-021)** |
-| L5-2 | 표 편집 UI | ⬜ 미착수 |
-| L5-3 | 이미지 삽입/편집 | ⬜ 미착수 |
-| L5-4 | 실시간 협업 | ⬜ 미착수 (우선순위 낮음) |
+| L5-2 | 표 편집 UI | ✅ **완료 (TASK-024)** |
+| L5-3 | 이미지 삽입/편집 | ✅ **완료 (TASK-025)** |
+| L5-4 | 실시간 협업 | ⬜ 미착수 (TASK-027, 대규모 프로젝트) |
 
 ### 6.4 알려진 제한사항
 
 - 한 문단 내 혼합 인라인 서식 미지원 ("일반 **굵게** 일반")
 - HwpxBuilder API에서 run-level 서식 지원 필요 (향후 개선)
+- 셀 병합 속성(colspan/rowspan)은 ProseMirror에서 보존되나 HWPX 직렬화 시 HwpxBuilder 제약으로 `string[][]` 형식만 지원
 
 ---
 
@@ -276,6 +279,9 @@
 | **TASK-023** | **도형/수식 Writer (shape/equation 전용 직렬화)** | **2026-02-21** |
 | **TASK-024** | **Editor 표 편집 UI (prosemirror-tables 통합)** | **2026-02-21** |
 | **TASK-025** | **Editor 이미지 삽입/편집 (base64 임베딩)** | **2026-02-21** |
+| **TASK-026** | **HTML → HWPX 역변환 (html-reader 패키지)** | **2026-02-21** |
+| **TASK-029** | **PDF 페이지 레이아웃 고급 제어 (landscape 방향)** | **2026-02-21** |
+| **TASK-030** | **Viewer 모바일 반응형 최적화 (미디어 쿼리)** | **2026-02-21** |
 | — | pdf-export (HWPX → PDF) | 2026-02-20 |
 | — | viewer (React 컴포넌트) | 2026-02-20 |
 | — | editor (ProseMirror 프로토타입) | 2026-02-20 |
@@ -287,42 +293,35 @@
 
 ```
 [TASK-022] npm 패키지 배포 (**ONE 지시 시 진행**)
-  - 작업: 11개 패키지 npm 배포 준비 (README, LICENSE, 버전 관리)
+  - 작업: 12개 패키지 npm 배포 준비 (README, LICENSE, 버전 관리)
   - 완료 기준: @handoc/* 패키지 npmjs.com에서 설치 가능
   - 예상 시간: 4시간
 ```
 
-### 🟡 P2: 중간
+### 🟡 P2: 중간 (전부 완료)
 
-```
-[TASK-026] HTML → HWPX 역변환 (진행 중)
-  - 작업: HTML 파싱 → document-model → HWPX
-  - 예상 시간: 10시간
-```
+모든 P2 태스크 완료 ✅
 
 ### 🔵 P3: 낮음 (개선/미래)
 
 ```
-[TASK-027] 실시간 협업 (Y.js CRDT)
-[TASK-028] Google Docs API 연동
-[TASK-029] PDF 페이지 레이아웃 고급 제어
-[TASK-030] Viewer 모바일 반응형 최적화
+[TASK-027] 실시간 협업 (Y.js CRDT) — 대규모 프로젝트, ONE 승인 필요
+[TASK-028] Google Docs API 연동 — 대규모 프로젝트, ONE 승인 필요
 ```
 
 ### 실행 순서 요약
 
 ```
-완료:     Level 1-4 완료 ✅
+완료:     Level 1-5 대부분 완료 ✅
           - HWPX/HWP 읽기/쓰기
-          - DOCX 양방향, HTML 단방향
-          - PDF export
-          - React Viewer
+          - DOCX/HTML 양방향 변환
+          - PDF export (레이아웃 제어 포함)
+          - React Viewer (모바일 반응형)
+          - Editor (텍스트/서식/표/이미지 편집)
           - 570개 문서 100% 파싱
-현재:     Level 5 진행 중 — Editor (ProseMirror)
-다음:     TASK-021 (스키마 완성) → TASK-024/025 (표/이미지 편집)
-후속:     TASK-023 (도형/수식 Writer)
-준비:     TASK-022 (npm 배포 — ONE 지시 시)
-미래:     실시간 협업, Google Docs 연동
+          - 도형/수식 전용 직렬화
+준비:     TASK-022 (npm 배포 — ONE 지시 대기)
+미래:     실시간 협업 (Y.js), Google Docs API (대규모 프로젝트)
 ```
 
 ---

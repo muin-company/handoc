@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { HanDocEditor } from '@handoc/editor';
 import { FileUpload } from './FileUpload';
-import { parseHwp } from '@handoc/hwp-reader';
-import { parseDocx } from '@handoc/docx-reader';
+import { convertHwpToHwpx } from '@handoc/hwp-reader';
+import { docxToHwpx } from '@handoc/docx-reader';
 
 export function EditorDemo() {
   const [buffer, setBuffer] = useState<Uint8Array | null>(null);
@@ -23,11 +23,9 @@ export function EditorDemo() {
 
       // Convert HWP/DOCX to HWPX if needed
       if (file.name.toLowerCase().endsWith('.hwp')) {
-        const hwpxBuffer = await parseHwp(uint8Array);
-        uint8Array = hwpxBuffer;
+        uint8Array = await convertHwpToHwpx(uint8Array);
       } else if (file.name.toLowerCase().endsWith('.docx')) {
-        const hwpxBuffer = await parseDocx(uint8Array);
-        uint8Array = hwpxBuffer;
+        uint8Array = await docxToHwpx(uint8Array);
       }
 
       setBuffer(uint8Array);
