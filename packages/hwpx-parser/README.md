@@ -18,10 +18,13 @@ import fs from 'fs';
 
 // Parse an HWPX file
 const buffer = fs.readFileSync('document.hwpx');
-const doc = new HanDoc(new Uint8Array(buffer));
+const doc = await HanDoc.open(new Uint8Array(buffer));
+
+// Extract all text
+console.log(doc.extractText());
 
 // Access metadata
-console.log(doc.metadata); // { title, creator, ... }
+console.log(doc.metadata); // { title, creator, language }
 
 // Access document header (fonts, styles, properties)
 console.log(doc.header);
@@ -32,10 +35,6 @@ for (const section of doc.sections) {
     console.log(para.runs.map(r => r.children));
   }
 }
-
-// Extract plain text
-import { extractText } from '@handoc/hwpx-parser';
-const text = extractText(doc.sections[0]);
 
 // Parse tables
 import { parseTable, tableToTextGrid } from '@handoc/hwpx-parser';
@@ -48,10 +47,17 @@ import { parseTable, tableToTextGrid } from '@handoc/hwpx-parser';
 
 High-level HWPX document parser.
 
-- **`new HanDoc(data: Uint8Array)`** — Parse an HWPX file
-- **`.metadata`** — Document metadata (title, creator, etc.)
+- **`HanDoc.open(data: Uint8Array)`** — Parse an HWPX file (async)
+- **`.extractText()`** — Extract all text as a single string
+- **`.extractTextBySection()`** — Extract text per section
+- **`.metadata`** — Document metadata (title, creator, language)
 - **`.header`** — Document header (fonts, styles, char/para properties)
 - **`.sections`** — Parsed document sections
+- **`.images`** — Embedded images with binary data
+- **`.sectionProps`** — Page size, margins, columns
+- **`.headers`** / **`.footers`** — Page headers and footers
+- **`.footnotes`** — Footnotes
+- **`.warnings`** — Non-fatal parse warnings
 
 ### Functions
 

@@ -38,10 +38,16 @@ importers:
 
   packages/hwp-reader:
     dependencies:
+      '@handoc/hwpx-writer':
+        specifier: workspace:*
+        version: link:../hwpx-writer
       cfb:
         specifier: ^1.2.2
         version: 1.2.2
     devDependencies:
+      '@handoc/hwpx-parser':
+        specifier: workspace:*
+        version: link:../hwpx-parser
       '@types/node':
         specifier: ^25.3.0
         version: 25.3.0

@@ -13,24 +13,29 @@ npm install @handoc/hwpx-writer
 ## Usage
 
 ```typescript
-import { buildHwpx } from '@handoc/hwpx-writer';
+import { writeHwpx, HwpxBuilder } from '@handoc/hwpx-writer';
 import { HanDoc } from '@handoc/hwpx-parser';
 import fs from 'fs';
 
-// Parse → modify → write round-trip
-const original = new HanDoc(new Uint8Array(fs.readFileSync('input.hwpx')));
-
-const hwpxBytes = buildHwpx({
-  header: original.header,
-  sections: original.sections,
-});
-
+// Round-trip: parse → modify → write
+const original = await HanDoc.open(new Uint8Array(fs.readFileSync('input.hwpx')));
+const hwpxBytes = writeHwpx(
+  { header: original.header, sections: original.sections },
+  original.opcPackage,
+);
 fs.writeFileSync('output.hwpx', hwpxBytes);
+
+// Create from scratch
+const bytes = HwpxBuilder.create()
+  .addParagraph('Hello World', { bold: true })
+  .addTable([['A', 'B'], ['C', 'D']])
+  .build();
+fs.writeFileSync('new.hwpx', bytes);
 ```
 
 ## API
 
-### `buildHwpx(doc: HwpxDocument): Uint8Array`
+### `writeHwpx(doc: HwpxDocument, original?: OpcPackageLike): Uint8Array`
 
 Build a complete HWPX file (ZIP archive) from a document model.
 
