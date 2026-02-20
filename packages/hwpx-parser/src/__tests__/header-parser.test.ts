@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parseHeader } from '../header-parser.js';
 
 const __dirname2 = dirname(fileURLToPath(import.meta.url));
-const FIXTURES_DIR = resolve(__dirname2, '../../../../../clawd/research/handoc-fixtures/xml-dumps');
+const FIXTURES_DIR = resolve(__dirname2, '../../../../fixtures/xml-dumps');
 
 function loadFixture(name: string): string {
   return readFileSync(resolve(FIXTURES_DIR, name), 'utf-8');

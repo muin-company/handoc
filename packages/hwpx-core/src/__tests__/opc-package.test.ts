@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { OpcPackage } from '../opc-package';
 
-const FIXTURES_DIR = '/Users/mj/clawd/research/handoc-fixtures/hwpx';
+const FIXTURES_DIR = join(__dirname, '../../../../fixtures/hwpx');
 const fixture = readFileSync(`${FIXTURES_DIR}/simple-text.hwpx`);
 
 describe('OpcPackage', () => {

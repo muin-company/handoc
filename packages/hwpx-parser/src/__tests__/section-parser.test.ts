@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseSection, extractText } from '../section-parser';
 
-const fixtureDir = join(__dirname, '../../../../../clawd/research/handoc-fixtures/xml-dumps');
+const fixtureDir = join(__dirname, '../../../../fixtures/xml-dumps');
 
 function loadFixture(name: string): string {
   return readFileSync(join(fixtureDir, name), 'utf-8');

@@ -9,9 +9,10 @@
     "lint": "turbo lint"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "tsup": "^8.0.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
-    "tsup": "^8.0.0"
+    "vitest": "^4.0.18"
   }
 }

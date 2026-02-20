@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
+import { join } from 'path';
 import { parseManifest } from '../manifest';
 import { OpcPackage } from '../opc-package';
 
-const fixture = readFileSync('/Users/mj/clawd/research/handoc-fixtures/hwpx/simple-text.hwpx');
+const fixture = readFileSync(join(__dirname, '../../../../fixtures/hwpx/simple-text.hwpx'));
 
 describe('parseManifest', () => {
   it('parses content.hpf from simple-text.hwpx', async () => {
