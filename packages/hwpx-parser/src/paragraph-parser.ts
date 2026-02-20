@@ -1,0 +1,168 @@
+import type { Paragraph, Run, RunChild, LineSeg, GenericElement } from './types';
+import { getAttrs, getChildren, parseBool, parseIntSafe } from './xml-utils';
+
+const INLINE_OBJECTS = new Set([
+  'line', 'rect', 'ellipse', 'arc', 'polyline', 'polygon', 'curve',
+  'connectLine', 'picture', 'pic', 'shape', 'drawingObject', 'container',
+  'equation', 'ole', 'chart', 'video', 'audio', 'textart',
+]);
+
+const TRACK_CHANGE_MARKS = new Set([
+  'insertBegin', 'insertEnd', 'deleteBegin', 'deleteEnd',
+]);
+
+export function parseGenericElement(node: Record<string, unknown>, tag: string, depth = 0): GenericElement {
+  if (depth > 50) return { tag, attrs: {}, children: [], text: null };
+  const attrs = getAttrs(node);
+  const children: GenericElement[] = [];
+  let text: string | null = null;
+
+  if (typeof node['#text'] === 'string' || typeof node['#text'] === 'number') {
+    text = String(node['#text']);
+  }
+
+  for (const key of Object.keys(node)) {
+    if (key.startsWith('@_') || key === '#text') continue;
+    const val = node[key];
+    if (val === null || val === undefined) continue;
+    if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+      // Primitive child — treat as text-like leaf
+      children.push({ tag: key, attrs: {}, children: [], text: String(val) });
+      continue;
+    }
+    if (Array.isArray(val)) {
+      for (const item of val) {
+        if (typeof item === 'object' && item !== null) {
+          children.push(parseGenericElement(item as Record<string, unknown>, key, depth + 1));
+        } else {
+          children.push({ tag: key, attrs: {}, children: [], text: item != null ? String(item) : null });
+        }
+      }
+    } else if (typeof val === 'object') {
+      children.push(parseGenericElement(val as Record<string, unknown>, key, depth + 1));
+    }
+  }
+
+  return { tag, attrs, children, text };
+}
+
+export function parseRunChild(key: string, value: unknown): RunChild[] {
+  const results: RunChild[] = [];
+
+  if (key === 't') {
+    // Text content - can be string, number, object with #text, or empty
+    let content = '';
+    if (typeof value === 'string' || typeof value === 'number') {
+      content = String(value);
+    } else if (typeof value === 'object' && value !== null && '#text' in (value as Record<string, unknown>)) {
+      content = String((value as Record<string, unknown>)['#text']);
+    }
+    // Array case handled by caller
+    results.push({ type: 'text', content });
+    return results;
+  }
+
+  if (key === 'secPr') {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'secPr', element: parseGenericElement(node, 'secPr') });
+    return results;
+  }
+
+  if (key === 'ctrl') {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'ctrl', element: parseGenericElement(node, 'ctrl') });
+    return results;
+  }
+
+  if (key === 'tbl') {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'table', element: parseGenericElement(node, 'tbl') });
+    return results;
+  }
+
+  if (INLINE_OBJECTS.has(key)) {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'inlineObject', name: key, element: parseGenericElement(node, key) });
+    return results;
+  }
+
+  if (TRACK_CHANGE_MARKS.has(key)) {
+    results.push({ type: 'trackChange', mark: key });
+    return results;
+  }
+
+  // Unknown element - preserve as inlineObject
+  const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+  results.push({ type: 'inlineObject', name: key, element: parseGenericElement(node, key) });
+  return results;
+}
+
+export function parseRun(node: Record<string, unknown>): Run {
+  const attrs = getAttrs(node);
+  const charPrIDRef = attrs['charPrIDRef'] != null ? Number(attrs['charPrIDRef']) : null;
+  const children: RunChild[] = [];
+
+  for (const key of Object.keys(node)) {
+    if (key.startsWith('@_')) continue;
+
+    const val = node[key];
+
+    // Handle arrays (multiple elements with same tag)
+    if (Array.isArray(val)) {
+      for (const item of val) {
+        children.push(...parseRunChild(key, item));
+      }
+    } else {
+      children.push(...parseRunChild(key, val));
+    }
+  }
+
+  return { charPrIDRef, children };
+}
+
+function parseLineSeg(node: Record<string, unknown>): LineSeg {
+  const attrs = getAttrs(node);
+  return {
+    textpos: parseIntSafe(attrs['textpos']),
+    vertpos: parseIntSafe(attrs['vertpos']),
+    vertsize: parseIntSafe(attrs['vertsize']),
+    textheight: parseIntSafe(attrs['textheight']),
+    baseline: parseIntSafe(attrs['baseline']),
+    spacing: parseIntSafe(attrs['spacing']),
+    horzpos: parseIntSafe(attrs['horzpos']),
+    horzsize: parseIntSafe(attrs['horzsize']),
+    flags: parseIntSafe(attrs['flags']),
+  };
+}
+
+export function parseParagraph(node: Record<string, unknown>): Paragraph {
+  const attrs = getAttrs(node);
+  const runs: Run[] = [];
+  const lineSegArray: LineSeg[] = [];
+
+  // Parse runs
+  const runNodes = getChildren(node, 'run');
+  for (const runNode of runNodes) {
+    runs.push(parseRun(runNode));
+  }
+
+  // Parse linesegarray
+  const lsaNodes = getChildren(node, 'linesegarray');
+  for (const lsa of lsaNodes) {
+    const segNodes = getChildren(lsa, 'lineseg');
+    for (const seg of segNodes) {
+      lineSegArray.push(parseLineSeg(seg));
+    }
+  }
+
+  return {
+    id: attrs['id'] ?? null,
+    paraPrIDRef: attrs['paraPrIDRef'] != null ? Number(attrs['paraPrIDRef']) : null,
+    styleIDRef: attrs['styleIDRef'] != null ? Number(attrs['styleIDRef']) : null,
+    pageBreak: parseBool(attrs['pageBreak']),
+    columnBreak: parseBool(attrs['columnBreak']),
+    merged: parseBool(attrs['merged']),
+    runs,
+    lineSegArray,
+  };
+}
