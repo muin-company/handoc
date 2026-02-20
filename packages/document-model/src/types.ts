@@ -58,6 +58,8 @@ export type RunChild =
   | { type: 'ctrl'; element: GenericElement }
   | { type: 'table'; element: GenericElement }
   | { type: 'inlineObject'; name: string; element: GenericElement }
+  | { type: 'shape'; name: string; element: GenericElement }
+  | { type: 'equation'; element: GenericElement }
   | { type: 'trackChange'; mark: string };
 
 // ── LineSeg ──

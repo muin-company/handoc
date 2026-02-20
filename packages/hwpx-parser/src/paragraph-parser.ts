@@ -1,10 +1,13 @@
 import type { Paragraph, Run, RunChild, LineSeg, GenericElement } from './types';
 import { getAttrs, getChildren, parseBool, parseIntSafe } from './xml-utils';
 
-const INLINE_OBJECTS = new Set([
+const SHAPE_OBJECTS = new Set([
   'line', 'rect', 'ellipse', 'arc', 'polyline', 'polygon', 'curve',
-  'connectLine', 'picture', 'pic', 'shape', 'drawingObject', 'container',
-  'equation', 'ole', 'chart', 'video', 'audio', 'textart',
+  'connectLine', 'shape', 'drawingObject', 'container', 'textart',
+]);
+
+const INLINE_OBJECTS = new Set([
+  'picture', 'pic', 'ole', 'chart', 'video', 'audio',
 ]);
 
 const TRACK_CHANGE_MARKS = new Set([
@@ -77,6 +80,18 @@ export function parseRunChild(key: string, value: unknown): RunChild[] {
   if (key === 'tbl') {
     const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
     results.push({ type: 'table', element: parseGenericElement(node, 'tbl') });
+    return results;
+  }
+
+  if (key === 'equation') {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'equation', element: parseGenericElement(node, 'equation') });
+    return results;
+  }
+
+  if (SHAPE_OBJECTS.has(key)) {
+    const node = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+    results.push({ type: 'shape', name: key, element: parseGenericElement(node, key) });
     return results;
   }
 

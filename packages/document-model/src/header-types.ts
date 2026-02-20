@@ -52,8 +52,34 @@ export interface CharProperty {
   shadeColor?: string;
   highlightColor?: string;
   fontRef?: Record<string, number>; // lang → fontFace index (e.g. hangul, latin, hanja, ...)
+  spacing?: Record<string, number>; // lang → letter spacing (e.g. hangul: -5)
+  ratio?: Record<string, number>;   // lang → character width ratio (장평, e.g. 100 = normal)
+  offset?: Record<string, number>;  // lang → vertical offset (위첨자/아래첨자)
+  relSz?: Record<string, number>;   // lang → relative size percent
+  useKerning?: boolean;
+  useFontSpace?: boolean;
+  symMark?: string;
+  borderFillIDRef?: number;
+  outline?: string;                 // outline type (e.g. NONE, SOLID)
+  shadow?: { type: string; color?: string; offsetX?: number; offsetY?: number };
   attrs: Record<string, string>;
   children: GenericElement[];
+}
+
+// ── Tab properties ──
+
+export interface TabStop {
+  pos: number;
+  type?: string;   // LEFT, RIGHT, CENTER, DECIMAL
+  leader?: string; // NONE, SOLID, DASH, DOT, etc.
+  unit?: string;
+}
+
+export interface TabProperty {
+  id: number;
+  autoTabLeft?: boolean;
+  autoTabRight?: boolean;
+  tabStops: TabStop[];
 }
 
 // ── Paragraph properties ──
@@ -64,6 +90,11 @@ export interface ParaProperty {
   heading?: { type: string; level: number };
   lineSpacing?: { type: string; value: number };
   margin?: { left?: number; right?: number; indent?: number; prev?: number; next?: number };
+  tabPrIDRef?: number;
+  condense?: number;
+  border?: { borderFillIDRef: number; offsetLeft?: number; offsetRight?: number; offsetTop?: number; offsetBottom?: number; connect?: boolean; ignoreMargin?: boolean };
+  breakSetting?: { breakLatinWord?: string; breakNonLatinWord?: string; widowOrphan?: boolean; keepWithNext?: boolean; keepLines?: boolean; pageBreakBefore?: boolean; lineWrap?: string };
+  autoSpacing?: { eAsianEng?: boolean; eAsianNum?: boolean };
   attrs: Record<string, string>;
   children: GenericElement[];
 }
