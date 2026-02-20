@@ -1,0 +1,45 @@
+{
+  "name": "@handoc/docx-reader",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fflate": "^0.8.0",
+    "@handoc/document-model": "workspace:*",
+    "@handoc/hwpx-writer": "workspace:*"
+  },
+  "devDependencies": {
+    "@handoc/hwpx-parser": "workspace:*",
+    "vitest": "^4.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0"
+  },
+  "description": "Parse DOCX files and convert to HWPX via HanDoc document model",
+  "keywords": ["docx", "hwpx", "converter", "hancom", "document"],
+  "author": "MUIN <mj@muin.company>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muin-company/handoc.git",
+    "directory": "packages/docx-reader"
+  },
+  "homepage": "https://github.com/muin-company/handoc/tree/main/packages/docx-reader",
+  "bugs": {
+    "url": "https://github.com/muin-company/handoc/issues"
+  },
+  "files": ["dist", "README.md", "LICENSE"]
+}
