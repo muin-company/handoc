@@ -1,0 +1,20 @@
+{
+  "name": "multi-section",
+  "texts": [
+    "첫 번째 섹션의 내용입니다.",
+    "이 섹션은 페이지 레이아웃을 포함합니다."
+  ],
+  "zip_files": [
+    "Contents/content.hpf",
+    "Contents/header.xml",
+    "Contents/section0.xml",
+    "META-INF/container.rdf",
+    "META-INF/container.xml",
+    "META-INF/manifest.xml",
+    "Preview/PrvImage.png",
+    "Preview/PrvText.txt",
+    "mimetype",
+    "settings.xml",
+    "version.xml"
+  ]
+}

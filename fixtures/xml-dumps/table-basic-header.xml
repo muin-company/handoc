@@ -1,0 +1,830 @@
+<?xml version="1.0" ?>
+<ns0:head xmlns:ns0="http://www.hancom.co.kr/hwpml/2011/head" xmlns:ns1="http://www.hancom.co.kr/hwpml/2011/core" xmlns:ns2="http://www.hancom.co.kr/hwpml/2011/paragraph" version="1.5" secCnt="1">
+  <ns0:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
+  <ns0:refList>
+    <ns0:fontfaces itemCnt="7">
+      <ns0:fontface lang="HANGUL" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="LATIN" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="HANJA" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="JAPANESE" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="OTHER" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="SYMBOL" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+      <ns0:fontface lang="USER" fontCnt="2">
+        <ns0:font id="0" face="함초롬돋움" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+        <ns0:font id="1" face="함초롬바탕" type="TTF" isEmbedded="0">
+          <ns0:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </ns0:font>
+      </ns0:fontface>
+    </ns0:fontfaces>
+    <ns0:borderFills itemCnt="3">
+      <ns0:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <ns0:slash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </ns0:borderFill>
+      <ns0:borderFill id="2" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <ns0:slash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <ns0:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <ns1:fillBrush>
+          <ns1:winBrush faceColor="none" hatchColor="#999999" alpha="0"/>
+        </ns1:fillBrush>
+      </ns0:borderFill>
+      <ns0:borderFill id="3" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <ns0:slash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <ns0:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <ns0:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <ns0:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <ns0:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <ns0:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </ns0:borderFill>
+    </ns0:borderFills>
+    <ns0:charProperties itemCnt="7">
+      <ns0:charPr id="0" height="1000" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="1" latin="1" hanja="1" japanese="1" other="1" symbol="1" user="1"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="1" height="1000" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="2" height="900" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="3" height="900" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="1" latin="1" hanja="1" japanese="1" other="1" symbol="1" user="1"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="4" height="900" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="-5" latin="-5" hanja="-5" japanese="-5" other="-5" symbol="-5" user="-5"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="5" height="1600" textColor="#2E74B5" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+      <ns0:charPr id="6" height="1100" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <ns0:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <ns0:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <ns0:underline type="NONE" shape="SOLID" color="#000000"/>
+        <ns0:strikeout shape="NONE" color="#000000"/>
+        <ns0:outline type="NONE"/>
+        <ns0:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </ns0:charPr>
+    </ns0:charProperties>
+    <ns0:tabProperties itemCnt="3">
+      <ns0:tabPr id="0" autoTabLeft="0" autoTabRight="0"/>
+      <ns0:tabPr id="1" autoTabLeft="1" autoTabRight="0"/>
+      <ns0:tabPr id="2" autoTabLeft="0" autoTabRight="1"/>
+    </ns0:tabProperties>
+    <ns0:numberings itemCnt="1">
+      <ns0:numbering id="1" start="0">
+        <ns0:paraHead start="1" level="1" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">^1.</ns0:paraHead>
+        <ns0:paraHead start="1" level="2" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">^2.</ns0:paraHead>
+        <ns0:paraHead start="1" level="3" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">^3)</ns0:paraHead>
+        <ns0:paraHead start="1" level="4" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">^4)</ns0:paraHead>
+        <ns0:paraHead start="1" level="5" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">(^5)</ns0:paraHead>
+        <ns0:paraHead start="1" level="6" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">(^6)</ns0:paraHead>
+        <ns0:paraHead start="1" level="7" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="CIRCLED_DIGIT" charPrIDRef="4294967295" checkable="1">^7</ns0:paraHead>
+        <ns0:paraHead start="1" level="8" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="CIRCLED_HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="1">^8</ns0:paraHead>
+        <ns0:paraHead start="1" level="9" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_JAMO" charPrIDRef="4294967295" checkable="0"/>
+        <ns0:paraHead start="1" level="10" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="ROMAN_SMALL" charPrIDRef="4294967295" checkable="1"/>
+      </ns0:numbering>
+    </ns0:numberings>
+    <ns0:paraProperties itemCnt="20">
+      <ns0:paraPr id="0" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="1" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="1500" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="3000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="2" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="1000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="2000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="3" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="1"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="2000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="4000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="4" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="2"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="3000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="6000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="5" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="3"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="4000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="8000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="6" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="4"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="5000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="10000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="7" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="5"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="6000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="12000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="8" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="OUTLINE" idRef="0" level="6"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="7000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="14000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="9" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="150" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="150" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="10" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="-1310" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="-2620" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="11" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="LEFT" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="12" tabPrIDRef="1" condense="20" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="LEFT" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="1200" unit="HWPUNIT"/>
+              <ns1:next value="300" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="2400" unit="HWPUNIT"/>
+              <ns1:next value="600" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="13" tabPrIDRef="2" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="LEFT" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="700" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="1400" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="14" tabPrIDRef="2" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="LEFT" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="1100" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="700" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="2200" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="1400" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="15" tabPrIDRef="2" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="LEFT" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="2200" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="700" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="4400" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="1400" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="16" tabPrIDRef="1" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/paragraph">
+            <ns0:heading type="OUTLINE" idRef="0" level="8"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:heading type="NONE" idRef="0" level="0"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="9000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="18000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="17" tabPrIDRef="1" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/paragraph">
+            <ns0:heading type="OUTLINE" idRef="0" level="9"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:heading type="NONE" idRef="0" level="0"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="10000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="20000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="18" tabPrIDRef="1" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/paragraph">
+            <ns0:heading type="OUTLINE" idRef="0" level="7"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:heading type="NONE" idRef="0" level="0"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="8000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="16000" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="0" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+      <ns0:paraPr id="19" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <ns0:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <ns0:heading type="NONE" idRef="0" level="0"/>
+        <ns0:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <ns0:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <ns2:switch>
+          <ns2:case ns2:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="800" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="150" unit="HWPUNIT"/>
+          </ns2:case>
+          <ns2:default>
+            <ns0:margin>
+              <ns1:intent value="0" unit="HWPUNIT"/>
+              <ns1:left value="0" unit="HWPUNIT"/>
+              <ns1:right value="0" unit="HWPUNIT"/>
+              <ns1:prev value="0" unit="HWPUNIT"/>
+              <ns1:next value="1600" unit="HWPUNIT"/>
+            </ns0:margin>
+            <ns0:lineSpacing type="PERCENT" value="150" unit="HWPUNIT"/>
+          </ns2:default>
+        </ns2:switch>
+        <ns0:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </ns0:paraPr>
+    </ns0:paraProperties>
+    <ns0:styles itemCnt="23">
+      <ns0:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/>
+      <ns0:style id="1" type="PARA" name="본문" engName="Body" paraPrIDRef="1" charPrIDRef="0" nextStyleIDRef="1" langID="1042" lockForm="0"/>
+      <ns0:style id="2" type="PARA" name="개요 1" engName="Outline 1" paraPrIDRef="2" charPrIDRef="0" nextStyleIDRef="2" langID="1042" lockForm="0"/>
+      <ns0:style id="3" type="PARA" name="개요 2" engName="Outline 2" paraPrIDRef="3" charPrIDRef="0" nextStyleIDRef="3" langID="1042" lockForm="0"/>
+      <ns0:style id="4" type="PARA" name="개요 3" engName="Outline 3" paraPrIDRef="4" charPrIDRef="0" nextStyleIDRef="4" langID="1042" lockForm="0"/>
+      <ns0:style id="5" type="PARA" name="개요 4" engName="Outline 4" paraPrIDRef="5" charPrIDRef="0" nextStyleIDRef="5" langID="1042" lockForm="0"/>
+      <ns0:style id="6" type="PARA" name="개요 5" engName="Outline 5" paraPrIDRef="6" charPrIDRef="0" nextStyleIDRef="6" langID="1042" lockForm="0"/>
+      <ns0:style id="7" type="PARA" name="개요 6" engName="Outline 6" paraPrIDRef="7" charPrIDRef="0" nextStyleIDRef="7" langID="1042" lockForm="0"/>
+      <ns0:style id="8" type="PARA" name="개요 7" engName="Outline 7" paraPrIDRef="8" charPrIDRef="0" nextStyleIDRef="8" langID="1042" lockForm="0"/>
+      <ns0:style id="9" type="PARA" name="개요 8" engName="Outline 8" paraPrIDRef="18" charPrIDRef="0" nextStyleIDRef="9" langID="1042" lockForm="0"/>
+      <ns0:style id="10" type="PARA" name="개요 9" engName="Outline 9" paraPrIDRef="16" charPrIDRef="0" nextStyleIDRef="10" langID="1042" lockForm="0"/>
+      <ns0:style id="11" type="PARA" name="개요 10" engName="Outline 10" paraPrIDRef="17" charPrIDRef="0" nextStyleIDRef="11" langID="1042" lockForm="0"/>
+      <ns0:style id="12" type="CHAR" name="쪽 번호" engName="Page Number" paraPrIDRef="0" charPrIDRef="1" nextStyleIDRef="0" langID="1042" lockForm="0"/>
+      <ns0:style id="13" type="CHAR" name="줄 번호" engName="Line Number" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/>
+      <ns0:style id="14" type="PARA" name="머리말" engName="Header" paraPrIDRef="9" charPrIDRef="2" nextStyleIDRef="14" langID="1042" lockForm="0"/>
+      <ns0:style id="15" type="PARA" name="각주" engName="Footnote" paraPrIDRef="10" charPrIDRef="3" nextStyleIDRef="15" langID="1042" lockForm="0"/>
+      <ns0:style id="16" type="PARA" name="미주" engName="Endnote" paraPrIDRef="10" charPrIDRef="3" nextStyleIDRef="16" langID="1042" lockForm="0"/>
+      <ns0:style id="17" type="PARA" name="메모" engName="Memo" paraPrIDRef="11" charPrIDRef="4" nextStyleIDRef="17" langID="1042" lockForm="0"/>
+      <ns0:style id="18" type="PARA" name="차례 제목" engName="TOC Heading" paraPrIDRef="12" charPrIDRef="5" nextStyleIDRef="18" langID="1042" lockForm="0"/>
+      <ns0:style id="19" type="PARA" name="차례 1" engName="TOC 1" paraPrIDRef="13" charPrIDRef="6" nextStyleIDRef="19" langID="1042" lockForm="0"/>
+      <ns0:style id="20" type="PARA" name="차례 2" engName="TOC 2" paraPrIDRef="14" charPrIDRef="6" nextStyleIDRef="20" langID="1042" lockForm="0"/>
+      <ns0:style id="21" type="PARA" name="차례 3" engName="TOC 3" paraPrIDRef="15" charPrIDRef="6" nextStyleIDRef="21" langID="1042" lockForm="0"/>
+      <ns0:style id="22" type="PARA" name="캡션" engName="Caption" paraPrIDRef="19" charPrIDRef="0" nextStyleIDRef="22" langID="1042" lockForm="0"/>
+    </ns0:styles>
+  </ns0:refList>
+  <ns0:compatibleDocument targetProgram="HWP201X">
+    <ns0:layoutCompatibility/>
+  </ns0:compatibleDocument>
+  <ns0:docOption>
+    <ns0:linkinfo path="" pageInherit="0" footnoteInherit="0"/>
+  </ns0:docOption>
+  <ns0:metaTag>{"name":""}</ns0:metaTag>
+  <ns0:trackchageConfig flags="56"/>
+</ns0:head>

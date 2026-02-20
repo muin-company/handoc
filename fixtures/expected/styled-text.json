@@ -1,0 +1,21 @@
+{
+  "name": "styled-text",
+  "texts": [
+    "일반 텍스트입니다.",
+    "굵은 텍스트입니다.",
+    "기울임 텍스트입니다."
+  ],
+  "zip_files": [
+    "Contents/content.hpf",
+    "Contents/header.xml",
+    "Contents/section0.xml",
+    "META-INF/container.rdf",
+    "META-INF/container.xml",
+    "META-INF/manifest.xml",
+    "Preview/PrvImage.png",
+    "Preview/PrvText.txt",
+    "mimetype",
+    "settings.xml",
+    "version.xml"
+  ]
+}

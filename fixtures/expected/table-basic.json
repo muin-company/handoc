@@ -1,0 +1,28 @@
+{
+  "name": "table-basic",
+  "texts": [
+    "표 예제:",
+    "항목",
+    "수량",
+    "가격",
+    "사과",
+    "10",
+    "5,000",
+    "바나나",
+    "5",
+    "3,000"
+  ],
+  "zip_files": [
+    "Contents/content.hpf",
+    "Contents/header.xml",
+    "Contents/section0.xml",
+    "META-INF/container.rdf",
+    "META-INF/container.xml",
+    "META-INF/manifest.xml",
+    "Preview/PrvImage.png",
+    "Preview/PrvText.txt",
+    "mimetype",
+    "settings.xml",
+    "version.xml"
+  ]
+}
