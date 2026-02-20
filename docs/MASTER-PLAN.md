@@ -118,7 +118,10 @@
 
 | 패키지 | 기능 | 상태 |
 |--------|------|------|
-| **@handoc/editor** | ProseMirror 기반 HWPX 에디터 | 🟡 프로토타입 (271줄, 21 tests) |
+| **@handoc/editor** | ProseMirror 기반 HWPX 에디터 | ✅ 기본 기능 완료 (14 tests, 267 total tests) |
+| **스키마 매핑** | HWPX ↔ ProseMirror 변환 | ✅ CharPr/ParaPr → marks/align |
+| **편집 기능** | 텍스트/서식/정렬 편집 | ✅ bold/italic/underline/fontSize/color/align |
+| **라운드트립** | 편집 → HWPX 저장 | ✅ 검증 완료 |
 
 ### 6.2 아키텍처 결정
 
@@ -133,10 +136,15 @@
 
 | # | 항목 | 상태 |
 |---|------|------|
-| L5-1 | HWPX ↔ ProseMirror 스키마 완전 매핑 | ⬜ 진행 중 |
+| L5-1 | HWPX ↔ ProseMirror 스키마 완전 매핑 | ✅ **완료 (TASK-021)** |
 | L5-2 | 표 편집 UI | ⬜ 미착수 |
 | L5-3 | 이미지 삽입/편집 | ⬜ 미착수 |
 | L5-4 | 실시간 협업 | ⬜ 미착수 (우선순위 낮음) |
+
+### 6.4 알려진 제한사항
+
+- 한 문단 내 혼합 인라인 서식 미지원 ("일반 **굵게** 일반")
+- HwpxBuilder API에서 run-level 서식 지원 필요 (향후 개선)
 
 ---
 
@@ -160,8 +168,8 @@
 | **표** (hp:tbl) | ✅ | ✅ | ✅ | 행/열/셀/병합, DOCX 변환 테스트 (TASK-017) |
 | **이미지** (hp:picture/pic) | ✅ | ✅ | ✅ | base64 임베딩, DOCX 변환 테스트 (TASK-017) |
 | **섹션 속성** (hp:secPr) | ✅ | ⚠️ GenericElement | ⚠️ | 페이지 크기, 여백, 방향 파싱 |
-| **도형** (line/rect/ellipse 등) | ✅ | ⚠️ GenericElement | ⚠️ | 20종 인식 (shape-detect-fix) |
-| **수식** (equation) | ✅ | ⚠️ GenericElement | ⚠️ | MathML 구조 파싱 (shape-detect-fix) |
+| **도형** (line/rect/ellipse 등) | ✅ | ✅ | ✅ | 20종 전용 직렬화 (TASK-023) |
+| **수식** (equation) | ✅ | ✅ | ✅ | MathML 전용 직렬화 (TASK-023) |
 | **필드** (fieldBegin/End) | ✅ | ⚠️ GenericElement | ⚠️ | 페이지 번호, 날짜 등 |
 | **머리말/꼬리말** | ✅ | ✅ | ✅ | HwpxBuilder v2 지원 |
 | **각주/미주** | ✅ | ✅ | ✅ | HwpxBuilder v2 지원 |
@@ -264,6 +272,8 @@
 | shape-detect-fix | 도형/수식 분리 파싱 | 2026-02-20 |
 | docx-quality (TASK-017) | 표/이미지 DOCX 변환 테스트 강화 | 2026-02-21 |
 | TASK-019 | HTML 독립 내보내기 (시맨틱 태그, print CSS, a11y) | 2026-02-21 |
+| **TASK-021** | **Editor 스키마 완성 (CharPr/ParaPr → ProseMirror marks/align)** | **2026-02-21** |
+| **TASK-023** | **도형/수식 Writer (shape/equation 전용 직렬화)** | **2026-02-21** |
 | — | pdf-export (HWPX → PDF) | 2026-02-20 |
 | — | viewer (React 컴포넌트) | 2026-02-20 |
 | — | editor (ProseMirror 프로토타입) | 2026-02-20 |
@@ -274,20 +284,10 @@
 ### 🟠 P1: 높음 (다음 작업)
 
 ```
-[TASK-021] Editor 스키마 완성 (Level 5 핵심)
-  - 작업: HWPX 문서모델 ↔ ProseMirror 스키마 완전 매핑
-  - 완료 기준: 텍스트/서식/문단 편집 후 HWPX 저장 성공
-  - 예상 시간: 12시간
-
 [TASK-022] npm 패키지 배포 (**ONE 지시 시 진행**)
   - 작업: 11개 패키지 npm 배포 준비 (README, LICENSE, 버전 관리)
   - 완료 기준: @handoc/* 패키지 npmjs.com에서 설치 가능
   - 예상 시간: 4시간
-
-[TASK-023] 도형/수식 Writer 구현
-  - 작업: GenericElement → 전용 XML 직렬화 (shape/equation)
-  - 완료 기준: 도형/수식 포함 문서 라운드트립 정확도 향상
-  - 예상 시간: 8시간
 ```
 
 ### 🟡 P2: 중간
