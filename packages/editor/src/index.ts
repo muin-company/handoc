@@ -1,6 +1,7 @@
 export { hanDocSchema } from './schema';
 export { hwpxToEditorState, editorStateToHwpx } from './converter';
 export { HanDocEditor, type HanDocEditorProps } from './HanDocEditor';
+export { imagePlugin } from './imagePlugin';
 export { 
   // Image commands
   insertImage, 

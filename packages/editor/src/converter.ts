@@ -201,7 +201,24 @@ function imageElementToNode(element: GenericElement): PMNode | null {
   // Get image data from HanDoc and convert to base64 data URL
   let src: string | null = null;
   if (currentHanDoc) {
-    const imageData = currentHanDoc.getImage(binPath);
+    // Debug: log available images
+    const allImages = currentHanDoc.images;
+    
+    // Try to get the image data
+    let imageData = currentHanDoc.getImage(binPath);
+    
+    // If not found, try all available image paths
+    if (!imageData && allImages.length > 0) {
+      // Try to find by matching filename
+      const filename = binPath.split('/').pop();
+      for (const img of allImages) {
+        if (img.path.endsWith(filename || '') || img.path === binPath) {
+          imageData = img.data;
+          break;
+        }
+      }
+    }
+    
     if (imageData) {
       // Determine MIME type from extension
       const ext = binPath.split('.').pop()?.toLowerCase() || 'png';

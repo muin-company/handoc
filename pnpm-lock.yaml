@@ -143,12 +143,18 @@ importers:
 
   packages/handoc-cli:
     dependencies:
+      '@handoc/document-model':
+        specifier: workspace:*
+        version: link:../document-model
       '@handoc/docx-reader':
         specifier: workspace:*
         version: link:../docx-reader
       '@handoc/docx-writer':
         specifier: workspace:*
         version: link:../docx-writer
+      '@handoc/html-reader':
+        specifier: workspace:*
+        version: link:../html-reader
       '@handoc/hwp-reader':
         specifier: workspace:*
         version: link:../hwp-reader

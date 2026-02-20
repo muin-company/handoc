@@ -11,6 +11,7 @@ import { columnResizing, tableEditing } from 'prosemirror-tables';
 import { hanDocSchema } from './schema';
 import { hwpxToEditorState, editorStateToHwpx } from './converter';
 import { tableKeymap } from './commands';
+import { imagePlugin } from './imagePlugin';
 
 export interface HanDocEditorProps {
   /** HWPX file as binary buffer. If provided, initializes the editor with this document. */
@@ -36,6 +37,7 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
       plugins: [
         columnResizing(),
         tableEditing(),
+        imagePlugin(hanDocSchema),
         history(),
         keymap(tableKeymap()),
         keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
@@ -62,6 +64,7 @@ export function HanDocEditor({ buffer, onChange }: HanDocEditorProps) {
             plugins: [
               columnResizing(),
               tableEditing(),
+              imagePlugin(hanDocSchema),
               history(),
               keymap(tableKeymap()),
               keymap({ 'Mod-z': undo, 'Mod-y': redo, 'Mod-Shift-z': redo }),
