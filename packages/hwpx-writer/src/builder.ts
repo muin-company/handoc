@@ -42,12 +42,31 @@ interface BuilderImage {
   height: number;  // HWP units
 }
 
+interface ShapeOptions {
+  shapeType: 'rect' | 'ellipse' | 'line' | 'arc' | 'polygon' | 'curve';
+  width: number;   // HWP units
+  height: number;  // HWP units
+  x?: number;      // HWP units (position)
+  y?: number;      // HWP units (position)
+  text?: string;   // optional text inside shape
+}
+
+interface EquationOptions {
+  script: string;  // equation script (e.g. MathML-like notation)
+  font?: string;
+  baseUnit?: number;
+  width?: number;  // HWP units
+  height?: number; // HWP units
+}
+
 /** Items that go into the current section */
 type SectionItem =
   | { kind: 'paragraph'; text: string; style?: ParagraphStyle }
   | { kind: 'table'; rows: string[][] }
   | { kind: 'image'; image: BuilderImage }
-  | { kind: 'footnote'; text: string; noteText: string };
+  | { kind: 'footnote'; text: string; noteText: string }
+  | { kind: 'shape'; options: ShapeOptions }
+  | { kind: 'equation'; options: EquationOptions };
 
 interface SectionMeta {
   headerText?: string;
@@ -108,6 +127,16 @@ export class HwpxBuilder {
 
   addFootnote(text: string, noteText: string): this {
     this.currentSection().push({ kind: 'footnote', text, noteText });
+    return this;
+  }
+
+  addShape(options: ShapeOptions): this {
+    this.currentSection().push({ kind: 'shape', options });
+    return this;
+  }
+
+  addEquation(options: EquationOptions): this {
+    this.currentSection().push({ kind: 'equation', options });
     return this;
   }
 
@@ -267,8 +296,22 @@ export class HwpxBuilder {
     let ppIdx = 0;
     for (const [key, style] of paraStyleMap) {
       const alignVal: ParaProperty['align'] = (style.align as ParaProperty['align']) ?? 'left';
-      const ppAttrs: Record<string, string> = { id: String(ppIdx), align: alignVal ?? 'left' };
+      const ppAttrs: Record<string, string> = { id: String(ppIdx) };
       const ppChildren: GenericElement[] = [];
+
+      // Add align as child element
+      if (alignVal && alignVal !== 'left') {
+        const alignMap: Record<string, string> = {
+          left: 'LEFT',
+          center: 'CENTER',
+          right: 'RIGHT',
+          justify: 'JUSTIFY',
+          distribute: 'DISTRIBUTE',
+        };
+        ppChildren.push(makeGenericEl('align', {
+          horizontal: alignMap[alignVal] ?? 'LEFT',
+        }));
+      }
 
       const ppLineSpacing = style.lineSpacing
         ? { type: 'percent', value: style.lineSpacing }
@@ -395,6 +438,14 @@ export class HwpxBuilder {
           }
           case 'footnote': {
             paragraphs.push(makeFootnoteParagraph(item.text, item.noteText));
+            break;
+          }
+          case 'shape': {
+            paragraphs.push(makeShapeParagraph(item.options));
+            break;
+          }
+          case 'equation': {
+            paragraphs.push(makeEquationParagraph(item.options));
             break;
           }
         }
@@ -680,4 +731,117 @@ function makeFootnoteParagraph(text: string, noteText: string): Paragraph {
 
 function makeGenericEl(tag: string, attrs: Record<string, string>): GenericElement {
   return { tag, attrs, children: [], text: null };
+}
+
+function makeShapeParagraph(options: ShapeOptions): Paragraph {
+  const { shapeType, width, height, x = 0, y = 0, text } = options;
+
+  const children: GenericElement[] = [
+    {
+      tag: 'sz',
+      attrs: { width: String(width), height: String(height) },
+      children: [],
+      text: null,
+    },
+    {
+      tag: 'pos',
+      attrs: { x: String(x), y: String(y), z: '0' },
+      children: [],
+      text: null,
+    },
+  ];
+
+  // Add text content if provided
+  if (text) {
+    const textPara: GenericElement = {
+      tag: 'p',
+      attrs: { paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' },
+      children: [{
+        tag: 'run',
+        attrs: { charPrIDRef: '0' },
+        children: [{
+          tag: 't',
+          attrs: {},
+          children: [],
+          text: text,
+        }],
+        text: null,
+      }],
+      text: null,
+    };
+
+    const subList: GenericElement = {
+      tag: 'subList',
+      attrs: {},
+      children: [textPara],
+      text: null,
+    };
+
+    children.push(subList);
+  }
+
+  const shapeEl: GenericElement = {
+    tag: shapeType,
+    attrs: {},
+    children,
+    text: null,
+  };
+
+  return {
+    id: null,
+    paraPrIDRef: 0,
+    styleIDRef: 0,
+    pageBreak: false,
+    columnBreak: false,
+    merged: false,
+    runs: [{
+      charPrIDRef: 0,
+      children: [{ type: 'shape', name: shapeType, element: shapeEl }],
+    }],
+    lineSegArray: [],
+  };
+}
+
+function makeEquationParagraph(options: EquationOptions): Paragraph {
+  const { script, font = 'HWP_Equation', baseUnit = 100, width = 5000, height = 1000 } = options;
+
+  const eqChildren: GenericElement[] = [
+    {
+      tag: 'script',
+      attrs: {},
+      children: [],
+      text: script,
+    },
+    {
+      tag: 'sz',
+      attrs: { width: String(width), height: String(height) },
+      children: [],
+      text: null,
+    },
+  ];
+
+  const eqEl: GenericElement = {
+    tag: 'equation',
+    attrs: {
+      font,
+      baseUnit: String(baseUnit),
+      version: '1.0',
+    },
+    children: eqChildren,
+    text: null,
+  };
+
+  return {
+    id: null,
+    paraPrIDRef: 0,
+    styleIDRef: 0,
+    pageBreak: false,
+    columnBreak: false,
+    merged: false,
+    runs: [{
+      charPrIDRef: 0,
+      children: [{ type: 'equation', element: eqEl }],
+    }],
+    lineSegArray: [],
+  };
 }

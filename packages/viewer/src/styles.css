@@ -5,9 +5,57 @@
   color: #000;
   background: #e8e8e8;
   padding: 20px;
+  --handoc-zoom: 1;
 }
 
-.handoc-page {
+/* Zoom controls */
+.handoc-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.handoc-zoom-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 36px;
+}
+
+.handoc-zoom-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.handoc-zoom-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.handoc-zoom-label {
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 48px;
+  text-align: center;
+}
+
+/* Content container with zoom */
+.handoc-content {
+  transform: scale(var(--handoc-zoom));
+  transform-origin: top center;
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Page view mode (default) */
+.handoc-page.handoc-page {
   background: #fff;
   width: 210mm;
   min-height: 297mm;
@@ -17,6 +65,17 @@
   box-sizing: border-box;
   overflow-wrap: break-word;
   word-break: break-all;
+}
+
+/* Continuous scroll mode */
+.handoc-continuous .handoc-page {
+  box-shadow: none;
+  margin-bottom: 0;
+  border-bottom: 1px dashed #ccc;
+}
+
+.handoc-continuous .handoc-page:last-child {
+  border-bottom: none;
 }
 
 .handoc-para {
@@ -47,6 +106,28 @@
 .handoc-image-missing {
   color: #999;
   font-style: italic;
+}
+
+.handoc-shape {
+  display: inline-block;
+  margin: 4px;
+  vertical-align: middle;
+}
+
+.handoc-shape-unknown {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.handoc-equation {
+  font-family: 'Cambria Math', 'Latin Modern Math', serif;
+  font-style: italic;
+  padding: 2px 4px;
+  background: #f8f8f8;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 0 2px;
 }
 
 .handoc-loading,

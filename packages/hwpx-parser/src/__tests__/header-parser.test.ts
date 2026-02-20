@@ -101,4 +101,58 @@ describe('parseHeader', () => {
       expect(header.refList.styles.length).toBeGreaterThan(0);
     });
   }
+
+  it('parses offset as superscript/subscript convenience flags', () => {
+    // Create a minimal header XML with offset attributes
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" version="1.5" secCnt="1">
+        <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
+        <hh:refList>
+          <hh:fontfaces>
+            <hh:fontface lang="HANGUL">
+              <hh:font id="0" face="맑은 고딕" type="ttf" isEmbedded="0"/>
+            </hh:fontface>
+          </hh:fontfaces>
+          <hh:charProperties>
+            <hh:charPr id="0" height="1000">
+              <hh:offset hangul="500" latin="500"/>
+            </hh:charPr>
+            <hh:charPr id="1" height="1000">
+              <hh:offset hangul="-300" latin="-300"/>
+            </hh:charPr>
+            <hh:charPr id="2" height="1000">
+            </hh:charPr>
+          </hh:charProperties>
+          <hh:paraProperties>
+            <hh:paraPr id="0"/>
+          </hh:paraProperties>
+          <hh:styles>
+            <hh:style id="0" type="para" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0"/>
+          </hh:styles>
+        </hh:refList>
+      </hh:head>`;
+
+    const header = parseHeader(xml);
+
+    // CharPr id=0 should have superscript (positive offset)
+    const cp0 = header.refList.charProperties.find((cp) => cp.id === 0);
+    expect(cp0).toBeDefined();
+    expect(cp0!.offset).toBeDefined();
+    expect(cp0!.superscript).toBe(true);
+    expect(cp0!.subscript).toBeUndefined();
+
+    // CharPr id=1 should have subscript (negative offset)
+    const cp1 = header.refList.charProperties.find((cp) => cp.id === 1);
+    expect(cp1).toBeDefined();
+    expect(cp1!.offset).toBeDefined();
+    expect(cp1!.subscript).toBe(true);
+    expect(cp1!.superscript).toBeUndefined();
+
+    // CharPr id=2 should have neither (no offset)
+    const cp2 = header.refList.charProperties.find((cp) => cp.id === 2);
+    expect(cp2).toBeDefined();
+    expect(cp2!.offset).toBeUndefined();
+    expect(cp2!.superscript).toBeUndefined();
+    expect(cp2!.subscript).toBeUndefined();
+  });
 });

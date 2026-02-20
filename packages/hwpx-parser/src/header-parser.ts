@@ -212,7 +212,15 @@ function parseCharProperties(containers: Record<string, unknown>[]): CharPropert
       if (fontRef) cp.fontRef = fontRef;
       if (spacing) cp.spacing = spacing;
       if (ratio) cp.ratio = ratio;
-      if (offset) cp.offset = offset;
+      if (offset) {
+        cp.offset = offset;
+        // Set convenience flags based on offset values
+        const offsetValues = Object.values(offset);
+        const hasPositive = offsetValues.some((v) => v > 0);
+        const hasNegative = offsetValues.some((v) => v < 0);
+        if (hasPositive) cp.superscript = true;
+        if (hasNegative) cp.subscript = true;
+      }
       if (relSz) cp.relSz = relSz;
       if (useKerning) cp.useKerning = useKerning;
       if (useFontSpace) cp.useFontSpace = useFontSpace;

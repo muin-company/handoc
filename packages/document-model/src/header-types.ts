@@ -76,6 +76,8 @@ export interface CharProperty {
   ratio?: Record<string, number>;   // lang → character width ratio (장평, e.g. 100 = normal)
   offset?: Record<string, number>;  // lang → vertical offset (위첨자/아래첨자)
   relSz?: Record<string, number>;   // lang → relative size percent
+  superscript?: boolean;            // convenience flag: true if offset is positive (위첨자)
+  subscript?: boolean;              // convenience flag: true if offset is negative (아래첨자)
   useKerning?: boolean;
   useFontSpace?: boolean;
   symMark?: string;

@@ -6,6 +6,8 @@
 
 import type { Section, Paragraph, Run, RunChild, LineSeg, GenericElement } from '@handoc/document-model';
 import { writeGenericElement, escapeXml } from './xml-helpers';
+import { serializeShape } from './serializers/shape-serializer';
+import { serializeEquation } from './serializers/equation-serializer';
 
 const SECTION_NS: Record<string, string> = {
   'xmlns:hp': 'http://www.hancom.co.kr/hwpml/2011/paragraph',
@@ -106,12 +108,16 @@ function writeRunChild(child: RunChild): string {
       return writeTable(child.element);
 
     case 'inlineObject':
-      // Try dedicated inline object (pic) serialization, fallback to GenericElement
-      return writeInlineObject(child.element);
+      // Dedicated serialization for equation and shape inlineObjects
+      return writeInlineObject(child.element, child.name);
 
     case 'shape':
-      // Try dedicated shape serialization, fallback to GenericElement
-      return writeShape(child.element);
+      // Dedicated shape serialization using shape-serializer
+      return serializeShape(child.element, 'hp');
+
+    case 'equation':
+      // Dedicated equation serialization using equation-serializer
+      return serializeEquation(child.element, 'hc');
 
     case 'trackChange':
       return `<hp:${child.mark}/>`;
@@ -267,21 +273,36 @@ function writeRunFromGeneric(runEl: GenericElement): string {
 }
 
 /**
- * Write inline object (picture, etc.)
- * Fallback to GenericElement passthrough if structure is unknown.
+ * Write inline object (picture, equation, shape, etc.)
+ * Uses dedicated serializers for equation and shape.
+ * Fallback to GenericElement passthrough for other types.
  */
-function writeInlineObject(element: GenericElement): string {
-  // For now, use GenericElement passthrough
-  // Can be specialized later for <hp:pic>
+function writeInlineObject(element: GenericElement, name: string): string {
+  // Use dedicated serializers for equation and shape
+  if (name === 'equation') {
+    return serializeEquation(element, 'hc');
+  }
+  
+  // Shape types: rect, ellipse, line, arc, polygon, curve, etc.
+  const shapeTypes = [
+    'rect', 'ellipse', 'line', 'arc', 'polygon', 'curve',
+    'polyline', 'textbox', 'freeform', 'connector', 'callout',
+    'roundedRect', 'diamond', 'trapezoid', 'parallelogram',
+    'hexagon', 'octagon', 'star', 'arrow', 'flowchart',
+  ];
+  
+  if (shapeTypes.includes(name)) {
+    return serializeShape(element, 'hp');
+  }
+  
+  // For picture and other types, use GenericElement passthrough
   return writeGenericElement(element, 'hp');
 }
 
 /**
  * Write shape element (rect, ellipse, line, etc.)
- * Fallback to GenericElement passthrough if structure is unknown.
+ * Uses dedicated shape-serializer.
  */
 function writeShape(element: GenericElement): string {
-  // For now, use GenericElement passthrough
-  // Can be specialized later for specific shape tags
-  return writeGenericElement(element, 'hp');
+  return serializeShape(element, 'hp');
 }

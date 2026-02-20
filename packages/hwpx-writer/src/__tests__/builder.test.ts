@@ -3,6 +3,7 @@ import { HwpxBuilder } from '../builder';
 import { OpcPackage } from '@handoc/hwpx-core';
 import { HanDoc } from '@handoc/hwpx-parser';
 import { extractAnnotationText } from '@handoc/hwpx-parser';
+import type { RunChild } from '@handoc/document-model';
 
 describe('HwpxBuilder', () => {
   it('creates an empty document with valid ZIP', async () => {
@@ -189,5 +190,82 @@ describe('HwpxBuilder', () => {
     const doc = await HanDoc.open(bytes);
     // Page number creates a footer ctrl element
     expect(doc.footers.length).toBeGreaterThan(0);
+  });
+
+  it('creates a shape (rect) element', async () => {
+    const bytes = HwpxBuilder.create()
+      .addParagraph('Before shape')
+      .addShape({
+        shapeType: 'rect',
+        width: 5000,
+        height: 3000,
+        x: 1000,
+        y: 1000,
+        text: 'Shape text',
+      })
+      .addParagraph('After shape')
+      .build();
+
+    const doc = await HanDoc.open(bytes);
+    const text = doc.extractText();
+    expect(text).toContain('Before shape');
+    expect(text).toContain('After shape');
+
+    // Find the shape in the document
+    const sections = doc.sections;
+    let foundShape = false;
+    for (const section of sections) {
+      for (const para of section.paragraphs) {
+        for (const run of para.runs) {
+          for (const child of run.children) {
+            if (child.type === 'shape') {
+              foundShape = true;
+              expect(child.name).toBe('rect');
+              expect(child.element.tag).toBe('rect');
+            }
+          }
+        }
+      }
+    }
+    expect(foundShape).toBe(true);
+  });
+
+  it('creates an equation element', async () => {
+    const bytes = HwpxBuilder.create()
+      .addParagraph('Before equation')
+      .addEquation({
+        script: 'x = {-b +- sqrt{b^2 - 4ac}} over {2a}',
+        width: 6000,
+        height: 1200,
+      })
+      .addParagraph('After equation')
+      .build();
+
+    const doc = await HanDoc.open(bytes);
+    const text = doc.extractText();
+    expect(text).toContain('Before equation');
+    expect(text).toContain('After equation');
+
+    // Find the equation in the document
+    const sections = doc.sections;
+    let foundEquation = false;
+    for (const section of sections) {
+      for (const para of section.paragraphs) {
+        for (const run of para.runs) {
+          for (const child of run.children) {
+            if (child.type === 'equation') {
+              foundEquation = true;
+              expect(child.element.tag).toBe('equation');
+              expect(child.element.attrs.font).toBe('HWP_Equation');
+              // Check script child
+              const scriptChild = child.element.children.find((c) => c.tag === 'script');
+              expect(scriptChild).toBeDefined();
+              expect(scriptChild!.text).toContain('sqrt');
+            }
+          }
+        }
+      }
+    }
+    expect(foundEquation).toBe(true);
   });
 });

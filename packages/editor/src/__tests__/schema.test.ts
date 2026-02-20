@@ -21,6 +21,7 @@ describe('hanDocSchema', () => {
     expect(hanDocSchema.marks.strikeout).toBeDefined();
     expect(hanDocSchema.marks.textColor).toBeDefined();
     expect(hanDocSchema.marks.fontSize).toBeDefined();
+    expect(hanDocSchema.marks.fontFamily).toBeDefined();
   });
 
   it('should create a valid document', () => {

@@ -172,6 +172,61 @@ function uint8ToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+// ── Shape rendering (SVG) ──
+
+function shapeToSvg(child: { type: 'shape'; name: string; element: GenericElement }): string {
+  const el = child.element;
+  const shapeType = child.name.toLowerCase();
+  
+  // Extract common attributes
+  const width = parseFloat(el.attrs['width'] || el.attrs['w'] || '100');
+  const height = parseFloat(el.attrs['height'] || el.attrs['h'] || '100');
+  const x = parseFloat(el.attrs['x'] || '0');
+  const y = parseFloat(el.attrs['y'] || '0');
+  
+  // Look for drawing properties
+  const strokeColor = el.attrs['stroke'] || el.attrs['lineColor'] || '#000000';
+  const fillColor = el.attrs['fill'] || el.attrs['fillColor'] || 'none';
+  const strokeWidth = el.attrs['strokeWidth'] || '1';
+  
+  let svgContent = '';
+  
+  // Basic shape types
+  if (shapeType.includes('line')) {
+    const x2 = parseFloat(el.attrs['x2'] || String(x + width));
+    const y2 = parseFloat(el.attrs['y2'] || String(y + height));
+    svgContent = `<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeWidth}" />`;
+  } else if (shapeType.includes('rect')) {
+    svgContent = `<rect x="${x}" y="${y}" width="${width}" height="${height}" stroke="${strokeColor}" fill="${fillColor}" stroke-width="${strokeWidth}" />`;
+  } else if (shapeType.includes('ellipse') || shapeType.includes('circle')) {
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+    const rx = width / 2;
+    const ry = height / 2;
+    svgContent = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" stroke="${strokeColor}" fill="${fillColor}" stroke-width="${strokeWidth}" />`;
+  } else {
+    // Unknown shape - render as a placeholder
+    return `<span class="handoc-shape-unknown">[${shapeType}]</span>`;
+  }
+  
+  const svgWidth = Math.max(width, 100);
+  const svgHeight = Math.max(height, 100);
+  
+  return `<svg class="handoc-shape" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">${svgContent}</svg>`;
+}
+
+// ── Equation rendering ──
+
+function equationToHtml(child: { type: 'equation'; element: GenericElement }): string {
+  // Try to extract equation text
+  const eqText = extractTextFromGeneric(child.element);
+  if (eqText) {
+    // Basic LaTeX-like rendering (without KaTeX for now)
+    return `<span class="handoc-equation" title="${escapeHtml(eqText)}">${escapeHtml(eqText)}</span>`;
+  }
+  return '<span class="handoc-equation">[equation]</span>';
+}
+
 // ── Public API ──
 
 export function runChildToHtml(child: RunChild, ctx: RenderContext): string {
@@ -182,6 +237,10 @@ export function runChildToHtml(child: RunChild, ctx: RenderContext): string {
       return tableToHtml(child.element);
     case 'inlineObject':
       return imageToHtml(child.element, ctx);
+    case 'shape':
+      return shapeToSvg(child);
+    case 'equation':
+      return equationToHtml(child);
     case 'ctrl':
       // Check if it's a table or image inside ctrl
       if (child.element.tag.toLowerCase().includes('tbl')) return tableToHtml(child.element);

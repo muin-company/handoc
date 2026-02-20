@@ -24,9 +24,21 @@ const nodes: Record<string, NodeSpec> = {
     attrs: {
       styleIDRef: { default: null },
       paraPrIDRef: { default: null },
+      align: { default: null }, // 'left' | 'center' | 'right' | 'justify' | 'distribute'
     },
-    parseDOM: [{ tag: 'p' }],
-    toDOM() { return ['p', 0]; },
+    parseDOM: [{ tag: 'p', getAttrs(dom) {
+      const el = dom as unknown as { style: { textAlign?: string } };
+      return {
+        align: el.style?.textAlign || null,
+      };
+    }}],
+    toDOM(node) {
+      const attrs: Record<string, string> = {};
+      if (node.attrs.align) {
+        attrs.style = `text-align: ${node.attrs.align}`;
+      }
+      return ['p', attrs, 0];
+    },
   },
   heading: {
     content: 'inline*',
@@ -127,6 +139,11 @@ const marks: Record<string, MarkSpec> = {
     attrs: { size: {} },
     parseDOM: [{ style: 'font-size', getAttrs(value: string) { return { size: value }; } }],
     toDOM(mark) { return ['span', { style: `font-size: ${mark.attrs.size}` }, 0]; },
+  },
+  fontFamily: {
+    attrs: { family: {} },
+    parseDOM: [{ style: 'font-family', getAttrs(value: string) { return { family: value }; } }],
+    toDOM(mark) { return ['span', { style: `font-family: ${mark.attrs.family}` }, 0]; },
   },
 };
 

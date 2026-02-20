@@ -178,3 +178,86 @@ describe('text color rendering', () => {
     expect(html).toContain('color:#ff0000');
   });
 });
+
+describe('shape rendering', () => {
+  it('renders line shape as SVG', () => {
+    const shapeEl: GenericElement = {
+      tag: 'hp:line',
+      attrs: { x: '0', y: '0', x2: '100', y2: '50', stroke: '#000000' },
+      children: [],
+      text: null,
+    };
+    const child: RunChild = { type: 'shape', name: 'line', element: shapeEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('<svg');
+    expect(html).toContain('<line');
+    expect(html).toContain('class="handoc-shape"');
+  });
+
+  it('renders rect shape as SVG', () => {
+    const shapeEl: GenericElement = {
+      tag: 'hp:rect',
+      attrs: { x: '10', y: '10', width: '100', height: '50', fill: 'red' },
+      children: [],
+      text: null,
+    };
+    const child: RunChild = { type: 'shape', name: 'rect', element: shapeEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('<svg');
+    expect(html).toContain('<rect');
+    expect(html).toContain('fill="red"');
+  });
+
+  it('renders ellipse shape as SVG', () => {
+    const shapeEl: GenericElement = {
+      tag: 'hp:ellipse',
+      attrs: { x: '0', y: '0', width: '100', height: '80' },
+      children: [],
+      text: null,
+    };
+    const child: RunChild = { type: 'shape', name: 'ellipse', element: shapeEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('<svg');
+    expect(html).toContain('<ellipse');
+  });
+
+  it('renders unknown shape as placeholder', () => {
+    const shapeEl: GenericElement = {
+      tag: 'hp:polygon',
+      attrs: {},
+      children: [],
+      text: null,
+    };
+    const child: RunChild = { type: 'shape', name: 'polygon', element: shapeEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('[polygon]');
+    expect(html).toContain('handoc-shape-unknown');
+  });
+});
+
+describe('equation rendering', () => {
+  it('renders equation with text content', () => {
+    const eqEl: GenericElement = {
+      tag: 'hp:equation',
+      attrs: {},
+      children: [],
+      text: 'x = y + z',
+    };
+    const child: RunChild = { type: 'equation', element: eqEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('handoc-equation');
+    expect(html).toContain('x = y + z');
+  });
+
+  it('renders empty equation as placeholder', () => {
+    const eqEl: GenericElement = {
+      tag: 'hp:equation',
+      attrs: {},
+      children: [],
+      text: null,
+    };
+    const child: RunChild = { type: 'equation', element: eqEl };
+    const html = runChildToHtml(child, emptyCtx);
+    expect(html).toContain('[equation]');
+  });
+});
