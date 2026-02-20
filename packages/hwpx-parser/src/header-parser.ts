@@ -127,9 +127,12 @@ function parseCharProperties(containers: Record<string, unknown>[]): CharPropert
       const id = parseIntSafe(attrs.id);
       const height = parseIntSafe(attrs.height);
 
-      // Extract structured fields from attrs
-      const bold = attrs.bold !== undefined ? parseBool(attrs.bold) : undefined;
-      const italic = attrs.italic !== undefined ? parseBool(attrs.italic) : undefined;
+      // Extract bold/italic from child elements (e.g. <hh:bold/>, <hh:italic/>)
+      // Also check attrs for backward compatibility
+      const boldEl = findChild(item, 'bold');
+      const bold = boldEl !== undefined ? true : (attrs.bold !== undefined ? parseBool(attrs.bold) : undefined);
+      const italicEl = findChild(item, 'italic');
+      const italic = italicEl !== undefined ? true : (attrs.italic !== undefined ? parseBool(attrs.italic) : undefined);
       const textColor = attrs.textColor || undefined;
       const shadeColor = attrs.shadeColor && attrs.shadeColor !== 'none' ? attrs.shadeColor : undefined;
       const highlightColor = attrs.highlightColor || undefined;

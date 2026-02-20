@@ -29,6 +29,10 @@ interface ParagraphStyle {
   italic?: boolean;
   fontSize?: number; // in pt
   align?: string;    // left | center | right | justify
+  fontFamily?: string;
+  color?: string;       // hex like '0000FF' (RGB) or decimal
+  lineSpacing?: number; // percent (e.g. 150 = 1.5x)
+  indent?: number;      // left indent in mm
 }
 
 interface BuilderImage {
@@ -42,13 +46,22 @@ interface BuilderImage {
 type SectionItem =
   | { kind: 'paragraph'; text: string; style?: ParagraphStyle }
   | { kind: 'table'; rows: string[][] }
-  | { kind: 'image'; image: BuilderImage };
+  | { kind: 'image'; image: BuilderImage }
+  | { kind: 'footnote'; text: string; noteText: string };
+
+interface SectionMeta {
+  headerText?: string;
+  footerText?: string;
+  pageNumber?: { position: 'header' | 'footer'; align: 'left' | 'center' | 'right' };
+}
 
 export class HwpxBuilder {
   private pageWidth: number;
   private pageHeight: number;
   private sectionItems: SectionItem[][] = [[]]; // array of sections, each an array of items
+  private sectionMetas: SectionMeta[] = [{}];
   private images: { data: Uint8Array; path: string }[] = [];
+  private extraFontFamilies: Set<string> = new Set();
 
   private constructor(pageWidth: number, pageHeight: number) {
     this.pageWidth = pageWidth;
@@ -82,8 +95,40 @@ export class HwpxBuilder {
     return this;
   }
 
+  addHeading(level: number, text: string): this {
+    const sizes: Record<number, number> = { 1: 28, 2: 24, 3: 20, 4: 16, 5: 14, 6: 12 };
+    const fontSize = sizes[level] ?? 12;
+    this.currentSection().push({
+      kind: 'paragraph',
+      text,
+      style: { bold: true, fontSize },
+    });
+    return this;
+  }
+
+  addFootnote(text: string, noteText: string): this {
+    this.currentSection().push({ kind: 'footnote', text, noteText });
+    return this;
+  }
+
+  setHeader(text: string): this {
+    this.currentSectionMeta().headerText = text;
+    return this;
+  }
+
+  setFooter(text: string): this {
+    this.currentSectionMeta().footerText = text;
+    return this;
+  }
+
+  setPageNumber(position: 'header' | 'footer', align: 'left' | 'center' | 'right'): this {
+    this.currentSectionMeta().pageNumber = { position, align };
+    return this;
+  }
+
   addSectionBreak(): this {
     this.sectionItems.push([]);
+    this.sectionMetas.push({});
     return this;
   }
 
@@ -104,6 +149,10 @@ export class HwpxBuilder {
 
   private currentSection(): SectionItem[] {
     return this.sectionItems[this.sectionItems.length - 1];
+  }
+
+  private currentSectionMeta(): SectionMeta {
+    return this.sectionMetas[this.sectionMetas.length - 1];
   }
 
   /**
@@ -127,36 +176,56 @@ export class HwpxBuilder {
           if (!charStyles.has(key)) {
             charStyles.set(key, item.style);
           }
+          if (item.style.fontFamily) {
+            this.extraFontFamilies.add(item.style.fontFamily);
+          }
         }
       }
     }
 
-    // Collect unique para alignments
-    const paraAligns = new Map<string, string>();
-    paraAligns.set('left', 'left');
+    // Collect unique para styles (align + lineSpacing + indent)
+    const paraStyleMap = new Map<string, ParagraphStyle>();
+    paraStyleMap.set('left||', {}); // default
     for (const section of this.sectionItems) {
       for (const item of section) {
-        if (item.kind === 'paragraph' && item.style?.align) {
-          paraAligns.set(item.style.align, item.style.align);
+        if (item.kind === 'paragraph' && item.style) {
+          const key = paraStyleKey(item.style);
+          if (!paraStyleMap.has(key)) {
+            paraStyleMap.set(key, item.style);
+          }
         }
       }
     }
 
     // Build fontFaces
+    const extraFonts = Array.from(this.extraFontFamilies);
     const fontFaces: FontFaceDecl[] = [
       {
         lang: 'hangul',
-        fonts: [{ id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false }],
+        fonts: [
+          { id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false },
+          ...extraFonts.map((f, i) => ({ id: i + 1, face: f, type: 'ttf' as const, isEmbedded: false })),
+        ],
       },
       {
         lang: 'latin',
-        fonts: [{ id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false }],
+        fonts: [
+          { id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false },
+          ...extraFonts.map((f, i) => ({ id: i + 1, face: f, type: 'ttf' as const, isEmbedded: false })),
+        ],
       },
       {
         lang: 'hanja',
-        fonts: [{ id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false }],
+        fonts: [
+          { id: 0, face: '맑은 고딕', type: 'ttf', isEmbedded: false },
+          ...extraFonts.map((f, i) => ({ id: i + 1, face: f, type: 'ttf' as const, isEmbedded: false })),
+        ],
       },
     ];
+    // Map font family name to font id
+    const fontIdMap = new Map<string, number>();
+    fontIdMap.set('맑은 고딕', 0);
+    extraFonts.forEach((f, i) => fontIdMap.set(f, i + 1));
 
     // Build charProperties
     const charProperties: CharProperty[] = [];
@@ -165,24 +234,25 @@ export class HwpxBuilder {
     let cpIdx = 0;
     for (const [key, style] of charStyles) {
       const height = ((style.fontSize ?? 10) * 100); // hundredths of pt (HWP convention)
-      const attrs: Record<string, string> = {
+      const textColor = style.color ?? '0';
+      const cpAttrs: Record<string, string> = {
         id: String(cpIdx),
         height: String(height),
-        textColor: '0',
+        textColor,
       };
-      if (style.bold) attrs.bold = '1';
-      if (style.italic) attrs.italic = '1';
+      if (style.bold) cpAttrs.bold = '1';
+      if (style.italic) cpAttrs.italic = '1';
 
+      const fontId = style.fontFamily ? String(fontIdMap.get(style.fontFamily) ?? 0) : '0';
       charProperties.push({
         id: cpIdx,
         height,
         bold: style.bold,
         italic: style.italic,
-        attrs,
+        attrs: cpAttrs,
         children: [
-          // fontRef children
           makeGenericEl('fontRef', {
-            hangul: '0', latin: '0', hanja: '0',
+            hangul: fontId, latin: fontId, hanja: fontId,
           }),
         ],
       });
@@ -195,18 +265,40 @@ export class HwpxBuilder {
     const paraPropMap = new Map<string, number>();
 
     let ppIdx = 0;
-    for (const [key] of paraAligns) {
-      const alignVal = key === 'left' ? 'left'
-        : key === 'center' ? 'center'
-        : key === 'right' ? 'right'
-        : key === 'justify' ? 'justify'
-        : 'left';
+    for (const [key, style] of paraStyleMap) {
+      const alignVal: ParaProperty['align'] = (style.align as ParaProperty['align']) ?? 'left';
+      const ppAttrs: Record<string, string> = { id: String(ppIdx), align: alignVal ?? 'left' };
+      const ppChildren: GenericElement[] = [];
+
+      const ppLineSpacing = style.lineSpacing
+        ? { type: 'percent', value: style.lineSpacing }
+        : undefined;
+      const ppMargin = style.indent
+        ? { left: Math.round(style.indent * MM_TO_HWP), indent: Math.round(style.indent * MM_TO_HWP) }
+        : undefined;
+
+      if (style.lineSpacing) {
+        ppChildren.push(makeGenericEl('lineSpacing', {
+          type: 'percent',
+          value: String(style.lineSpacing),
+        }));
+      }
+      if (style.indent) {
+        const indentHwp = String(Math.round(style.indent * MM_TO_HWP));
+        ppChildren.push(makeGenericEl('margin', {
+          indent: indentHwp,
+          left: indentHwp,
+          right: '0',
+        }));
+      }
 
       paraProperties.push({
         id: ppIdx,
-        align: alignVal as ParaProperty['align'],
-        attrs: { id: String(ppIdx), align: alignVal },
-        children: [],
+        align: alignVal,
+        lineSpacing: ppLineSpacing,
+        margin: ppMargin,
+        attrs: ppAttrs,
+        children: ppChildren,
       });
       paraPropMap.set(key, ppIdx);
       ppIdx++;
@@ -251,11 +343,29 @@ export class HwpxBuilder {
   ): Section[] {
     let imageCounter = 0;
 
-    return this.sectionItems.map((items) => {
+    return this.sectionItems.map((items, sectionIdx) => {
       const paragraphs: Paragraph[] = [];
+      const meta = this.sectionMetas[sectionIdx] ?? {};
 
-      if (items.length === 0) {
-        // Empty section — add one empty paragraph
+      // Insert header/footer as ctrl elements in the first paragraph
+      const headerFooterCtrls: Paragraph[] = [];
+      if (meta.headerText) {
+        const text = meta.pageNumber?.position === 'header'
+          ? meta.headerText  // page number in header handled below
+          : meta.headerText;
+        headerFooterCtrls.push(makeHeaderFooterParagraph('header', text));
+      } else if (meta.pageNumber?.position === 'header') {
+        headerFooterCtrls.push(makeHeaderFooterParagraph('header', ''));
+      }
+      if (meta.footerText) {
+        headerFooterCtrls.push(makeHeaderFooterParagraph('footer', meta.footerText));
+      } else if (meta.pageNumber?.position === 'footer') {
+        headerFooterCtrls.push(makeHeaderFooterParagraph('footer', ''));
+      }
+
+      paragraphs.push(...headerFooterCtrls);
+
+      if (items.length === 0 && headerFooterCtrls.length === 0) {
         paragraphs.push(makeParagraph('', 0, 0));
       }
 
@@ -263,7 +373,7 @@ export class HwpxBuilder {
         switch (item.kind) {
           case 'paragraph': {
             const cpKey = item.style ? charStyleKey(item.style) : 'default';
-            const ppKey = item.style?.align ?? 'left';
+            const ppKey = item.style ? paraStyleKey(item.style) : 'left||';
             const cpIdx = charPropMap.get(cpKey) ?? 0;
             const ppIdx = paraPropMap.get(ppKey) ?? 0;
             paragraphs.push(makeParagraph(item.text, cpIdx, ppIdx));
@@ -280,6 +390,10 @@ export class HwpxBuilder {
             imageCounter++;
             break;
           }
+          case 'footnote': {
+            paragraphs.push(makeFootnoteParagraph(item.text, item.noteText));
+            break;
+          }
         }
       }
 
@@ -291,8 +405,12 @@ export class HwpxBuilder {
 // ── Utility functions ──
 
 function charStyleKey(style: ParagraphStyle): string {
-  if (!style.bold && !style.italic && !style.fontSize) return 'default';
-  return `b${style.bold ? 1 : 0}_i${style.italic ? 1 : 0}_fs${style.fontSize ?? 10}`;
+  if (!style.bold && !style.italic && !style.fontSize && !style.fontFamily && !style.color) return 'default';
+  return `b${style.bold ? 1 : 0}_i${style.italic ? 1 : 0}_fs${style.fontSize ?? 10}_ff${style.fontFamily ?? ''}_c${style.color ?? ''}`;
+}
+
+function paraStyleKey(style: ParagraphStyle): string {
+  return `${style.align ?? 'left'}|${style.lineSpacing ?? ''}|${style.indent ?? ''}`;
 }
 
 function makeParagraph(text: string, charPrIdx: number, paraPrIdx: number): Paragraph {
@@ -441,6 +559,117 @@ function makeImageParagraph(binPath: string, width: number, height: number): Par
     runs: [{
       charPrIDRef: 0,
       children: [{ type: 'inlineObject', name: 'pic', element: imgEl }],
+    }],
+    lineSegArray: [],
+  };
+}
+
+function makeHeaderFooterParagraph(type: 'header' | 'footer', text: string): Paragraph {
+  const innerPara: GenericElement = {
+    tag: 'p',
+    attrs: { paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' },
+    children: [{
+      tag: 'run',
+      attrs: { charPrIDRef: '0' },
+      children: [{
+        tag: 't',
+        attrs: {},
+        children: [],
+        text: text,
+      }],
+      text: null,
+    }],
+    text: null,
+  };
+
+  const subList: GenericElement = {
+    tag: 'subList',
+    attrs: {},
+    children: [innerPara],
+    text: null,
+  };
+
+  const hfEl: GenericElement = {
+    tag: type,
+    attrs: { applyPageType: 'BOTH' },
+    children: [subList],
+    text: null,
+  };
+
+  const ctrlEl: GenericElement = {
+    tag: 'ctrl',
+    attrs: {},
+    children: [hfEl],
+    text: null,
+  };
+
+  return {
+    id: null,
+    paraPrIDRef: 0,
+    styleIDRef: 0,
+    pageBreak: false,
+    columnBreak: false,
+    merged: false,
+    runs: [{
+      charPrIDRef: 0,
+      children: [{ type: 'ctrl', element: ctrlEl }],
+    }],
+    lineSegArray: [],
+  };
+}
+
+function makeFootnoteParagraph(text: string, noteText: string): Paragraph {
+  const innerPara: GenericElement = {
+    tag: 'p',
+    attrs: { paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' },
+    children: [{
+      tag: 'run',
+      attrs: { charPrIDRef: '0' },
+      children: [{
+        tag: 't',
+        attrs: {},
+        children: [],
+        text: noteText,
+      }],
+      text: null,
+    }],
+    text: null,
+  };
+
+  const subList: GenericElement = {
+    tag: 'subList',
+    attrs: {},
+    children: [innerPara],
+    text: null,
+  };
+
+  const footnoteEl: GenericElement = {
+    tag: 'footnote',
+    attrs: {},
+    children: [subList],
+    text: null,
+  };
+
+  const ctrlEl: GenericElement = {
+    tag: 'ctrl',
+    attrs: {},
+    children: [footnoteEl],
+    text: null,
+  };
+
+  return {
+    id: null,
+    paraPrIDRef: 0,
+    styleIDRef: 0,
+    pageBreak: false,
+    columnBreak: false,
+    merged: false,
+    runs: [{
+      charPrIDRef: 0,
+      children: [
+        { type: 'text', content: text },
+        { type: 'ctrl', element: ctrlEl },
+      ],
     }],
     lineSegArray: [],
   };

@@ -36,7 +36,7 @@ export interface HwpxDocument {
 /**
  * Build a content.hpf manifest XML for the given sections.
  */
-function buildManifest(sectionCount: number): string {
+function buildManifest(sectionCount: number, extraPartNames?: string[]): string {
   let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>';
   xml += '<opf:package xmlns:opf="http://www.idpf.org/2007/opf/" version="" unique-identifier="" id="">';
   xml += '<opf:metadata><opf:language>ko</opf:language></opf:metadata>';
@@ -44,6 +44,20 @@ function buildManifest(sectionCount: number): string {
   xml += '<opf:item id="header" href="Contents/header.xml" media-type="application/xml"/>';
   for (let i = 0; i < sectionCount; i++) {
     xml += `<opf:item id="section${i}" href="Contents/section${i}.xml" media-type="application/xml"/>`;
+  }
+  if (extraPartNames) {
+    for (const name of extraPartNames) {
+      if (name.startsWith('BinData/')) {
+        const ext = name.split('.').pop()?.toLowerCase() ?? 'bin';
+        const mimeMap: Record<string, string> = {
+          png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+          gif: 'image/gif', bmp: 'image/bmp', tiff: 'image/tiff',
+        };
+        const mime = mimeMap[ext] ?? 'application/octet-stream';
+        const id = name.replace(/[^a-zA-Z0-9]/g, '_');
+        xml += `<opf:item id="${id}" href="Contents/${name}" media-type="${mime}"/>`;
+      }
+    }
   }
   xml += '</opf:manifest>';
   xml += '<opf:spine>';
@@ -84,8 +98,16 @@ export function writeHwpx(doc: HwpxDocument, originalPackage?: OpcPackageLike): 
       '<?xml version="1.0" encoding="UTF-8" ?><HWPVersion Major="1" Minor="5" Micro="0" BuildNumber="0"/>'
     );
 
-    // content.hpf
-    parts['Contents/content.hpf'] = encode(buildManifest(doc.sections.length));
+    // content.hpf — collect BinData paths for manifest
+    const binDataPaths: string[] = [];
+    if (doc.extraParts) {
+      for (const name of doc.extraParts.keys()) {
+        if (name.startsWith('BinData/')) {
+          binDataPaths.push(name);
+        }
+      }
+    }
+    parts['Contents/content.hpf'] = encode(buildManifest(doc.sections.length, binDataPaths));
   }
 
   // Overwrite header.xml and section*.xml with our generated versions
@@ -98,7 +120,9 @@ export function writeHwpx(doc: HwpxDocument, originalPackage?: OpcPackageLike): 
   // Extra parts
   if (doc.extraParts) {
     for (const [name, data] of doc.extraParts) {
-      parts[name] = typeof data === 'string' ? encode(data) : data;
+      // BinData files go under Contents/
+      const path = name.startsWith('BinData/') ? `Contents/${name}` : name;
+      parts[path] = typeof data === 'string' ? encode(data) : data;
     }
   }
 

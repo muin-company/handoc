@@ -8,6 +8,8 @@
 
 import { readHwp } from './hwp-reader.js';
 import { parseRecords } from './record-parser.js';
+import { parseDocInfo, type DocInfo, type CharShape, type ParaShape } from './docinfo-parser.js';
+import { parseSectionContent, type SectionContent, type HwpParagraph } from './body-parser.js';
 
 /** HWPTAG_PARA_TEXT base tag id (HWPTAG_BEGIN=16, offset 51 → 67) */
 const HWPTAG_PARA_TEXT = 67;
@@ -88,4 +90,47 @@ export function extractTextFromHwp(buffer: Uint8Array): string {
   }
 
   return paragraphs.join('\n');
+}
+
+/** Result of rich extraction */
+export interface HwpExtractedDocument {
+  /** Plain text (same as extractTextFromHwp) */
+  text: string;
+  /** DocInfo with fonts, char shapes, para shapes */
+  docInfo: DocInfo;
+  /** Parsed sections with paragraphs, tables, controls */
+  sections: SectionContent[];
+}
+
+/**
+ * Extract text with full formatting/structure info from an HWP 5.x buffer.
+ */
+export function extractRichContent(buffer: Uint8Array): HwpExtractedDocument {
+  const doc = readHwp(buffer);
+
+  // Parse DocInfo
+  const docInfoRecords = parseRecords(doc.docInfo);
+  const docInfo = parseDocInfo(docInfoRecords);
+
+  // Parse body sections
+  const sections: SectionContent[] = [];
+  const textParts: string[] = [];
+
+  for (const section of doc.bodyText) {
+    const records = parseRecords(section);
+    const content = parseSectionContent(records);
+    sections.push(content);
+
+    for (const para of content.paragraphs) {
+      if (para.text.length > 0) {
+        textParts.push(para.text);
+      }
+    }
+  }
+
+  return {
+    text: textParts.join('\n'),
+    docInfo,
+    sections,
+  };
 }

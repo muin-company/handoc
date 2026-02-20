@@ -15,6 +15,29 @@ export interface HwpRecord {
   data: Uint8Array;
 }
 
+/** HWPTAG_BEGIN = 16; tag = BEGIN + offset */
+export const HWPTAG = {
+  DOCUMENT_PROPERTIES: 16,    // BEGIN + 0
+  ID_MAPPINGS: 17,            // BEGIN + 1
+  BIN_DATA: 18,               // BEGIN + 2
+  FACE_NAME: 19,              // BEGIN + 3
+  BORDER_FILL: 20,            // BEGIN + 4
+  CHAR_SHAPE: 21,             // BEGIN + 5
+  TAB_DEF: 22,                // BEGIN + 6
+  NUMBERING: 23,              // BEGIN + 7
+  BULLET: 24,                 // BEGIN + 8
+  PARA_SHAPE: 25,             // BEGIN + 9
+  STYLE: 26,                  // BEGIN + 10
+  PARA_HEADER: 66,            // BEGIN + 50
+  PARA_TEXT: 67,              // BEGIN + 51
+  PARA_CHAR_SHAPE: 68,        // BEGIN + 52
+  PARA_LINE_SEG: 69,          // BEGIN + 53
+  CTRL_HEADER: 71,            // BEGIN + 55
+  LIST_HEADER: 72,            // BEGIN + 56
+  TABLE: 73,                  // BEGIN + 57
+  PAGE_DEF: 74,               // BEGIN + 58
+} as const;
+
 /**
  * Parse a raw HWP stream (e.g. DocInfo or BodyText/SectionN) into records.
  */
