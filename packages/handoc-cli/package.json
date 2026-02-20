@@ -1,0 +1,27 @@
+{
+  "name": "@handoc/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "handoc": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@handoc/hwp-reader": "workspace:*",
+    "@handoc/hwpx-core": "workspace:*",
+    "@handoc/hwpx-parser": "workspace:*",
+    "@handoc/hwpx-writer": "workspace:*",
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.0"
+  },
+  "description": "CLI tool for HanDoc - inspect, extract, and convert HWP/HWPX documents"
+}
