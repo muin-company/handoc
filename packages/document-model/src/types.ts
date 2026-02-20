@@ -1,119 +1,64 @@
 import type { GenericElement } from './generic';
-import type { DocumentHeader } from './header-types';
 
-// ── Section properties (secPr) ──
+// ── Section properties (parsed from secPr elements) ──
 
-export interface PageSize {
-  landscape: string;
-  width: number;
-  height: number;
-  gutterType: string;
+export interface SectionProperties {
+  pageWidth: number;   // HWP unit (1/7200 inch)
+  pageHeight: number;
+  margins: {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    header: number;
+    footer: number;
+    gutter: number;
+  };
+  landscape: boolean;
+  columns?: {
+    count: number;
+    gap: number;
+    type: string;
+  };
+  pageStartNumber?: number;
 }
 
-export interface PageMargin {
-  header: number;
-  footer: number;
-  gutter: number;
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-}
+// ── Section ──
 
-export interface SectionProperty {
-  id: string;
-  textDirection: string;
-  spaceColumns: number;
-  tabStop: number;
-  tabStopVal: number;
-  tabStopUnit: string;
-  outlineShapeIDRef: number;
-  memoShapeIDRef: number;
-  textVerticalWidthHead: number;
-  masterPageCnt: number;
-  pagePr: PageSize;
-  margin: PageMargin;
-  extra?: GenericElement[];
-}
-
-// ── Table types ──
-
-export interface CellAddress {
-  colAddr: number;
-  rowAddr: number;
-}
-
-export interface CellSpan {
-  colSpan: number;
-  rowSpan: number;
-}
-
-export interface CellSize {
-  width: number;
-  height: number;
-}
-
-export interface TableCell {
-  name: string;
-  header: number;
-  hasMargin: number;
-  protect: number;
-  editable: number;
-  dirty: number;
-  borderFillIDRef: number;
-  cellAddr: CellAddress;
-  cellSpan: CellSpan;
-  cellSz: CellSize;
-  cellMargin?: { left: number; right: number; top: number; bottom: number };
+export interface Section {
   paragraphs: Paragraph[];
+  sectionProps?: SectionProperties;
 }
 
-export interface TableRow {
-  cells: TableCell[];
+// ── Paragraph ──
+
+export interface Paragraph {
+  id: string | null;
+  paraPrIDRef: number | null;
+  styleIDRef: number | null;
+  pageBreak: boolean;
+  columnBreak: boolean;
+  merged: boolean;
+  runs: Run[];
+  lineSegArray: LineSeg[];
 }
 
-export interface Table {
-  kind: 'table';
-  id: string;
-  rowCnt: number;
-  colCnt: number;
-  cellSpacing: number;
-  borderFillIDRef: number;
-  repeatHeader: number;
-  noAdjust: number;
-  rows: TableRow[];
-  attrs?: Record<string, string>;
-  extra?: GenericElement[];
+// ── Run ──
+
+export interface Run {
+  charPrIDRef: number | null;
+  children: RunChild[];
 }
 
-// ── Run children ──
+// ── RunChild ──
 
-export interface TextChild {
-  kind: 'text';
-  value: string;
-}
-
-export interface SecPrChild {
-  kind: 'secPr';
-  secPr: SectionProperty;
-}
-
-export interface CtrlChild {
-  kind: 'ctrl';
-  element: GenericElement;
-}
-
-export interface InlineObjectChild {
-  kind: 'inlineObject';
-  element: GenericElement;
-}
-
-export interface TrackChangeChild {
-  kind: 'trackChange';
-  element: GenericElement;
-}
-
-export type RunChild = TextChild | SecPrChild | CtrlChild | Table | InlineObjectChild | TrackChangeChild;
+export type RunChild =
+  | { type: 'text'; content: string }
+  | { type: 'secPr'; element: GenericElement }
+  | { type: 'ctrl'; element: GenericElement }
+  | { type: 'table'; element: GenericElement }
+  | { type: 'inlineObject'; name: string; element: GenericElement }
+  | { type: 'trackChange'; mark: string };
 
 // ── LineSeg ──
 
@@ -127,35 +72,4 @@ export interface LineSeg {
   horzpos: number;
   horzsize: number;
   flags: number;
-}
-
-// ── Run & Paragraph ──
-
-export interface Run {
-  charPrIDRef: number;
-  children: RunChild[];
-}
-
-export interface Paragraph {
-  id: string;
-  paraPrIDRef: number;
-  styleIDRef: number;
-  pageBreak: number;
-  columnBreak: number;
-  merged: number;
-  runs: Run[];
-  lineSegArray?: LineSeg[];
-}
-
-// ── Section ──
-
-export interface Section {
-  paragraphs: Paragraph[];
-}
-
-// ── Document root ──
-
-export interface HwpDocument {
-  header: DocumentHeader;
-  sections: Section[];
 }

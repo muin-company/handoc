@@ -5,5 +5,5 @@ export interface GenericElement {
   tag: string;
   attrs: Record<string, string>;
   children: GenericElement[];
-  text?: string;
+  text: string | null;
 }

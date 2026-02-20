@@ -4,7 +4,10 @@ import { OpcPackage } from '../packages/hwpx-core/src/index';
 import { parseSection, extractText } from '../packages/hwpx-parser/src/index';
 import { parseHeader } from '../packages/hwpx-parser/src/header-parser';
 
-const FIXTURES_DIR = '/Users/mj/handoc-fixtures/real-world';
+const FIXTURES_DIR = process.env.HANDOC_FIXTURES_DIR
+  ? join(process.env.HANDOC_FIXTURES_DIR, 'real-world')
+  : '';
+if (!FIXTURES_DIR) { console.log('HANDOC_FIXTURES_DIR not set, skipping'); process.exit(0); }
 
 interface TestResult {
   file: string;
@@ -175,7 +178,7 @@ async function main() {
     else md += 'Investigation needed\n';
   }
   
-  writeFileSync('/Users/mj/handoc/docs/real-doc-test-results.md', md);
+  writeFileSync(join(__dirname, '..', 'docs', 'real-doc-test-results.md'), md);
   console.log(`\n=== Results ===`);
   console.log(`Total: ${total}, Success: ${success}, Failed: ${failed}, Rate: ${rate}%`);
   console.log(`Report saved to docs/real-doc-test-results.md`);

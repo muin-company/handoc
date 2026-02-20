@@ -1,67 +1,11 @@
 import { parseXml, getAttr, getAttrs, parseBool, parseIntSafe } from './xml-utils.js';
+import type {
+  DocumentHeader, BeginNum, RefList,
+  FontFaceDecl, CharProperty, ParaProperty, StyleDecl,
+} from '@handoc/document-model';
+import type { GenericElement } from '@handoc/document-model';
 
-// ─── Types ───────────────────────────────────────────────────────────
-
-export interface DocumentHeader {
-  version: string;
-  secCnt: number;
-  beginNum: BeginNum;
-  refList: RefList;
-}
-
-export interface BeginNum {
-  page: number;
-  footnote: number;
-  endnote: number;
-  pic: number;
-  tbl: number;
-  equation: number;
-}
-
-export interface RefList {
-  fontFaces: FontFaceDecl[];
-  charProperties: CharProperty[];
-  paraProperties: ParaProperty[];
-  styles: StyleDecl[];
-  borderFills: GenericElement[];
-  others: GenericElement[];
-}
-
-export interface FontFaceDecl {
-  lang: string;
-  fonts: { id: number; face: string; type: string; isEmbedded: boolean }[];
-}
-
-export interface CharProperty {
-  id: number;
-  height: number;
-  attrs: Record<string, string>;
-  children: GenericElement[];
-}
-
-export interface ParaProperty {
-  id: number;
-  attrs: Record<string, string>;
-  children: GenericElement[];
-}
-
-export interface StyleDecl {
-  id: number;
-  type: string;
-  name: string;
-  engName?: string;
-  paraPrIDRef?: number;
-  charPrIDRef?: number;
-  nextStyleIDRef?: number;
-  attrs: Record<string, string>;
-}
-
-export interface GenericElement {
-  tag: string;
-  attrs: Record<string, string>;
-  children: GenericElement[];
-  text: string | null;
-}
+export type { DocumentHeader };
 
 // ─── Parser ──────────────────────────────────────────────────────────
 

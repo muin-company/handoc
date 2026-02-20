@@ -17,3 +17,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo build
       - run: pnpm turbo test
+      - name: Quality Gate
+        run: npx tsx scripts/quality-gate.ts | tee gate-output.txt
+      - name: Check Gate Result
+        run: |
+          if grep -q '"passed": false' gate-output.txt; then
+            echo "❌ Quality gate failed"
+            exit 1
+          fi
+          echo "✅ Quality gate passed"

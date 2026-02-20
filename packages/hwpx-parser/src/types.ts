@@ -1,49 +1,14 @@
-import type { SectionProperties } from './section-props-parser';
-
-export interface Section {
-  paragraphs: Paragraph[];
-  sectionProps?: SectionProperties;
-}
-
-export interface Paragraph {
-  id: string | null;
-  paraPrIDRef: number | null;
-  styleIDRef: number | null;
-  pageBreak: boolean;
-  columnBreak: boolean;
-  merged: boolean;
-  runs: Run[];
-  lineSegArray: LineSeg[];
-}
-
-export interface Run {
-  charPrIDRef: number | null;
-  children: RunChild[];
-}
-
-export type RunChild =
-  | { type: 'text'; content: string }
-  | { type: 'secPr'; element: GenericElement }
-  | { type: 'ctrl'; element: GenericElement }
-  | { type: 'table'; element: GenericElement }
-  | { type: 'inlineObject'; name: string; element: GenericElement }
-  | { type: 'trackChange'; mark: string };
-
-export interface LineSeg {
-  textpos: number;
-  vertpos: number;
-  vertsize: number;
-  textheight: number;
-  baseline: number;
-  spacing: number;
-  horzpos: number;
-  horzsize: number;
-  flags: number;
-}
-
-export interface GenericElement {
-  tag: string;
-  attrs: Record<string, string>;
-  children: GenericElement[];
-  text: string | null;
-}
+/**
+ * Re-export all types from @handoc/document-model.
+ * Parser code imports from this file for convenience;
+ * the canonical definitions live in document-model.
+ */
+export type {
+  Section,
+  Paragraph,
+  Run,
+  RunChild,
+  LineSeg,
+  SectionProperties,
+} from '@handoc/document-model';
+export type { GenericElement } from '@handoc/document-model';

@@ -5,7 +5,9 @@ import { HanDoc } from '../handoc';
 import { parseHeaderFooter, parseFootnote, extractAnnotationText } from '../annotation-parser';
 import type { GenericElement } from '../types';
 
-const FIXTURES = '/Users/mj/handoc-fixtures/real-world';
+const FIXTURES = process.env.HANDOC_FIXTURES_DIR
+  ? join(process.env.HANDOC_FIXTURES_DIR, 'real-world')
+  : '';
 
 describe('annotation-parser', () => {
   describe('parseHeaderFooter', () => {
@@ -62,7 +64,9 @@ describe('annotation-parser', () => {
     });
   });
 
-  describe('HanDoc.headers/footers (HeaderFooter.hwpx)', () => {
+  const hasFixtures = FIXTURES !== '' && require('node:fs').existsSync(FIXTURES);
+
+  describe.skipIf(!hasFixtures)('HanDoc.headers/footers (HeaderFooter.hwpx)', () => {
     let doc: HanDoc;
 
     it('loads the fixture', async () => {
@@ -85,7 +89,7 @@ describe('annotation-parser', () => {
     });
   });
 
-  describe('HanDoc with no headers/footers', () => {
+  describe.skipIf(!hasFixtures)('HanDoc with no headers/footers', () => {
     it('returns empty arrays for a simple document', async () => {
       const buf = readFileSync(join(FIXTURES, '20260220/종묘제레악.hwpx'));
       const doc = await HanDoc.open(new Uint8Array(buf));
@@ -94,7 +98,7 @@ describe('annotation-parser', () => {
     });
   });
 
-  describe('HanDoc.footnotes', () => {
+  describe.skipIf(!hasFixtures)('HanDoc.footnotes', () => {
     it('returns empty array when no footnotes', async () => {
       const buf = readFileSync(join(FIXTURES, 'opensource/HeaderFooter.hwpx'));
       const doc = await HanDoc.open(new Uint8Array(buf));

@@ -7,8 +7,10 @@ import { HanDoc } from '../packages/hwpx-parser/src/handoc';
 import { extractText } from '../packages/hwpx-parser/src/section-parser';
 import { writeHwpx } from '../packages/hwpx-writer/src/index';
 
-const FIXTURES_DIR = '/Users/mj/handoc-fixtures/real-world';
-const OUTPUT_PATH = '/Users/mj/handoc/docs/roundtrip-test-results.md';
+const FIXTURES_DIR = process.env.HANDOC_FIXTURES_DIR
+  ? join(process.env.HANDOC_FIXTURES_DIR, 'real-world')
+  : join(__dirname, '..', 'fixtures');
+const OUTPUT_PATH = join(__dirname, '..', 'docs', 'roundtrip-test-results.md');
 
 interface TestResult {
   file: string;

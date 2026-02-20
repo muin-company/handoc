@@ -2,10 +2,12 @@ import { readFileSync } from 'fs';
 import { OpcPackage } from '../packages/hwpx-core/src/index';
 import { parseSection, extractText } from '../packages/hwpx-parser/src/index';
 
-const files = [
-  '/Users/mj/handoc-fixtures/real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(독후활동반).hwpx',
-  '/Users/mj/handoc-fixtures/real-world/20260220/종묘제레악.hwpx',
-];
+const HANDOC_FIXTURES = process.env.HANDOC_FIXTURES_DIR || '';
+const files = HANDOC_FIXTURES ? [
+  `${HANDOC_FIXTURES}/real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(독후활동반).hwpx`,
+  `${HANDOC_FIXTURES}/real-world/20260220/종묘제레악.hwpx`,
+] : [];
+if (!files.length) { console.log('HANDOC_FIXTURES_DIR not set, skipping'); process.exit(0); }
 
 async function main() {
   for (const f of files) {

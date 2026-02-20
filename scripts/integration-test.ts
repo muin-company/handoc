@@ -40,12 +40,12 @@ function record(c: Counter, ok: boolean, errMsg?: string) {
 // ── Main ──
 
 async function main() {
-  const fixturesDir = '/Users/mj/handoc-fixtures';
-  const localFixtures = '/Users/mj/handoc/fixtures';
+  const fixturesDir = process.env.HANDOC_FIXTURES_DIR || '';
+  const localFixtures = join(__dirname, '..', 'fixtures');
 
   // Collect all HWPX files
   const hwpxFiles = [
-    ...findFiles(fixturesDir, '.hwpx'),
+    ...(fixturesDir ? findFiles(fixturesDir, '.hwpx') : []),
     ...findFiles(localFixtures, '.hwpx'),
   ];
 
@@ -260,7 +260,7 @@ async function main() {
   const report = lines.join('\n');
   console.log(report);
 
-  const outPath = '/Users/mj/handoc/docs/integration-test-results.md';
+  const outPath = join(__dirname, '..', 'docs', 'integration-test-results.md');
   writeFileSync(outPath, report);
   console.log(`\nResults saved to ${outPath}`);
 }

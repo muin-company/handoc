@@ -1,25 +1,6 @@
-import type { GenericElement } from './types';
+import type { GenericElement, SectionProperties } from './types';
 
-export interface SectionProperties {
-  pageWidth: number;   // HWP unit (1/7200 inch)
-  pageHeight: number;
-  margins: {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-    header: number;
-    footer: number;
-    gutter: number;
-  };
-  landscape: boolean;
-  columns?: {
-    count: number;
-    gap: number;
-    type: string;
-  };
-  pageStartNumber?: number;
-}
+export type { SectionProperties };
 
 function findChild(el: GenericElement, tag: string): GenericElement | undefined {
   return el.children.find((c) => c.tag === tag);
@@ -60,9 +41,6 @@ export function parseSectionProps(element: GenericElement): SectionProperties {
     landscape,
   };
 
-  // columns — look for colPr in sibling ctrl elements or in the secPr itself
-  // colPr is typically in a ctrl element, not inside secPr directly
-  // We'll check secPr children for colPr as well
   const colPr = findChild(element, 'colPr');
   if (colPr) {
     result.columns = {

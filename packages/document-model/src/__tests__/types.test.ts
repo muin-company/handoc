@@ -1,85 +1,62 @@
 import { describe, it, expect } from 'vitest';
 import type {
-  HwpDocument, Section, Paragraph, Run, RunChild, Table, TextChild,
+  Section, Paragraph, Run, RunChild,
   DocumentHeader, RefList, FontFaceDecl, CharProperty, ParaProperty, StyleDecl,
-  GenericElement,
+  GenericElement, SectionProperties,
 } from '../index';
 
 describe('Type creation smoke tests', () => {
-  it('creates a minimal HwpDocument', () => {
-    const doc: HwpDocument = {
-      header: {
-        version: '1.5',
-        secCnt: 1,
-        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
-        refList: {
-          fontFaces: [],
-          borderFills: [],
-          charProperties: [],
-          paraProperties: [],
-          styles: [],
-        },
+  it('creates a minimal document structure', () => {
+    const header: DocumentHeader = {
+      version: '1.5',
+      secCnt: 1,
+      beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+      refList: {
+        fontFaces: [],
+        borderFills: [],
+        charProperties: [],
+        paraProperties: [],
+        styles: [],
+        others: [],
       },
-      sections: [{
-        paragraphs: [{
-          id: '123',
-          paraPrIDRef: 0,
-          styleIDRef: 0,
-          pageBreak: 0,
-          columnBreak: 0,
-          merged: 0,
-          runs: [{
-            charPrIDRef: 0,
-            children: [{ kind: 'text', value: '안녕하세요' }],
-          }],
+    };
+
+    const section: Section = {
+      paragraphs: [{
+        id: '123',
+        paraPrIDRef: 0,
+        styleIDRef: 0,
+        pageBreak: false,
+        columnBreak: false,
+        merged: false,
+        runs: [{
+          charPrIDRef: 0,
+          children: [{ type: 'text', content: '안녕하세요' }],
         }],
+        lineSegArray: [],
       }],
     };
 
-    expect(doc.sections).toHaveLength(1);
-    expect(doc.sections[0].paragraphs[0].runs[0].children[0]).toEqual({
-      kind: 'text',
-      value: '안녕하세요',
+    expect(section.paragraphs).toHaveLength(1);
+    expect(section.paragraphs[0].runs[0].children[0]).toEqual({
+      type: 'text',
+      content: '안녕하세요',
     });
+    expect(header.version).toBe('1.5');
   });
 
-  it('creates a Table RunChild', () => {
-    const table: Table = {
-      kind: 'table',
-      id: '1',
-      rowCnt: 1,
-      colCnt: 1,
-      cellSpacing: 0,
-      borderFillIDRef: 1,
-      repeatHeader: 0,
-      noAdjust: 0,
-      rows: [{
-        cells: [{
-          name: '',
-          header: 0,
-          hasMargin: 0,
-          protect: 0,
-          editable: 0,
-          dirty: 1,
-          borderFillIDRef: 1,
-          cellAddr: { colAddr: 0, rowAddr: 0 },
-          cellSpan: { colSpan: 1, rowSpan: 1 },
-          cellSz: { width: 7200, height: 3600 },
-          paragraphs: [{
-            id: '456',
-            paraPrIDRef: 0,
-            styleIDRef: 0,
-            pageBreak: 0,
-            columnBreak: 0,
-            merged: 0,
-            runs: [{ charPrIDRef: 0, children: [{ kind: 'text', value: '셀' }] }],
-          }],
-        }],
-      }],
+  it('creates a table RunChild', () => {
+    const tableChild: RunChild = {
+      type: 'table',
+      element: {
+        tag: 'tbl',
+        attrs: { rowCnt: '2', colCnt: '3' },
+        children: [],
+        text: null,
+      },
     };
 
-    const child: RunChild = table;
-    expect(child.kind).toBe('table');
+    expect(tableChild.type).toBe('table');
   });
 
   it('creates a GenericElement for unknown elements', () => {
@@ -101,8 +78,18 @@ describe('Type creation smoke tests', () => {
       paraPrIDRef: 0,
       charPrIDRef: 0,
       nextStyleIDRef: 0,
-      langID: 1042,
+      attrs: { id: '0', type: 'PARA', name: '바탕글' },
     };
     expect(style.name).toBe('바탕글');
+  });
+
+  it('creates SectionProperties', () => {
+    const props: SectionProperties = {
+      pageWidth: 59528,
+      pageHeight: 84186,
+      margins: { left: 8504, right: 8504, top: 5668, bottom: 4252, header: 4252, footer: 4252, gutter: 0 },
+      landscape: false,
+    };
+    expect(props.pageWidth).toBe(59528);
   });
 });
