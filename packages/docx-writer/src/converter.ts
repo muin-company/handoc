@@ -607,4 +607,8 @@ export const __testing = {
   convertSectionProperties,
   convertTableSimple,
   convertTable,
+  convertHeaderFooterToDocxHeader,
+  convertHeaderFooterToDocxFooter,
+  convertSection,
+  convertParagraph,
 };
