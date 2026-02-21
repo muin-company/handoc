@@ -129,7 +129,9 @@ function parseBorderFill(bf: GenericElement): {
     }
     // Parse border lines
     for (const side of ['top', 'bottom', 'left', 'right'] as const) {
-      if (child.tag === side || child.tag.endsWith(':' + side)) {
+      // Match both "top" and "topBorder", with or without namespace prefix
+      if (child.tag === side || child.tag === side + 'Border' || 
+          child.tag.endsWith(':' + side) || child.tag.endsWith(':' + side + 'Border')) {
         const type = child.attrs['type'] ?? child.attrs['style'];
         const width = child.attrs['width'];
         if (type && type !== 'none') {
@@ -603,4 +605,6 @@ export const __testing = {
   createDocxParagraph,
   convertParagraphToDocx,
   convertSectionProperties,
+  convertTableSimple,
+  convertTable,
 };
