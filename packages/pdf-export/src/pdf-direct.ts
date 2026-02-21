@@ -413,30 +413,31 @@ export async function generatePdf(
             const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : pW;
             const contentH = pageH - mT - mB;
 
-            for (const row of tbl.rows) {
+            for (let rowIdx = 0; rowIdx < tbl.rows.length; rowIdx++) {
+              const row = tbl.rows[rowIdx];
               // Calculate row height
               let rowH = 0;
               for (const cell of row.cells) {
                 const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-                const cellPadding = 4; // total vertical padding (2pt top + 2pt bottom)
+                const cellPadding = 3; // total vertical padding (balanced)
                 let h = cellPadding;
                 
                 for (const cp of cell.paragraphs) {
                   const cps = resolveParaStyle(doc, cp.paraPrIDRef);
                   // Only add para margins if significant (> 1pt)
-                  if (cps.marginTop > 1) h += cps.marginTop * 0.5; // reduce para spacing in tables
-                  if (cps.marginBottom > 1) h += cps.marginBottom * 0.5;
+                  if (cps.marginTop > 1) h += cps.marginTop * 0.4; // balanced reduction
+                  if (cps.marginBottom > 1) h += cps.marginBottom * 0.4;
                   
                   for (const cr of cp.runs) {
                     const cts = resolveTextStyle(doc, cr.charPrIDRef);
                     const cf = getFont(cts);
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
-                        const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 4); // reduce horizontal padding
+                        const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 3); // balanced horizontal padding
                         if (cl.length > 0) {
                           // Use actual line height, but don't multiply by lineHeight ratio for tables
                           // Tables should be more compact
-                          const lineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.2; // reduce from 1.6 to 1.2
+                          const lineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.1; // balanced line height
                           h += cl.length * lineH;
                         }
                       }
@@ -445,7 +446,7 @@ export async function generatePdf(
                 }
                 
                 // Minimum row height: font size + padding
-                const minH = 12 + cellPadding;
+                const minH = 11 + cellPadding; // balanced minimum
                 rowH = Math.max(rowH, Math.max(h, minH));
               }
 
@@ -453,10 +454,12 @@ export async function generatePdf(
               if (rowH > contentH) rowH = contentH;
 
               // Page break: if row doesn't fit, start new page
-              // BUT: don't break if we're already near the top (just started fresh page)
-              // This prevents "every row on new page" syndrome when rowH calc is inflated
+              // BUT: don't break if:
+              // 1. We're already near the top (just started fresh page)
+              // 2. This is one of the first 2 rows of the table (keep table headers together)
               const nearTop = (pageH - curY) < 50; // within ~50pt (~3-4 lines) of page top
-              if (curY - rowH < mB && !nearTop) {
+              const isTableStart = rowIdx < 2; // first 2 rows of table
+              if (curY - rowH < mB && !nearTop && !isTableStart) {
                 newPage();
               }
 
@@ -472,29 +475,29 @@ export async function generatePdf(
                   borderColor: rgb(0, 0, 0), borderWidth: 0.5,
                 });
 
-                let ty = curY - 2; // reduced top padding
+                let ty = curY - 1.5; // balanced top padding
                 for (const cp of cell.paragraphs) {
                   const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-                  if (cps.marginTop > 1) ty -= cps.marginTop * 0.5;
+                  if (cps.marginTop > 1) ty -= cps.marginTop * 0.4;
                   for (const cr of cp.runs) {
                     const cts = resolveTextStyle(doc, cr.charPrIDRef);
                     const cf = getFont(cts);
-                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.2;
+                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.1;
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
-                        const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 4);
+                        const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 3);
                         for (const cl of cls) {
                           ty -= cts.fontSize;
-                          let tx = cellX + 2; // reduced left padding
+                          let tx = cellX + 1.5; // balanced left padding
                           if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
-                          else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
+                          else if (cps.align === 'right') tx = cellX + cellW - 1.5 - cl.width;
                           drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
                           ty -= (lh - cts.fontSize);
                         }
                       }
                     }
                   }
-                  if (cps.marginBottom > 1) ty -= cps.marginBottom * 0.5;
+                  if (cps.marginBottom > 1) ty -= cps.marginBottom * 0.4;
                 }
                 cellX += cellW;
               }
