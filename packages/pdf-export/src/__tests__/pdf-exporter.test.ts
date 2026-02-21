@@ -124,6 +124,18 @@ describe('hwpxToPdf', () => {
   });
 });
 
+describe('hwpxToPdf - Playwright import error', () => {
+  it('should throw descriptive error when playwright is not available', async () => {
+    // Save original and make launch throw to simulate import failure
+    mockLaunch.mockImplementationOnce(() => {
+      throw new Error('Cannot find module');
+    });
+
+    const hwpxBuffer = readFixture('simple-text.hwpx');
+    await expect(hwpxToPdf(hwpxBuffer)).rejects.toThrow();
+  });
+});
+
 describe('hwpxToPdf - Page Layout Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();

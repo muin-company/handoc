@@ -232,6 +232,283 @@ describe('renderToHtml', () => {
   });
 });
 
+describe('renderToHtml - character properties', () => {
+  it('should render underline text', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, underline: 'single', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('밑줄', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('text-decoration:underline');
+  });
+
+  it('should skip underline when set to none', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, underline: 'none', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('없음', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('text-decoration:underline');
+  });
+
+  it('should render strikeout text', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, strikeout: 'single', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('취소선', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('text-decoration:line-through');
+  });
+
+  it('should skip strikeout when set to none', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, strikeout: 'none', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('없음', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('text-decoration:line-through');
+  });
+
+  it('should render text color', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, textColor: 'ff0000', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('빨강', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('color:#ff0000');
+  });
+
+  it('should skip default text colors (0 and 000000)', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, textColor: '0', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('검정', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('color:#');
+  });
+
+  it('should pad short color codes', () => {
+    const doc = mockDoc({
+      charProperties: [{ id: 1, textColor: 'ff', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('색상', 1)])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('color:#0000ff');
+  });
+});
+
+describe('renderToHtml - image rendering', () => {
+  it('should skip image when no fileRef element', () => {
+    const imgElement = {
+      tag: 'pic', attrs: {}, children: [], text: null,
+    };
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'picture', element: imgElement }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('<img');
+  });
+
+  it('should skip image when binItemIDRef is empty', () => {
+    const imgElement = {
+      tag: 'pic', attrs: {},
+      children: [{
+        tag: 'fileRef', attrs: { binItemIDRef: '' }, children: [], text: null,
+      }],
+      text: null,
+    };
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'picture', element: imgElement }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('<img');
+  });
+
+  it('should skip image when no matching image in doc.images', () => {
+    const imgElement = {
+      tag: 'pic', attrs: {},
+      children: [{
+        tag: 'fileRef', attrs: { binItemIDRef: 'notfound.png' }, children: [], text: null,
+      }],
+      text: null,
+    };
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'picture', element: imgElement }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    (doc as any).images = [{ path: 'other.png', data: new Uint8Array([]) }];
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('<img');
+  });
+
+  it('should render image with dimensions from imgRect', () => {
+    const imgElement = {
+      tag: 'pic', attrs: {},
+      children: [
+        { tag: 'fileRef', attrs: { binItemIDRef: 'test.jpg' }, children: [], text: null },
+        { tag: 'imgRect', attrs: { width: '36000', height: '28800' }, children: [], text: null },
+      ],
+      text: null,
+    };
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'picture', element: imgElement }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    (doc as any).images = [{ path: 'test.jpg', data: new Uint8Array([0xff, 0xd8]) }];
+    const html = renderToHtml(doc);
+    expect(html).toContain('data:image/jpeg;base64,');
+    expect(html).toContain('width:');
+    expect(html).toContain('height:');
+  });
+
+  it('should handle unknown image extensions with png fallback', () => {
+    const imgElement = {
+      tag: 'pic', attrs: {},
+      children: [
+        { tag: 'fileRef', attrs: { binItemIDRef: 'test.xyz' }, children: [], text: null },
+      ],
+      text: null,
+    };
+    const imgRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'picture', element: imgElement }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([imgRun])])],
+    });
+    (doc as any).images = [{ path: 'test.xyz', data: new Uint8Array([0x00]) }];
+    const html = renderToHtml(doc);
+    expect(html).toContain('data:image/png;base64,');
+  });
+
+  it('should skip non-picture inline objects', () => {
+    const el = { tag: 'equation', attrs: {}, children: [], text: null };
+    const run: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'inlineObject' as const, name: 'equation', element: el }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([run])])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).not.toContain('<img');
+  });
+});
+
+describe('renderToHtml - paragraph properties', () => {
+  it('should render distribute alignment as justify', () => {
+    const doc = mockDoc({
+      paraProperties: [{ id: 1, align: 'distribute', attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('분산')], 1)])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('text-align:justify');
+  });
+
+  it('should render percent line spacing', () => {
+    const doc = mockDoc({
+      paraProperties: [{ id: 1, lineSpacing: { type: 'percent', value: 160 }, attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('줄간격')], 1)])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('line-height:1.6');
+  });
+
+  it('should render fixed line spacing', () => {
+    const doc = mockDoc({
+      paraProperties: [{ id: 1, lineSpacing: { type: 'fixed', value: 7200 }, attrs: {}, children: [] }],
+      sections: [makeSection([makePara([textRun('고정')], 1)])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('line-height:1in');
+  });
+
+  it('should render paragraph margins', () => {
+    const doc = mockDoc({
+      paraProperties: [{
+        id: 1,
+        margin: { left: 7200, right: 3600, indent: 1800, prev: 7200, next: 3600 },
+        attrs: {}, children: [],
+      }],
+      sections: [makeSection([makePara([textRun('마진')], 1)])],
+    });
+    const html = renderToHtml(doc);
+    expect(html).toContain('margin-left:1in');
+    expect(html).toContain('margin-right:0.5in');
+    expect(html).toContain('text-indent:0.25in');
+    expect(html).toContain('margin-top:1in');
+    expect(html).toContain('margin-bottom:0.5in');
+  });
+});
+
+describe('renderToHtml - section properties', () => {
+  it('should use sectionProps for page dimensions when available', () => {
+    const section: Section = {
+      paragraphs: [makePara([textRun('섹션')])],
+      sectionProps: {
+        pageWidth: 60480, // 210mm in hwp units (7200 per inch)
+        pageHeight: 85680, // 297mm
+        margins: { left: 8504, right: 8504, top: 5669, bottom: 4252 },
+      },
+    } as any;
+    const doc = mockDoc({ sections: [section] });
+    const html = renderToHtml(doc);
+    expect(html).toContain('width:');
+    expect(html).toContain('min-height:');
+  });
+
+  it('should render header and footer paragraphs', () => {
+    const section: Section = {
+      paragraphs: [makePara([textRun('본문')])],
+      sectionProps: {
+        pageWidth: 60480,
+        pageHeight: 85680,
+        margins: { left: 8504, right: 8504, top: 5669, bottom: 4252 },
+        headerParagraphs: [makePara([textRun('머리글')])],
+        footerParagraphs: [makePara([textRun('꼬리글')])],
+      },
+    } as any;
+    const doc = mockDoc({ sections: [section] });
+    const html = renderToHtml(doc);
+    expect(html).toContain('page-header');
+    expect(html).toContain('머리글');
+    expect(html).toContain('page-footer');
+    expect(html).toContain('꼬리글');
+  });
+
+  it('should skip empty header/footer arrays', () => {
+    const section: Section = {
+      paragraphs: [makePara([textRun('본문')])],
+      sectionProps: {
+        pageWidth: 60480,
+        pageHeight: 85680,
+        margins: { left: 8504, right: 8504, top: 5669, bottom: 4252 },
+        headerParagraphs: [],
+        footerParagraphs: [],
+      },
+    } as any;
+    const doc = mockDoc({ sections: [section] });
+    const html = renderToHtml(doc);
+    // CSS contains .page-header class but no actual <header> element should be rendered
+    expect(html).not.toContain('<header');
+    expect(html).not.toContain('<footer');
+  });
+});
+
 describe('renderToStandaloneHtml', () => {
   it('should produce a complete standalone HTML document', () => {
     const doc = mockDoc({
@@ -307,5 +584,37 @@ describe('renderToStandaloneHtml', () => {
     });
     const html = renderToStandaloneHtml(doc);
     expect(html).toContain('<title>문서 제목</title>');
+  });
+
+  it('should use default title when no text content', () => {
+    const doc = mockDoc({
+      sections: [makeSection([makePara([])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('<title>HanDoc Document</title>');
+  });
+
+  it('should skip empty text runs when finding title', () => {
+    const emptyRun: Run = {
+      charPrIDRef: null,
+      children: [{ type: 'text', content: '   ' }],
+    };
+    const doc = mockDoc({
+      sections: [makeSection([makePara([emptyRun]), makePara([textRun('실제 제목')])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    expect(html).toContain('<title>실제 제목</title>');
+  });
+
+  it('should truncate long titles to 100 characters', () => {
+    const longText = '가'.repeat(200);
+    const doc = mockDoc({
+      sections: [makeSection([makePara([textRun(longText)])])],
+    });
+    const html = renderToStandaloneHtml(doc);
+    // Title should be truncated
+    expect(html).toContain('<title>');
+    const titleMatch = html.match(/<title>(.*?)<\/title>/);
+    expect(titleMatch![1].length).toBeLessThanOrEqual(100);
   });
 });
