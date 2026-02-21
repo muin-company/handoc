@@ -277,10 +277,10 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; }
-  p { margin: 0; padding: 0; }
+  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.3; }
+  p { margin: 0 0 0.05in 0; padding: 0; }
   table { border-collapse: collapse; width: 100%; }
-  td, th { border: 1px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; }
+  td, th { border: 0.5px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
