@@ -296,4 +296,168 @@ describe('converter', () => {
 
     expect(tableCount).toBe(2);
   });
+
+  it('should preserve text color in roundtrip', async () => {
+    const original = HwpxBuilder.create()
+      .addParagraph('Red text', { color: '#ff0000' })
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    let hasColor = false;
+    state2.doc.descendants(node => {
+      if (node.isText) {
+        node.marks.forEach(mark => {
+          if (mark.type.name === 'textColor' && mark.attrs.color) {
+            hasColor = true;
+          }
+        });
+      }
+    });
+    expect(hasColor).toBe(true);
+  });
+
+  it('should preserve font family in roundtrip', async () => {
+    const original = HwpxBuilder.create()
+      .addParagraph('Custom font', { fontFamily: 'Arial' })
+      .build();
+
+    const state = await hwpxToEditorState(original);
+    const rewritten = await editorStateToHwpx(state);
+    const state2 = await hwpxToEditorState(rewritten);
+
+    let hasFont = false;
+    state2.doc.descendants(node => {
+      if (node.isText) {
+        node.marks.forEach(mark => {
+          if (mark.type.name === 'fontFamily' && mark.attrs.family) {
+            hasFont = true;
+          }
+        });
+      }
+    });
+    expect(hasFont).toBe(true);
+  });
+
+  it('should handle image with non-data URL src', () => {
+    // Create a document with image that doesn't have data: URL
+    const imageNode = hanDocSchema.nodes.image.create({
+      src: 'http://example.com/image.png',
+    });
+    const paragraph = hanDocSchema.nodes.paragraph.create();
+    const section = hanDocSchema.nodes.section.create(null, [imageNode, paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    // Should not throw, just skip the image
+    expect(() => editorStateToHwpx(state)).not.toThrow();
+  });
+
+  it('should handle image with invalid data URL', async () => {
+    const imageNode = hanDocSchema.nodes.image.create({
+      src: 'data:invalid',
+    });
+    const paragraph = hanDocSchema.nodes.paragraph.create();
+    const section = hanDocSchema.nodes.section.create(null, [imageNode, paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    // Should not throw, just skip malformed image
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with underline mark', async () => {
+    // Create manually since HwpxBuilder might not support underline
+    const underlineMark = hanDocSchema.marks.underline.create();
+    const text = hanDocSchema.text('Underlined', [underlineMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with strikeout mark', async () => {
+    const strikeoutMark = hanDocSchema.marks.strikeout.create();
+    const text = hanDocSchema.text('Strikeout', [strikeoutMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with textColor mark', async () => {
+    const colorMark = hanDocSchema.marks.textColor.create({ color: '#00ff00' });
+    const text = hanDocSchema.text('Green', [colorMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with fontFamily mark', async () => {
+    const fontMark = hanDocSchema.marks.fontFamily.create({ family: 'Courier' });
+    const text = hanDocSchema.text('Courier', [fontMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with fontSize mark', async () => {
+    const sizeMark = hanDocSchema.marks.fontSize.create({ size: '24pt' });
+    const text = hanDocSchema.text('Large', [sizeMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle paragraph with fontSize without match', async () => {
+    const sizeMark = hanDocSchema.marks.fontSize.create({ size: 'invalid' });
+    const text = hanDocSchema.text('Text', [sizeMark]);
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [text]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+
+  it('should handle empty paragraph', async () => {
+    const paragraph = hanDocSchema.nodes.paragraph.create();
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    
+    const state = { doc, schema: hanDocSchema } as any;
+
+    const result = await editorStateToHwpx(state);
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
 });

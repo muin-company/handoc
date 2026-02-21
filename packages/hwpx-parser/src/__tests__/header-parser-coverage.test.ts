@@ -61,4 +61,36 @@ describe('parseHeader - refList properties', () => {
     expect(header.refList).toBeDefined();
     expect(header.refList.charProperties.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('parses shadow without color attribute', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head"
+         xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"
+         version="1.4" secCnt="1">
+  <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
+  <hh:refList>
+    <hh:fontfaces itemCnt="0"/>
+    <hh:charProperties itemCnt="1">
+      <hh:charPr id="0" height="1000">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:shadow type="DROP" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+    </hh:charProperties>
+    <hh:tabProperties itemCnt="0"/>
+    <hh:paraProperties itemCnt="0"/>
+    <hh:styles itemCnt="0"/>
+    <hh:borderFills itemCnt="0"/>
+  </hh:refList>
+</hh:head>`;
+
+    const header = parseHeader(xml);
+    expect(header.refList.charProperties[0].shadow).toBeDefined();
+    expect(header.refList.charProperties[0].shadow!.type).toBe('DROP');
+    expect(header.refList.charProperties[0].shadow!.color).toBeUndefined();
+  });
+
+  it('throws error when no head element found', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>`;
+    expect(() => parseHeader(xml)).toThrow('No head element found');
+  });
 });

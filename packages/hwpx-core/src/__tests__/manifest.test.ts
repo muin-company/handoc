@@ -117,4 +117,24 @@ describe('parseManifest', () => {
     expect(m.items[1]).toEqual({ id: '', href: 'path.xml', mediaType: '' });
     expect(m.items[2]).toEqual({ id: '', href: '', mediaType: 'text/xml' });
   });
+
+  it('handles spine itemrefs without idref attribute', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<opf:package xmlns:opf="http://www.idpf.org/2007/opf" version="2.0">
+  <opf:metadata>
+    <opf:language>en</opf:language>
+  </opf:metadata>
+  <opf:manifest>
+    <opf:item id="s1" href="s1.xml" media-type="text/xml"/>
+  </opf:manifest>
+  <opf:spine>
+    <opf:itemref idref="s1"/>
+    <opf:itemref/>
+    <opf:itemref other="value"/>
+  </opf:spine>
+</opf:package>`;
+
+    const m = parseManifest(xml);
+    expect(m.spine).toEqual(['s1']);
+  });
 });

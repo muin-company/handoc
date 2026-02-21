@@ -273,6 +273,34 @@ describe('parseHTML', () => {
         expect(imgChild.element.attrs['height']).toBe('100');
       }
     });
+
+    it('should parse image without src or alt', () => {
+      const html = '<img/>';
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      const imgChild = para.runs[0].children[0];
+      
+      if (imgChild.type === 'inlineObject') {
+        expect(imgChild.element.attrs['src']).toBe('');
+        expect(imgChild.element.attrs['alt']).toBe('');
+        expect(imgChild.element.attrs['width']).toBeUndefined();
+        expect(imgChild.element.attrs['height']).toBeUndefined();
+      }
+    });
+
+    it('should parse image with only width', () => {
+      const html = '<img src="test.jpg" width="150"/>';
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      const imgChild = para.runs[0].children[0];
+      
+      if (imgChild.type === 'inlineObject') {
+        expect(imgChild.element.attrs['width']).toBe('150');
+        expect(imgChild.element.attrs['height']).toBeUndefined();
+      }
+    });
   });
 
   describe('div elements', () => {
@@ -437,6 +465,14 @@ describe('parseHTML', () => {
 
       const runs = sections[0].paragraphs[0].runs;
       expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Styled')))).toBe(true);
+    });
+
+    it('should handle span without style attribute', () => {
+      const html = '<p><span>Plain span text</span></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Plain span')))).toBe(true);
     });
 
     it('should handle img without alt attribute', () => {

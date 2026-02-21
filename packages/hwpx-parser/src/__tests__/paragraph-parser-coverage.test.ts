@@ -247,4 +247,33 @@ describe('parseRun edge cases', () => {
       expect(results[0].content).toBe('123');
     }
   });
+
+  it('handles inlineObject with non-object value', () => {
+    // Tests line 113 - when value is not object for INLINE_OBJECTS
+    const results = parseRunChild('pic', 'invalid');
+    expect(results).toHaveLength(1);
+    expect(results[0].type).toBe('inlineObject');
+  });
+
+  it('handles trackChange with non-object value', () => {
+    // Tests line 119-122 - when value is not object for TRACK_CHANGE_MARKS
+    const results = parseRunChild('insertBegin', 'invalid');
+    expect(results).toHaveLength(1);
+    expect(results[0].type).toBe('trackChange');
+  });
+
+  it('parses key with namespace prefix', () => {
+    // Tests line 219 - key.includes(':')
+    const node = {
+      'hp:p': {
+        '@_id': '0',
+        'hp:run': {
+          'hp:t': 'text'
+        }
+      }
+    };
+    const para = parseParagraph(node);
+    // Should parse successfully despite namespace prefixes
+    expect(para).toBeDefined();
+  });
 });

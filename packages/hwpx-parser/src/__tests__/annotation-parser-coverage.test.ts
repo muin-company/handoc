@@ -268,3 +268,35 @@ describe('extractAnnotationText', () => {
     expect(extractAnnotationText(fn)).toBe('Part 1Part 2');
   });
 });
+
+describe('annotation paragraph parsing - non-p children', () => {
+  it('skips non-paragraph children in subList', () => {
+    const el: GenericElement = {
+      tag: 'footnote',
+      attrs: {},
+      children: [{
+        tag: 'subList',
+        attrs: {},
+        children: [
+          { tag: 'metadata', attrs: {}, children: [], text: null },
+          {
+            tag: 'p',
+            attrs: {},
+            children: [{
+              tag: 'run',
+              attrs: {},
+              children: [{ tag: 't', attrs: {}, children: [], text: 'Text' }],
+              text: null,
+            }],
+            text: null,
+          },
+        ],
+        text: null,
+      }],
+      text: null,
+    };
+    const result = parseFootnote(el);
+    expect(result).not.toBeNull();
+    expect(result!.paragraphs).toHaveLength(1);
+  });
+});

@@ -92,6 +92,56 @@ describe('image commands', () => {
 
     expect(dataURL).toMatch(/^data:image\/png;base64,/);
   });
+
+  it('should return false when updating non-image node', () => {
+    const paragraph = hanDocSchema.nodes.paragraph.create(null, [
+      hanDocSchema.text('Text')
+    ]);
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    const state = EditorState.create({ schema: hanDocSchema, doc });
+
+    const command = updateImage(1, { alt: 'New alt' });
+    
+    const result = command(state);
+    expect(result).toBe(false);
+  });
+
+  it('should return false when updating at position with null node', () => {
+    const paragraph = hanDocSchema.nodes.paragraph.create();
+    const section = hanDocSchema.nodes.section.create(null, [paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    const state = EditorState.create({ schema: hanDocSchema, doc });
+
+    // Position 0 is doc node, which is not an image
+    const command = updateImage(0, { alt: 'New alt' });
+    
+    const result = command(state);
+    expect(result).toBe(false);
+  });
+
+  it('should insert image without dispatch', () => {
+    const state = EditorState.create({ schema: hanDocSchema });
+    const command = insertImage({ src: RED_PIXEL_DATA_URL });
+
+    const result = command(state);
+    expect(result).toBe(true);
+  });
+
+  it('should update image without dispatch', () => {
+    const imageNode = hanDocSchema.nodes.image.create({
+      src: RED_PIXEL_DATA_URL,
+      alt: 'Original',
+    });
+    const paragraph = hanDocSchema.nodes.paragraph.create();
+    const section = hanDocSchema.nodes.section.create(null, [imageNode, paragraph]);
+    const doc = hanDocSchema.nodes.doc.create(null, [section]);
+    const state = EditorState.create({ schema: hanDocSchema, doc });
+
+    const command = updateImage(1, { alt: 'Updated' });
+    const result = command(state);
+    expect(result).toBe(true);
+  });
 });
 
 describe('image roundtrip', () => {

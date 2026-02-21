@@ -86,4 +86,44 @@ describe('extractText', () => {
     const text = extractText(section);
     expect(text).toHaveLength(0);
   });
+
+  it('extracts text from inlineObject elements', () => {
+    const xml = `<?xml version="1.0"?>
+      <sec>
+        <p>
+          <run>
+            <pic imgIDRef="0">
+              <caption>
+                <subList>
+                  <p><run><t>Picture caption</t></run></p>
+                </subList>
+              </caption>
+            </pic>
+          </run>
+        </p>
+      </sec>`;
+    const section = parseSection(xml);
+    const text = extractText(section);
+    expect(text.some(t => t.includes('Picture caption'))).toBe(true);
+  });
+
+  it('extracts text from secPr elements', () => {
+    const xml = `<?xml version="1.0"?>
+      <sec>
+        <p>
+          <run>
+            <secPr>
+              <header>
+                <subList>
+                  <p><run><t>SecPr content</t></run></p>
+                </subList>
+              </header>
+            </secPr>
+          </run>
+        </p>
+      </sec>`;
+    const section = parseSection(xml);
+    const text = extractText(section);
+    expect(text.some(t => t.includes('SecPr content'))).toBe(true);
+  });
 });
