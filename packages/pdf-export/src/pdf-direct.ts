@@ -407,12 +407,14 @@ export async function generatePdf(
               firstLine = false;
             }
           } else if (child.type === 'table') {
-            // Table
+            // Table — with proper page break handling per row
             const tbl = parseTable(child.element);
             const szEl = child.element.children.find(c => c.tag === 'sz');
             const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : pW;
+            const contentH = pageH - mT - mB;
 
             for (const row of tbl.rows) {
+              // Calculate row height
               let rowH = 10;
               for (const cell of row.cells) {
                 const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
@@ -435,8 +437,18 @@ export async function generatePdf(
                 rowH = Math.max(rowH, h);
               }
 
-              checkBreak(rowH);
+              // Cap row height to content area (prevent infinite single-page rows)
+              if (rowH > contentH) rowH = contentH;
 
+              // Page break: if row doesn't fit, start new page
+              // BUT: don't break if we're already near the top (just started fresh page)
+              // This prevents "every row on new page" syndrome when rowH calc is inflated
+              const nearTop = (pageH - curY) < 30; // within ~30pt (~2-3 lines) of page top
+              if (curY - rowH < mB && !nearTop) {
+                newPage();
+              }
+
+              // Draw cells
               let cellX = pL;
               for (const cell of row.cells) {
                 const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : (tblW / tbl.colCnt) * cell.cellSpan.colSpan;
@@ -494,6 +506,9 @@ export async function generatePdf(
                     if (hH > 0) h = hwpToPt(hH);
                   }
                   if (w > pW) { const sc = pW / w; w = pW; h *= sc; }
+                  // Cap image height to content area
+                  const maxImgH = pageH - mT - mB;
+                  if (h > maxImgH) { const sc = maxImgH / h; h = maxImgH; w *= sc; }
 
                   checkBreak(h);
                   page.drawImage(pdfImg, { x: pL, y: curY - h, width: w, height: h });

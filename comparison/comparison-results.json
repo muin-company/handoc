@@ -1,0 +1,6141 @@
+{
+  "generated": "2026-02-21T21:28:00.173826",
+  "dpi": 150,
+  "total": 30,
+  "grades": {
+    "A": 0,
+    "B": 2,
+    "C": 4,
+    "D": 7,
+    "F": 17
+  },
+  "results": [
+    {
+      "reference": "real-world/20260220/2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/2. 제안요청서_25년 홈택스 고도화 구축(2단계) 사업.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8648,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.8147,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7726,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6527,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6332,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.6706,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6623,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.7306,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.5976,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.6022,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.6255,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.5312,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.5181,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.551,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6376,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.5829,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.5228,
+          "size_match": 0.999
+        },
+        {
+          "page": 18,
+          "ssim": 0.5378,
+          "size_match": 0.999
+        },
+        {
+          "page": 19,
+          "ssim": 0.5801,
+          "size_match": 0.999
+        },
+        {
+          "page": 20,
+          "ssim": 0.5988,
+          "size_match": 0.999
+        },
+        {
+          "page": 21,
+          "ssim": 0.6114,
+          "size_match": 0.999
+        },
+        {
+          "page": 22,
+          "ssim": 0.659,
+          "size_match": 0.999
+        },
+        {
+          "page": 23,
+          "ssim": 0.572,
+          "size_match": 0.999
+        },
+        {
+          "page": 24,
+          "ssim": 0.6523,
+          "size_match": 0.999
+        },
+        {
+          "page": 25,
+          "ssim": 0.6991,
+          "size_match": 0.999
+        },
+        {
+          "page": 26,
+          "ssim": 0.6553,
+          "size_match": 0.999
+        },
+        {
+          "page": 27,
+          "ssim": 0.6605,
+          "size_match": 0.999
+        },
+        {
+          "page": 28,
+          "ssim": 0.6482,
+          "size_match": 0.999
+        },
+        {
+          "page": 29,
+          "ssim": 0.6533,
+          "size_match": 0.999
+        },
+        {
+          "page": 30,
+          "ssim": 0.7529,
+          "size_match": 0.999
+        },
+        {
+          "page": 31,
+          "ssim": 0.6145,
+          "size_match": 0.999
+        },
+        {
+          "page": 32,
+          "ssim": 0.6376,
+          "size_match": 0.999
+        },
+        {
+          "page": 33,
+          "ssim": 0.6479,
+          "size_match": 0.999
+        },
+        {
+          "page": 34,
+          "ssim": 0.699,
+          "size_match": 0.999
+        },
+        {
+          "page": 35,
+          "ssim": 0.706,
+          "size_match": 0.999
+        },
+        {
+          "page": 36,
+          "ssim": 0.664,
+          "size_match": 0.999
+        },
+        {
+          "page": 37,
+          "ssim": 0.6765,
+          "size_match": 0.999
+        },
+        {
+          "page": 38,
+          "ssim": 0.6555,
+          "size_match": 0.999
+        },
+        {
+          "page": 39,
+          "ssim": 0.6264,
+          "size_match": 0.999
+        },
+        {
+          "page": 40,
+          "ssim": 0.6198,
+          "size_match": 0.999
+        },
+        {
+          "page": 41,
+          "ssim": 0.5447,
+          "size_match": 0.999
+        },
+        {
+          "page": 42,
+          "ssim": 0.601,
+          "size_match": 0.999
+        },
+        {
+          "page": 43,
+          "ssim": 0.5648,
+          "size_match": 0.999
+        },
+        {
+          "page": 44,
+          "ssim": 0.5876,
+          "size_match": 0.999
+        },
+        {
+          "page": 45,
+          "ssim": 0.5991,
+          "size_match": 0.999
+        },
+        {
+          "page": 46,
+          "ssim": 0.584,
+          "size_match": 0.999
+        },
+        {
+          "page": 47,
+          "ssim": 0.6136,
+          "size_match": 0.999
+        },
+        {
+          "page": 48,
+          "ssim": 0.6155,
+          "size_match": 0.999
+        },
+        {
+          "page": 49,
+          "ssim": 0.6279,
+          "size_match": 0.999
+        },
+        {
+          "page": 50,
+          "ssim": 0.5954,
+          "size_match": 0.999
+        },
+        {
+          "page": 51,
+          "ssim": 0.6386,
+          "size_match": 0.999
+        },
+        {
+          "page": 52,
+          "ssim": 0.6449,
+          "size_match": 0.999
+        },
+        {
+          "page": 53,
+          "ssim": 0.6996,
+          "size_match": 0.999
+        },
+        {
+          "page": 54,
+          "ssim": 0.6892,
+          "size_match": 0.999
+        },
+        {
+          "page": 55,
+          "ssim": 0.6606,
+          "size_match": 0.999
+        },
+        {
+          "page": 56,
+          "ssim": 0.6866,
+          "size_match": 0.999
+        },
+        {
+          "page": 57,
+          "ssim": 0.6726,
+          "size_match": 0.999
+        },
+        {
+          "page": 58,
+          "ssim": 0.6924,
+          "size_match": 0.999
+        },
+        {
+          "page": 59,
+          "ssim": 0.6573,
+          "size_match": 0.999
+        },
+        {
+          "page": 60,
+          "ssim": 0.6407,
+          "size_match": 0.999
+        },
+        {
+          "page": 61,
+          "ssim": 0.6455,
+          "size_match": 0.999
+        },
+        {
+          "page": 62,
+          "ssim": 0.6441,
+          "size_match": 0.999
+        },
+        {
+          "page": 63,
+          "ssim": 0.6884,
+          "size_match": 0.999
+        },
+        {
+          "page": 64,
+          "ssim": 0.6799,
+          "size_match": 0.999
+        },
+        {
+          "page": 65,
+          "ssim": 0.7003,
+          "size_match": 0.999
+        },
+        {
+          "page": 66,
+          "ssim": 0.7003,
+          "size_match": 0.999
+        },
+        {
+          "page": 67,
+          "ssim": 0.6848,
+          "size_match": 0.999
+        },
+        {
+          "page": 68,
+          "ssim": 0.6764,
+          "size_match": 0.999
+        },
+        {
+          "page": 69,
+          "ssim": 0.6348,
+          "size_match": 0.999
+        },
+        {
+          "page": 70,
+          "ssim": 0.6529,
+          "size_match": 0.999
+        },
+        {
+          "page": 71,
+          "ssim": 0.6509,
+          "size_match": 0.999
+        },
+        {
+          "page": 72,
+          "ssim": 0.6481,
+          "size_match": 0.999
+        },
+        {
+          "page": 73,
+          "ssim": 0.6278,
+          "size_match": 0.999
+        },
+        {
+          "page": 74,
+          "ssim": 0.6478,
+          "size_match": 0.999
+        },
+        {
+          "page": 75,
+          "ssim": 0.6524,
+          "size_match": 0.999
+        },
+        {
+          "page": 76,
+          "ssim": 0.6622,
+          "size_match": 0.999
+        },
+        {
+          "page": 77,
+          "ssim": 0.6344,
+          "size_match": 0.999
+        },
+        {
+          "page": 78,
+          "ssim": 0.757,
+          "size_match": 0.999
+        },
+        {
+          "page": 79,
+          "ssim": 0.644,
+          "size_match": 0.999
+        },
+        {
+          "page": 80,
+          "ssim": 0.6327,
+          "size_match": 0.999
+        },
+        {
+          "page": 81,
+          "ssim": 0.6613,
+          "size_match": 0.999
+        },
+        {
+          "page": 82,
+          "ssim": 0.7118,
+          "size_match": 0.999
+        },
+        {
+          "page": 83,
+          "ssim": 0.6571,
+          "size_match": 0.999
+        },
+        {
+          "page": 84,
+          "ssim": 0.6438,
+          "size_match": 0.999
+        },
+        {
+          "page": 85,
+          "ssim": 0.6012,
+          "size_match": 0.999
+        },
+        {
+          "page": 86,
+          "ssim": 0.6459,
+          "size_match": 0.999
+        },
+        {
+          "page": 87,
+          "ssim": 0.7191,
+          "size_match": 0.999
+        },
+        {
+          "page": 88,
+          "ssim": 0.6408,
+          "size_match": 0.999
+        },
+        {
+          "page": 89,
+          "ssim": 0.7119,
+          "size_match": 0.999
+        },
+        {
+          "page": 90,
+          "ssim": 0.6271,
+          "size_match": 0.999
+        },
+        {
+          "page": 91,
+          "ssim": 0.734,
+          "size_match": 0.999
+        },
+        {
+          "page": 92,
+          "ssim": 0.6416,
+          "size_match": 0.999
+        },
+        {
+          "page": 93,
+          "ssim": 0.609,
+          "size_match": 0.999
+        },
+        {
+          "page": 94,
+          "ssim": 0.6409,
+          "size_match": 0.999
+        },
+        {
+          "page": 95,
+          "ssim": 0.6307,
+          "size_match": 0.999
+        },
+        {
+          "page": 96,
+          "ssim": 0.5874,
+          "size_match": 0.999
+        },
+        {
+          "page": 97,
+          "ssim": 0.662,
+          "size_match": 0.999
+        },
+        {
+          "page": 98,
+          "ssim": 0.631,
+          "size_match": 0.999
+        },
+        {
+          "page": 99,
+          "ssim": 0.6172,
+          "size_match": 0.999
+        },
+        {
+          "page": 100,
+          "ssim": 0.6418,
+          "size_match": 0.999
+        },
+        {
+          "page": 101,
+          "ssim": 0.6064,
+          "size_match": 0.999
+        },
+        {
+          "page": 102,
+          "ssim": 0.6167,
+          "size_match": 0.999
+        },
+        {
+          "page": 103,
+          "ssim": 0.6165,
+          "size_match": 0.999
+        },
+        {
+          "page": 104,
+          "ssim": 0.6251,
+          "size_match": 0.999
+        },
+        {
+          "page": 105,
+          "ssim": 0.615,
+          "size_match": 0.999
+        },
+        {
+          "page": 106,
+          "ssim": 0.6688,
+          "size_match": 0.999
+        },
+        {
+          "page": 107,
+          "ssim": 0.6216,
+          "size_match": 0.999
+        },
+        {
+          "page": 108,
+          "ssim": 0.5981,
+          "size_match": 0.999
+        },
+        {
+          "page": 109,
+          "ssim": 0.6126,
+          "size_match": 0.999
+        },
+        {
+          "page": 110,
+          "ssim": 0.6374,
+          "size_match": 0.999
+        },
+        {
+          "page": 111,
+          "ssim": 0.6782,
+          "size_match": 0.999
+        },
+        {
+          "page": 112,
+          "ssim": 0.6471,
+          "size_match": 0.999
+        },
+        {
+          "page": 113,
+          "ssim": 0.6848,
+          "size_match": 0.999
+        },
+        {
+          "page": 114,
+          "ssim": 0.7115,
+          "size_match": 0.999
+        },
+        {
+          "page": 115,
+          "ssim": 0.6521,
+          "size_match": 0.999
+        },
+        {
+          "page": 116,
+          "ssim": 0.6645,
+          "size_match": 0.999
+        },
+        {
+          "page": 117,
+          "ssim": 0.6955,
+          "size_match": 0.999
+        },
+        {
+          "page": 118,
+          "ssim": 0.6464,
+          "size_match": 0.999
+        },
+        {
+          "page": 119,
+          "ssim": 0.6497,
+          "size_match": 0.999
+        },
+        {
+          "page": 120,
+          "ssim": 0.6443,
+          "size_match": 0.999
+        },
+        {
+          "page": 121,
+          "ssim": 0.6331,
+          "size_match": 0.999
+        },
+        {
+          "page": 122,
+          "ssim": 0.6636,
+          "size_match": 0.999
+        },
+        {
+          "page": 123,
+          "ssim": 0.6506,
+          "size_match": 0.999
+        },
+        {
+          "page": 124,
+          "ssim": 0.6156,
+          "size_match": 0.999
+        },
+        {
+          "page": 125,
+          "ssim": 0.628,
+          "size_match": 0.999
+        },
+        {
+          "page": 126,
+          "ssim": 0.5984,
+          "size_match": 0.999
+        },
+        {
+          "page": 127,
+          "ssim": 0.5952,
+          "size_match": 0.999
+        },
+        {
+          "page": 128,
+          "ssim": 0.6204,
+          "size_match": 0.999
+        },
+        {
+          "page": 129,
+          "ssim": 0.6004,
+          "size_match": 0.999
+        },
+        {
+          "page": 130,
+          "ssim": 0.709,
+          "size_match": 0.999
+        },
+        {
+          "page": 131,
+          "ssim": 0.6424,
+          "size_match": 0.999
+        },
+        {
+          "page": 132,
+          "ssim": 0.678,
+          "size_match": 0.999
+        },
+        {
+          "page": 133,
+          "ssim": 0.6687,
+          "size_match": 0.999
+        },
+        {
+          "page": 134,
+          "ssim": 0.6473,
+          "size_match": 0.999
+        },
+        {
+          "page": 135,
+          "ssim": 0.666,
+          "size_match": 0.999
+        },
+        {
+          "page": 136,
+          "ssim": 0.6641,
+          "size_match": 0.999
+        },
+        {
+          "page": 137,
+          "ssim": 0.6962,
+          "size_match": 0.999
+        },
+        {
+          "page": 138,
+          "ssim": 0.6756,
+          "size_match": 0.999
+        },
+        {
+          "page": 139,
+          "ssim": 0.6282,
+          "size_match": 0.999
+        },
+        {
+          "page": 140,
+          "ssim": 0.6583,
+          "size_match": 0.999
+        },
+        {
+          "page": 141,
+          "ssim": 0.6609,
+          "size_match": 0.999
+        },
+        {
+          "page": 142,
+          "ssim": 0.6231,
+          "size_match": 0.999
+        },
+        {
+          "page": 143,
+          "ssim": 0.6732,
+          "size_match": 0.999
+        },
+        {
+          "page": 144,
+          "ssim": 0.6359,
+          "size_match": 0.999
+        },
+        {
+          "page": 145,
+          "ssim": 0.5906,
+          "size_match": 0.999
+        },
+        {
+          "page": 146,
+          "ssim": 0.6513,
+          "size_match": 0.999
+        },
+        {
+          "page": 147,
+          "ssim": 0.6255,
+          "size_match": 0.999
+        },
+        {
+          "page": 148,
+          "ssim": 0.6473,
+          "size_match": 0.999
+        },
+        {
+          "page": 149,
+          "ssim": 0.6399,
+          "size_match": 0.999
+        },
+        {
+          "page": 150,
+          "ssim": 0.6661,
+          "size_match": 0.999
+        },
+        {
+          "page": 151,
+          "ssim": 0.6593,
+          "size_match": 0.999
+        },
+        {
+          "page": 152,
+          "ssim": 0.6928,
+          "size_match": 0.999
+        },
+        {
+          "page": 153,
+          "ssim": 0.6659,
+          "size_match": 0.999
+        },
+        {
+          "page": 154,
+          "ssim": 0.6763,
+          "size_match": 0.999
+        },
+        {
+          "page": 155,
+          "ssim": 0.6328,
+          "size_match": 0.999
+        },
+        {
+          "page": 156,
+          "ssim": 0.6789,
+          "size_match": 0.999
+        },
+        {
+          "page": 157,
+          "ssim": 0.6584,
+          "size_match": 0.999
+        },
+        {
+          "page": 158,
+          "ssim": 0.6778,
+          "size_match": 0.999
+        },
+        {
+          "page": 159,
+          "ssim": 0.6588,
+          "size_match": 0.999
+        },
+        {
+          "page": 160,
+          "ssim": 0.651,
+          "size_match": 0.999
+        },
+        {
+          "page": 161,
+          "ssim": 0.6667,
+          "size_match": 0.999
+        },
+        {
+          "page": 162,
+          "ssim": 0.7411,
+          "size_match": 0.999
+        },
+        {
+          "page": 163,
+          "ssim": 0.6774,
+          "size_match": 0.999
+        },
+        {
+          "page": 164,
+          "ssim": 0.6764,
+          "size_match": 0.999
+        },
+        {
+          "page": 165,
+          "ssim": 0.6675,
+          "size_match": 0.999
+        },
+        {
+          "page": 166,
+          "ssim": 0.6489,
+          "size_match": 0.999
+        },
+        {
+          "page": 167,
+          "ssim": 0.6383,
+          "size_match": 0.999
+        },
+        {
+          "page": 168,
+          "ssim": 0.6336,
+          "size_match": 0.999
+        },
+        {
+          "page": 169,
+          "ssim": 0.6454,
+          "size_match": 0.999
+        },
+        {
+          "page": 170,
+          "ssim": 0.6278,
+          "size_match": 0.999
+        },
+        {
+          "page": 171,
+          "ssim": 0.647,
+          "size_match": 0.999
+        },
+        {
+          "page": 172,
+          "ssim": 0.6149,
+          "size_match": 0.999
+        },
+        {
+          "page": 173,
+          "ssim": 0.6502,
+          "size_match": 0.999
+        },
+        {
+          "page": 174,
+          "ssim": 0.6542,
+          "size_match": 0.999
+        },
+        {
+          "page": 175,
+          "ssim": 0.6604,
+          "size_match": 0.999
+        },
+        {
+          "page": 176,
+          "ssim": 0.6155,
+          "size_match": 0.999
+        },
+        {
+          "page": 177,
+          "ssim": 0.6783,
+          "size_match": 0.999
+        },
+        {
+          "page": 178,
+          "ssim": 0.6366,
+          "size_match": 0.999
+        },
+        {
+          "page": 179,
+          "ssim": 0.6379,
+          "size_match": 0.999
+        },
+        {
+          "page": 180,
+          "ssim": 0.6257,
+          "size_match": 0.999
+        },
+        {
+          "page": 181,
+          "ssim": 0.6159,
+          "size_match": 0.999
+        },
+        {
+          "page": 182,
+          "ssim": 0.6483,
+          "size_match": 0.999
+        },
+        {
+          "page": 183,
+          "ssim": 0.6207,
+          "size_match": 0.999
+        },
+        {
+          "page": 184,
+          "ssim": 0.6284,
+          "size_match": 0.999
+        },
+        {
+          "page": 185,
+          "ssim": 0.6414,
+          "size_match": 0.999
+        },
+        {
+          "page": 186,
+          "ssim": 0.6188,
+          "size_match": 0.999
+        },
+        {
+          "page": 187,
+          "ssim": 0.611,
+          "size_match": 0.999
+        },
+        {
+          "page": 188,
+          "ssim": 0.6117,
+          "size_match": 0.999
+        },
+        {
+          "page": 189,
+          "ssim": 0.6061,
+          "size_match": 0.999
+        },
+        {
+          "page": 190,
+          "ssim": 0.6323,
+          "size_match": 0.999
+        },
+        {
+          "page": 191,
+          "ssim": 0.6131,
+          "size_match": 0.999
+        },
+        {
+          "page": 192,
+          "ssim": 0.6348,
+          "size_match": 0.999
+        },
+        {
+          "page": 193,
+          "ssim": 0.5799,
+          "size_match": 0.999
+        },
+        {
+          "page": 194,
+          "ssim": 0.6262,
+          "size_match": 0.999
+        },
+        {
+          "page": 195,
+          "ssim": 0.6211,
+          "size_match": 0.999
+        },
+        {
+          "page": 196,
+          "ssim": 0.6395,
+          "size_match": 0.999
+        },
+        {
+          "page": 197,
+          "ssim": 0.6383,
+          "size_match": 0.999
+        },
+        {
+          "page": 198,
+          "ssim": 0.6249,
+          "size_match": 0.999
+        },
+        {
+          "page": 199,
+          "ssim": 0.6527,
+          "size_match": 0.999
+        },
+        {
+          "page": 200,
+          "ssim": 0.5867,
+          "size_match": 0.999
+        },
+        {
+          "page": 201,
+          "ssim": 0.5667,
+          "size_match": 0.999
+        },
+        {
+          "page": 202,
+          "ssim": 0.6203,
+          "size_match": 0.999
+        },
+        {
+          "page": 203,
+          "ssim": 0.6323,
+          "size_match": 0.999
+        },
+        {
+          "page": 204,
+          "ssim": 0.6144,
+          "size_match": 0.999
+        },
+        {
+          "page": 205,
+          "ssim": 0.5791,
+          "size_match": 0.999
+        },
+        {
+          "page": 206,
+          "ssim": 0.7323,
+          "size_match": 0.999
+        },
+        {
+          "page": 207,
+          "ssim": 0.6486,
+          "size_match": 0.999
+        },
+        {
+          "page": 208,
+          "ssim": 0.7398,
+          "size_match": 0.999
+        },
+        {
+          "page": 209,
+          "ssim": 0.7018,
+          "size_match": 0.999
+        },
+        {
+          "page": 210,
+          "ssim": 0.6352,
+          "size_match": 0.999
+        },
+        {
+          "page": 211,
+          "ssim": 0.662,
+          "size_match": 0.999
+        },
+        {
+          "page": 212,
+          "ssim": 0.652,
+          "size_match": 0.999
+        },
+        {
+          "page": 213,
+          "ssim": 0.8445,
+          "size_match": 0.999
+        },
+        {
+          "page": 214,
+          "ssim": 0.6464,
+          "size_match": 0.999
+        },
+        {
+          "page": 215,
+          "ssim": 0.5914,
+          "size_match": 0.999
+        },
+        {
+          "page": 216,
+          "ssim": 0.5788,
+          "size_match": 0.999
+        },
+        {
+          "page": 217,
+          "ssim": 0.6313,
+          "size_match": 0.999
+        },
+        {
+          "page": 218,
+          "ssim": 0.5315,
+          "size_match": 0.999
+        },
+        {
+          "page": 219,
+          "ssim": 0.6005,
+          "size_match": 0.999
+        },
+        {
+          "page": 220,
+          "ssim": 0.6141,
+          "size_match": 0.999
+        },
+        {
+          "page": 221,
+          "ssim": 0.5883,
+          "size_match": 0.999
+        },
+        {
+          "page": 222,
+          "ssim": 0.5605,
+          "size_match": 0.999
+        },
+        {
+          "page": 223,
+          "ssim": 0.6847,
+          "size_match": 0.999
+        },
+        {
+          "page": 224,
+          "ssim": 0.6377,
+          "size_match": 0.999
+        },
+        {
+          "page": 225,
+          "ssim": 0.7567,
+          "size_match": 0.999
+        },
+        {
+          "page": 226,
+          "ssim": 0.7437,
+          "size_match": 0.999
+        },
+        {
+          "page": 227,
+          "ssim": 0.7425,
+          "size_match": 0.999
+        },
+        {
+          "page": 228,
+          "ssim": 0.6473,
+          "size_match": 0.999
+        },
+        {
+          "page": 229,
+          "ssim": 0.6845,
+          "size_match": 0.999
+        },
+        {
+          "page": 230,
+          "ssim": 0.6858,
+          "size_match": 0.999
+        },
+        {
+          "page": 231,
+          "ssim": 0.5977,
+          "size_match": 0.999
+        },
+        {
+          "page": 232,
+          "ssim": 0.5643,
+          "size_match": 0.999
+        },
+        {
+          "page": 233,
+          "ssim": 0.5611,
+          "size_match": 0.999
+        },
+        {
+          "page": 234,
+          "ssim": 0.6296,
+          "size_match": 0.999
+        },
+        {
+          "page": 235,
+          "ssim": 0.6681,
+          "size_match": 0.999
+        },
+        {
+          "page": 236,
+          "ssim": 0.7226,
+          "size_match": 0.999
+        },
+        {
+          "page": 237,
+          "ssim": 0.5899,
+          "size_match": 0.999
+        },
+        {
+          "page": 238,
+          "ssim": 0.5624,
+          "size_match": 0.999
+        },
+        {
+          "page": 239,
+          "ssim": 0.5476,
+          "size_match": 0.999
+        },
+        {
+          "page": 240,
+          "ssim": 0.6041,
+          "size_match": 0.999
+        },
+        {
+          "page": 241,
+          "ssim": 0.6077,
+          "size_match": 0.999
+        },
+        {
+          "page": 242,
+          "ssim": 0.6068,
+          "size_match": 0.999
+        },
+        {
+          "page": 243,
+          "ssim": 0.6209,
+          "size_match": 0.999
+        },
+        {
+          "page": 244,
+          "ssim": 0.6524,
+          "size_match": 0.999
+        },
+        {
+          "page": 245,
+          "ssim": 0.6679,
+          "size_match": 0.999
+        },
+        {
+          "page": 246,
+          "ssim": 0.6906,
+          "size_match": 0.999
+        },
+        {
+          "page": 247,
+          "ssim": 0.6336,
+          "size_match": 0.999
+        },
+        {
+          "page": 248,
+          "ssim": 0.667,
+          "size_match": 0.999
+        },
+        {
+          "page": 249,
+          "ssim": 0.6818,
+          "size_match": 0.999
+        },
+        {
+          "page": 250,
+          "ssim": 0.6485,
+          "size_match": 0.999
+        },
+        {
+          "page": 251,
+          "ssim": 0.6971,
+          "size_match": 0.999
+        },
+        {
+          "page": 252,
+          "ssim": 0.5731,
+          "size_match": 0.999
+        },
+        {
+          "page": 253,
+          "ssim": 0.633,
+          "size_match": 0.999
+        },
+        {
+          "page": 254,
+          "ssim": 0.611,
+          "size_match": 0.999
+        },
+        {
+          "page": 255,
+          "ssim": 0.6109,
+          "size_match": 0.999
+        },
+        {
+          "page": 256,
+          "ssim": 0.6444,
+          "size_match": 0.999
+        },
+        {
+          "page": 257,
+          "ssim": 0.6238,
+          "size_match": 0.999
+        },
+        {
+          "page": 258,
+          "ssim": 0.5881,
+          "size_match": 0.999
+        },
+        {
+          "page": 259,
+          "ssim": 0.6175,
+          "size_match": 0.999
+        },
+        {
+          "page": 260,
+          "ssim": 0.6038,
+          "size_match": 0.999
+        },
+        {
+          "page": 261,
+          "ssim": 0.6066,
+          "size_match": 0.999
+        },
+        {
+          "page": 262,
+          "ssim": 0.5503,
+          "size_match": 0.999
+        },
+        {
+          "page": 263,
+          "ssim": 0.5961,
+          "size_match": 0.999
+        },
+        {
+          "page": 264,
+          "ssim": 0.5205,
+          "size_match": 0.999
+        },
+        {
+          "page": 265,
+          "ssim": 0.5844,
+          "size_match": 0.999
+        },
+        {
+          "page": 266,
+          "ssim": 0.702,
+          "size_match": 0.999
+        },
+        {
+          "page": 267,
+          "ssim": 0.6152,
+          "size_match": 0.999
+        },
+        {
+          "page": 268,
+          "ssim": 0.783,
+          "size_match": 0.999
+        },
+        {
+          "page": 269,
+          "ssim": 0.6332,
+          "size_match": 0.999
+        },
+        {
+          "page": 270,
+          "ssim": 0.5629,
+          "size_match": 0.999
+        },
+        {
+          "page": 271,
+          "ssim": 0.6406,
+          "size_match": 0.999
+        },
+        {
+          "page": 272,
+          "ssim": 0.6242,
+          "size_match": 0.999
+        },
+        {
+          "page": 273,
+          "ssim": 0.7398,
+          "size_match": 0.999
+        },
+        {
+          "page": 274,
+          "ssim": 0.7814,
+          "size_match": 0.999
+        },
+        {
+          "page": 275,
+          "ssim": 0.6716,
+          "size_match": 0.999
+        },
+        {
+          "page": 276,
+          "ssim": 0.6257,
+          "size_match": 0.999
+        },
+        {
+          "page": 277,
+          "ssim": 0.848,
+          "size_match": 0.999
+        },
+        {
+          "page": 278,
+          "ssim": 0.8284,
+          "size_match": 0.999
+        },
+        {
+          "page": 279,
+          "ssim": 0.7165,
+          "size_match": 0.999
+        },
+        {
+          "page": 280,
+          "ssim": 0.7,
+          "size_match": 0.999
+        },
+        {
+          "page": 281,
+          "ssim": 0.6251,
+          "size_match": 0.999
+        },
+        {
+          "page": 282,
+          "ssim": 0.7148,
+          "size_match": 0.999
+        },
+        {
+          "page": 283,
+          "ssim": 0.6293,
+          "size_match": 0.999
+        },
+        {
+          "page": 284,
+          "ssim": 0.6876,
+          "size_match": 0.999
+        },
+        {
+          "page": 285,
+          "ssim": 0.5477,
+          "size_match": 0.999
+        },
+        {
+          "page": 286,
+          "ssim": 0.5407,
+          "size_match": 0.999
+        },
+        {
+          "page": 287,
+          "ssim": 0.6307,
+          "size_match": 0.999
+        },
+        {
+          "page": 288,
+          "ssim": 0.634,
+          "size_match": 0.999
+        },
+        {
+          "page": 289,
+          "ssim": 0.5435,
+          "size_match": 0.999
+        },
+        {
+          "page": 290,
+          "ssim": 0.6391,
+          "size_match": 0.999
+        },
+        {
+          "page": 291,
+          "ssim": 0.5804,
+          "size_match": 0.999
+        },
+        {
+          "page": 292,
+          "ssim": 0.5446,
+          "size_match": 0.999
+        },
+        {
+          "page": 293,
+          "ssim": 0.5863,
+          "size_match": 0.999
+        },
+        {
+          "page": 294,
+          "ssim": 0.6745,
+          "size_match": 0.999
+        },
+        {
+          "page": 295,
+          "ssim": 0.5475,
+          "size_match": 0.999
+        },
+        {
+          "page": 296,
+          "ssim": 0.8881,
+          "size_match": 0.999
+        },
+        {
+          "page": 297,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 298,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        }
+      ],
+      "avg_ssim": 0.64,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 298,
+      "test_pages": 296
+    },
+    {
+      "reference": "real-world/20260220/230403 공공기관의 데이터베이스 표준화 지침 개정 전문.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/230403 공공기관의 데이터베이스 표준화 지침 개정 전문.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7317,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6169,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6749,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.7062,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6812,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.7152,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6582,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.6488,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.7141,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.6552,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.693,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.678,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.7031,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.6988,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6527,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.6474,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.5879,
+          "size_match": 0.999
+        },
+        {
+          "page": 18,
+          "ssim": 0.5802,
+          "size_match": 0.999
+        },
+        {
+          "page": 19,
+          "ssim": 0.5981,
+          "size_match": 0.999
+        },
+        {
+          "page": 20,
+          "ssim": 0.5722,
+          "size_match": 0.999
+        },
+        {
+          "page": 21,
+          "ssim": 0.6156,
+          "size_match": 0.999
+        },
+        {
+          "page": 22,
+          "ssim": 0.5725,
+          "size_match": 0.999
+        },
+        {
+          "page": 23,
+          "ssim": 0.5785,
+          "size_match": 0.999
+        },
+        {
+          "page": 24,
+          "ssim": 0.6205,
+          "size_match": 0.999
+        },
+        {
+          "page": 25,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 26,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 24,
+      "test_pages": 26
+    },
+    {
+      "reference": "real-world/20260220/[별지 1] 인증평가 업무를 수행하는 직원 보유현황(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별지 1] 인증평가 업무를 수행하는 직원 보유현황(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7262,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3631,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 1,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/20260220/[별지 2] 취약점 점검 및 침투테스트 동의서(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별지 2] 취약점 점검 및 침투테스트 동의서(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6552,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.7359,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 6,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 7,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 8,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 9,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 10,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 11,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 12,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 13,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 14,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.0994,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 2,
+      "test_pages": 14
+    },
+    {
+      "reference": "real-world/20260220/[별지 3] 클라우드컴퓨팅서비스 보안인증 명세서(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별지 3] 클라우드컴퓨팅서비스 보안인증 명세서(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7038,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.7038,
+      "min_ssim": 0.7038,
+      "grade": "C",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/[별지 7] 이의신청서(클라우드컴퓨팅서비스 보안인증에 관한 고시) 2.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별지 7] 이의신청서(클라우드컴퓨팅서비스 보안인증에 관한 고시) 2.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7163,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3582,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 1,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/20260220/[별표 1] 관리적 보호조치(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별표 1] 관리적 보호조치(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5746,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5597,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.5537,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6649,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 6,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3921,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 4,
+      "test_pages": 6
+    },
+    {
+      "reference": "real-world/20260220/[별표 6] 업무수행 요건·능력 심사에 관한 세부기준(제4조¸ 제6조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별표 6] 업무수행 요건·능력 심사에 관한 세부기준(제4조¸ 제6조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6772,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.678,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6646,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.505,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 3,
+      "test_pages": 4
+    },
+    {
+      "reference": "real-world/20260220/[별표 7] 인증평가 일부 생략의 범위(제11조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별표 7] 인증평가 일부 생략의 범위(제11조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6524,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6155,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6128,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4702,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 3,
+      "test_pages": 4
+    },
+    {
+      "reference": "real-world/20260220/[별표 8] 인증 수수료 산정 및 평가원 보수 기준(제12조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별표 8] 인증 수수료 산정 및 평가원 보수 기준(제12조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7923,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.7923,
+      "min_ssim": 0.7923,
+      "grade": "C",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/[별표 9] 인증평가팀 자격 요건 및 구성기준(제16조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/[별표 9] 인증평가팀 자격 요건 및 구성기준(제16조 관련)(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8053,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.8053,
+      "min_ssim": 0.8053,
+      "grade": "C",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/가곡.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/가곡.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8385,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.8385,
+      "min_ssim": 0.8385,
+      "grade": "C",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/붙임 1. 2025년 고성능 컴퓨팅 지원 사용자 모집 공고(제2025-0169호)_v7.0.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/붙임 1. 2025년 고성능 컴퓨팅 지원 사용자 모집 공고(제2025-0169호)_v7.0.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7197,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6745,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.8169,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.5528,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 3,
+      "test_pages": 4
+    },
+    {
+      "reference": "real-world/20260220/붙임1. 2023년 ICT표준화포럼 전략 워크숍 프로그램(안).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/붙임1. 2023년 ICT표준화포럼 전략 워크숍 프로그램(안).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5419,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.5419,
+      "min_ssim": 0.5419,
+      "grade": "D",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/소프트웨어사업_계약_및_관리감독에_관한_지침_개정_전문.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/소프트웨어사업_계약_및_관리감독에_관한_지침_개정_전문.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8074,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.7258,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7181,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.7269,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.7276,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.7333,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.7341,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.7036,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.7071,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.7151,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.7483,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.7185,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.7179,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.7227,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.7264,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.7357,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.7296,
+          "size_match": 0.999
+        },
+        {
+          "page": 18,
+          "ssim": 0.7152,
+          "size_match": 0.999
+        },
+        {
+          "page": 19,
+          "ssim": 0.722,
+          "size_match": 0.999
+        },
+        {
+          "page": 20,
+          "ssim": 0.7432,
+          "size_match": 0.999
+        },
+        {
+          "page": 21,
+          "ssim": 0.7191,
+          "size_match": 0.999
+        },
+        {
+          "page": 22,
+          "ssim": 0.7246,
+          "size_match": 0.999
+        },
+        {
+          "page": 23,
+          "ssim": 0.7322,
+          "size_match": 0.999
+        },
+        {
+          "page": 24,
+          "ssim": 0.7227,
+          "size_match": 0.999
+        },
+        {
+          "page": 25,
+          "ssim": 0.733,
+          "size_match": 0.999
+        },
+        {
+          "page": 26,
+          "ssim": 0.7892,
+          "size_match": 0.999
+        },
+        {
+          "page": 27,
+          "ssim": 0.8674,
+          "size_match": 0.999
+        },
+        {
+          "page": 28,
+          "ssim": 0.6954,
+          "size_match": 0.999
+        },
+        {
+          "page": 29,
+          "ssim": 0.6749,
+          "size_match": 0.999
+        },
+        {
+          "page": 30,
+          "ssim": 0.7095,
+          "size_match": 0.999
+        },
+        {
+          "page": 31,
+          "ssim": 0.6269,
+          "size_match": 0.999
+        },
+        {
+          "page": 32,
+          "ssim": 0.5728,
+          "size_match": 0.999
+        },
+        {
+          "page": 33,
+          "ssim": 0.5715,
+          "size_match": 0.999
+        },
+        {
+          "page": 34,
+          "ssim": 0.5997,
+          "size_match": 0.999
+        },
+        {
+          "page": 35,
+          "ssim": 0.7118,
+          "size_match": 0.999
+        },
+        {
+          "page": 36,
+          "ssim": 0.6286,
+          "size_match": 0.999
+        },
+        {
+          "page": 37,
+          "ssim": 0.7315,
+          "size_match": 0.999
+        },
+        {
+          "page": 38,
+          "ssim": 0.7557,
+          "size_match": 0.999
+        },
+        {
+          "page": 39,
+          "ssim": 0.7475,
+          "size_match": 0.999
+        },
+        {
+          "page": 40,
+          "ssim": 0.7587,
+          "size_match": 0.999
+        },
+        {
+          "page": 41,
+          "ssim": 0.8122,
+          "size_match": 0.999
+        },
+        {
+          "page": 42,
+          "ssim": 0.7854,
+          "size_match": 0.999
+        },
+        {
+          "page": 43,
+          "ssim": 0.7108,
+          "size_match": 0.999
+        },
+        {
+          "page": 44,
+          "ssim": 0.7677,
+          "size_match": 0.999
+        },
+        {
+          "page": 45,
+          "ssim": 0.826,
+          "size_match": 0.999
+        },
+        {
+          "page": 46,
+          "ssim": 0.6775,
+          "size_match": 0.999
+        },
+        {
+          "page": 47,
+          "ssim": 0.7041,
+          "size_match": 0.999
+        },
+        {
+          "page": 48,
+          "ssim": 0.6931,
+          "size_match": 0.999
+        },
+        {
+          "page": 49,
+          "ssim": 0.7141,
+          "size_match": 0.999
+        },
+        {
+          "page": 50,
+          "ssim": 0.7471,
+          "size_match": 0.999
+        },
+        {
+          "page": 51,
+          "ssim": 0.719,
+          "size_match": 0.999
+        },
+        {
+          "page": 52,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 53,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 54,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 55,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 56,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 57,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 58,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6346,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 51,
+      "test_pages": 58
+    },
+    {
+      "reference": "real-world/20260220/종묘제레악.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/종묘제레악.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8601,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.8601,
+      "min_ssim": 0.8601,
+      "grade": "B",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/참석자 사전 의견서.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/참석자 사전 의견서.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8956,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.8956,
+      "min_ssim": 0.8956,
+      "grade": "B",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/20260220/취약점_점검_및_침투테스트_동의서_사업자명 2.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/20260220/취약점_점검_및_침투테스트_동의서_사업자명 2.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6476,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.7348,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 6,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 7,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 8,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 9,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 10,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 11,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 12,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 13,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 14,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.0987,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 2,
+      "test_pages": 14
+    },
+    {
+      "reference": "real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(독후활동반).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(독후활동반).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6657,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3328,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 1,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(동아리명).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(동아리명).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7405,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3703,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 1,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/education/(역곡중학교) 2025학년도 2학기 역곡중학교 교수학습 및 평가 운영 계획서 검토본.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/(역곡중학교) 2025학년도 2학기 역곡중학교 교수학습 및 평가 운영 계획서 검토본.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.7531,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5285,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.4397,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.4432,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.4575,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.5749,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6624,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.5239,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.4454,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.4718,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.5282,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.4637,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.5254,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.5825,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.5753,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.4526,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.5435,
+          "size_match": 0.999
+        },
+        {
+          "page": 18,
+          "ssim": 0.5665,
+          "size_match": 0.999
+        },
+        {
+          "page": 19,
+          "ssim": 0.4929,
+          "size_match": 0.999
+        },
+        {
+          "page": 20,
+          "ssim": 0.5645,
+          "size_match": 0.999
+        },
+        {
+          "page": 21,
+          "ssim": 0.454,
+          "size_match": 0.999
+        },
+        {
+          "page": 22,
+          "ssim": 0.5034,
+          "size_match": 0.999
+        },
+        {
+          "page": 23,
+          "ssim": 0.5501,
+          "size_match": 0.999
+        },
+        {
+          "page": 24,
+          "ssim": 0.6325,
+          "size_match": 0.999
+        },
+        {
+          "page": 25,
+          "ssim": 0.5742,
+          "size_match": 0.999
+        },
+        {
+          "page": 26,
+          "ssim": 0.5646,
+          "size_match": 0.999
+        },
+        {
+          "page": 27,
+          "ssim": 0.5202,
+          "size_match": 0.999
+        },
+        {
+          "page": 28,
+          "ssim": 0.5411,
+          "size_match": 0.999
+        },
+        {
+          "page": 29,
+          "ssim": 0.5841,
+          "size_match": 0.999
+        },
+        {
+          "page": 30,
+          "ssim": 0.5618,
+          "size_match": 0.999
+        },
+        {
+          "page": 31,
+          "ssim": 0.5251,
+          "size_match": 0.999
+        },
+        {
+          "page": 32,
+          "ssim": 0.5819,
+          "size_match": 0.999
+        },
+        {
+          "page": 33,
+          "ssim": 0.6374,
+          "size_match": 0.999
+        },
+        {
+          "page": 34,
+          "ssim": 0.5657,
+          "size_match": 0.999
+        },
+        {
+          "page": 35,
+          "ssim": 0.578,
+          "size_match": 0.999
+        },
+        {
+          "page": 36,
+          "ssim": 0.582,
+          "size_match": 0.999
+        },
+        {
+          "page": 37,
+          "ssim": 0.5679,
+          "size_match": 0.999
+        },
+        {
+          "page": 38,
+          "ssim": 0.6201,
+          "size_match": 0.999
+        },
+        {
+          "page": 39,
+          "ssim": 0.596,
+          "size_match": 0.999
+        },
+        {
+          "page": 40,
+          "ssim": 0.4526,
+          "size_match": 0.999
+        },
+        {
+          "page": 41,
+          "ssim": 0.5311,
+          "size_match": 0.999
+        },
+        {
+          "page": 42,
+          "ssim": 0.4984,
+          "size_match": 0.999
+        },
+        {
+          "page": 43,
+          "ssim": 0.5616,
+          "size_match": 0.999
+        },
+        {
+          "page": 44,
+          "ssim": 0.6235,
+          "size_match": 0.999
+        },
+        {
+          "page": 45,
+          "ssim": 0.5833,
+          "size_match": 0.999
+        },
+        {
+          "page": 46,
+          "ssim": 0.5955,
+          "size_match": 0.999
+        },
+        {
+          "page": 47,
+          "ssim": 0.4621,
+          "size_match": 0.999
+        },
+        {
+          "page": 48,
+          "ssim": 0.6172,
+          "size_match": 0.999
+        },
+        {
+          "page": 49,
+          "ssim": 0.5623,
+          "size_match": 0.999
+        },
+        {
+          "page": 50,
+          "ssim": 0.5284,
+          "size_match": 0.999
+        },
+        {
+          "page": 51,
+          "ssim": 0.7176,
+          "size_match": 0.999
+        },
+        {
+          "page": 52,
+          "ssim": 0.5723,
+          "size_match": 0.999
+        },
+        {
+          "page": 53,
+          "ssim": 0.6171,
+          "size_match": 0.999
+        },
+        {
+          "page": 54,
+          "ssim": 0.7038,
+          "size_match": 0.999
+        },
+        {
+          "page": 55,
+          "ssim": 0.669,
+          "size_match": 0.999
+        },
+        {
+          "page": 56,
+          "ssim": 0.5694,
+          "size_match": 0.999
+        },
+        {
+          "page": 57,
+          "ssim": 0.5083,
+          "size_match": 0.999
+        },
+        {
+          "page": 58,
+          "ssim": 0.5608,
+          "size_match": 0.999
+        },
+        {
+          "page": 59,
+          "ssim": 0.5019,
+          "size_match": 0.999
+        },
+        {
+          "page": 60,
+          "ssim": 0.6732,
+          "size_match": 0.999
+        },
+        {
+          "page": 61,
+          "ssim": 0.5198,
+          "size_match": 0.999
+        },
+        {
+          "page": 62,
+          "ssim": 0.535,
+          "size_match": 0.999
+        },
+        {
+          "page": 63,
+          "ssim": 0.4832,
+          "size_match": 0.999
+        },
+        {
+          "page": 64,
+          "ssim": 0.5255,
+          "size_match": 0.999
+        },
+        {
+          "page": 65,
+          "ssim": 0.5714,
+          "size_match": 0.999
+        },
+        {
+          "page": 66,
+          "ssim": 0.6015,
+          "size_match": 0.999
+        },
+        {
+          "page": 67,
+          "ssim": 0.6842,
+          "size_match": 0.999
+        },
+        {
+          "page": 68,
+          "ssim": 0.5759,
+          "size_match": 0.999
+        },
+        {
+          "page": 69,
+          "ssim": 0.6295,
+          "size_match": 0.999
+        },
+        {
+          "page": 70,
+          "ssim": 0.528,
+          "size_match": 0.999
+        },
+        {
+          "page": 71,
+          "ssim": 0.5024,
+          "size_match": 0.999
+        },
+        {
+          "page": 72,
+          "ssim": 0.5987,
+          "size_match": 0.999
+        },
+        {
+          "page": 73,
+          "ssim": 0.4621,
+          "size_match": 0.999
+        },
+        {
+          "page": 74,
+          "ssim": 0.5627,
+          "size_match": 0.999
+        },
+        {
+          "page": 75,
+          "ssim": 0.6296,
+          "size_match": 0.999
+        },
+        {
+          "page": 76,
+          "ssim": 0.709,
+          "size_match": 0.999
+        },
+        {
+          "page": 77,
+          "ssim": 0.6117,
+          "size_match": 0.999
+        },
+        {
+          "page": 78,
+          "ssim": 0.5384,
+          "size_match": 0.999
+        },
+        {
+          "page": 79,
+          "ssim": 0.6807,
+          "size_match": 0.999
+        },
+        {
+          "page": 80,
+          "ssim": 0.5814,
+          "size_match": 0.999
+        },
+        {
+          "page": 81,
+          "ssim": 0.5517,
+          "size_match": 0.999
+        },
+        {
+          "page": 82,
+          "ssim": 0.6189,
+          "size_match": 0.999
+        },
+        {
+          "page": 83,
+          "ssim": 0.6486,
+          "size_match": 0.999
+        },
+        {
+          "page": 84,
+          "ssim": 0.675,
+          "size_match": 0.999
+        },
+        {
+          "page": 85,
+          "ssim": 0.5156,
+          "size_match": 0.999
+        },
+        {
+          "page": 86,
+          "ssim": 0.4615,
+          "size_match": 0.999
+        },
+        {
+          "page": 87,
+          "ssim": 0.4862,
+          "size_match": 0.999
+        },
+        {
+          "page": 88,
+          "ssim": 0.5544,
+          "size_match": 0.999
+        },
+        {
+          "page": 89,
+          "ssim": 0.6445,
+          "size_match": 0.999
+        },
+        {
+          "page": 90,
+          "ssim": 0.5072,
+          "size_match": 0.999
+        },
+        {
+          "page": 91,
+          "ssim": 0.5201,
+          "size_match": 0.999
+        },
+        {
+          "page": 92,
+          "ssim": 0.8098,
+          "size_match": 0.999
+        },
+        {
+          "page": 93,
+          "ssim": 0.5323,
+          "size_match": 0.999
+        },
+        {
+          "page": 94,
+          "ssim": 0.6003,
+          "size_match": 0.999
+        },
+        {
+          "page": 95,
+          "ssim": 0.4808,
+          "size_match": 0.999
+        },
+        {
+          "page": 96,
+          "ssim": 0.6442,
+          "size_match": 0.999
+        },
+        {
+          "page": 97,
+          "ssim": 0.4862,
+          "size_match": 0.999
+        },
+        {
+          "page": 98,
+          "ssim": 0.5042,
+          "size_match": 0.999
+        },
+        {
+          "page": 99,
+          "ssim": 0.518,
+          "size_match": 0.999
+        },
+        {
+          "page": 100,
+          "ssim": 0.5088,
+          "size_match": 0.999
+        },
+        {
+          "page": 101,
+          "ssim": 0.6106,
+          "size_match": 0.999
+        },
+        {
+          "page": 102,
+          "ssim": 0.6427,
+          "size_match": 0.999
+        },
+        {
+          "page": 103,
+          "ssim": 0.7678,
+          "size_match": 0.999
+        },
+        {
+          "page": 104,
+          "ssim": 0.5207,
+          "size_match": 0.999
+        },
+        {
+          "page": 105,
+          "ssim": 0.5103,
+          "size_match": 0.999
+        },
+        {
+          "page": 106,
+          "ssim": 0.5455,
+          "size_match": 0.999
+        },
+        {
+          "page": 107,
+          "ssim": 0.4928,
+          "size_match": 0.999
+        },
+        {
+          "page": 108,
+          "ssim": 0.5415,
+          "size_match": 0.999
+        },
+        {
+          "page": 109,
+          "ssim": 0.5463,
+          "size_match": 0.999
+        },
+        {
+          "page": 110,
+          "ssim": 0.5782,
+          "size_match": 0.999
+        },
+        {
+          "page": 111,
+          "ssim": 0.5744,
+          "size_match": 0.999
+        },
+        {
+          "page": 112,
+          "ssim": 0.5471,
+          "size_match": 0.999
+        },
+        {
+          "page": 113,
+          "ssim": 0.5036,
+          "size_match": 0.999
+        },
+        {
+          "page": 114,
+          "ssim": 0.4812,
+          "size_match": 0.999
+        },
+        {
+          "page": 115,
+          "ssim": 0.5188,
+          "size_match": 0.999
+        },
+        {
+          "page": 116,
+          "ssim": 0.5066,
+          "size_match": 0.999
+        },
+        {
+          "page": 117,
+          "ssim": 0.5286,
+          "size_match": 0.999
+        },
+        {
+          "page": 118,
+          "ssim": 0.5597,
+          "size_match": 0.999
+        },
+        {
+          "page": 119,
+          "ssim": 0.5222,
+          "size_match": 0.999
+        },
+        {
+          "page": 120,
+          "ssim": 0.4643,
+          "size_match": 0.999
+        },
+        {
+          "page": 121,
+          "ssim": 0.5064,
+          "size_match": 0.999
+        },
+        {
+          "page": 122,
+          "ssim": 0.5032,
+          "size_match": 0.999
+        },
+        {
+          "page": 123,
+          "ssim": 0.6197,
+          "size_match": 0.999
+        },
+        {
+          "page": 124,
+          "ssim": 0.56,
+          "size_match": 0.999
+        },
+        {
+          "page": 125,
+          "ssim": 0.488,
+          "size_match": 0.999
+        },
+        {
+          "page": 126,
+          "ssim": 0.4878,
+          "size_match": 0.999
+        },
+        {
+          "page": 127,
+          "ssim": 0.4652,
+          "size_match": 0.999
+        },
+        {
+          "page": 128,
+          "ssim": 0.5552,
+          "size_match": 0.999
+        },
+        {
+          "page": 129,
+          "ssim": 0.4938,
+          "size_match": 0.999
+        },
+        {
+          "page": 130,
+          "ssim": 0.6157,
+          "size_match": 0.999
+        },
+        {
+          "page": 131,
+          "ssim": 0.5558,
+          "size_match": 0.999
+        },
+        {
+          "page": 132,
+          "ssim": 0.5769,
+          "size_match": 0.999
+        },
+        {
+          "page": 133,
+          "ssim": 0.5881,
+          "size_match": 0.999
+        },
+        {
+          "page": 134,
+          "ssim": 0.6131,
+          "size_match": 0.999
+        },
+        {
+          "page": 135,
+          "ssim": 0.4841,
+          "size_match": 0.999
+        },
+        {
+          "page": 136,
+          "ssim": 0.6279,
+          "size_match": 0.999
+        },
+        {
+          "page": 137,
+          "ssim": 0.5444,
+          "size_match": 0.999
+        },
+        {
+          "page": 138,
+          "ssim": 0.6163,
+          "size_match": 0.999
+        },
+        {
+          "page": 139,
+          "ssim": 0.5547,
+          "size_match": 0.999
+        },
+        {
+          "page": 140,
+          "ssim": 0.472,
+          "size_match": 0.999
+        },
+        {
+          "page": 141,
+          "ssim": 0.5984,
+          "size_match": 0.999
+        },
+        {
+          "page": 142,
+          "ssim": 0.53,
+          "size_match": 0.999
+        },
+        {
+          "page": 143,
+          "ssim": 0.6555,
+          "size_match": 0.999
+        },
+        {
+          "page": 144,
+          "ssim": 0.5633,
+          "size_match": 0.999
+        },
+        {
+          "page": 145,
+          "ssim": 0.5124,
+          "size_match": 0.999
+        },
+        {
+          "page": 146,
+          "ssim": 0.5786,
+          "size_match": 0.999
+        },
+        {
+          "page": 147,
+          "ssim": 0.5621,
+          "size_match": 0.999
+        },
+        {
+          "page": 148,
+          "ssim": 0.5747,
+          "size_match": 0.999
+        },
+        {
+          "page": 149,
+          "ssim": 0.5397,
+          "size_match": 0.999
+        },
+        {
+          "page": 150,
+          "ssim": 0.5096,
+          "size_match": 0.999
+        },
+        {
+          "page": 151,
+          "ssim": 0.5133,
+          "size_match": 0.999
+        },
+        {
+          "page": 152,
+          "ssim": 0.5827,
+          "size_match": 0.999
+        },
+        {
+          "page": 153,
+          "ssim": 0.5423,
+          "size_match": 0.999
+        },
+        {
+          "page": 154,
+          "ssim": 0.5088,
+          "size_match": 0.999
+        },
+        {
+          "page": 155,
+          "ssim": 0.5612,
+          "size_match": 0.999
+        },
+        {
+          "page": 156,
+          "ssim": 0.5134,
+          "size_match": 0.999
+        },
+        {
+          "page": 157,
+          "ssim": 0.5534,
+          "size_match": 0.999
+        },
+        {
+          "page": 158,
+          "ssim": 0.6187,
+          "size_match": 0.999
+        },
+        {
+          "page": 159,
+          "ssim": 0.5902,
+          "size_match": 0.999
+        },
+        {
+          "page": 160,
+          "ssim": 0.629,
+          "size_match": 0.999
+        },
+        {
+          "page": 161,
+          "ssim": 0.5783,
+          "size_match": 0.999
+        },
+        {
+          "page": 162,
+          "ssim": 0.5595,
+          "size_match": 0.999
+        },
+        {
+          "page": 163,
+          "ssim": 0.646,
+          "size_match": 0.999
+        },
+        {
+          "page": 164,
+          "ssim": 0.6131,
+          "size_match": 0.999
+        },
+        {
+          "page": 165,
+          "ssim": 0.551,
+          "size_match": 0.999
+        },
+        {
+          "page": 166,
+          "ssim": 0.7078,
+          "size_match": 0.999
+        },
+        {
+          "page": 167,
+          "ssim": 0.566,
+          "size_match": 0.999
+        },
+        {
+          "page": 168,
+          "ssim": 0.5712,
+          "size_match": 0.999
+        },
+        {
+          "page": 169,
+          "ssim": 0.5871,
+          "size_match": 0.999
+        },
+        {
+          "page": 170,
+          "ssim": 0.6609,
+          "size_match": 0.999
+        },
+        {
+          "page": 171,
+          "ssim": 0.5716,
+          "size_match": 0.999
+        },
+        {
+          "page": 172,
+          "ssim": 0.6605,
+          "size_match": 0.999
+        },
+        {
+          "page": 173,
+          "ssim": 0.5249,
+          "size_match": 0.999
+        },
+        {
+          "page": 174,
+          "ssim": 0.608,
+          "size_match": 0.999
+        },
+        {
+          "page": 175,
+          "ssim": 0.5575,
+          "size_match": 0.999
+        },
+        {
+          "page": 176,
+          "ssim": 0.5855,
+          "size_match": 0.999
+        },
+        {
+          "page": 177,
+          "ssim": 0.5485,
+          "size_match": 0.999
+        },
+        {
+          "page": 178,
+          "ssim": 0.5695,
+          "size_match": 0.999
+        },
+        {
+          "page": 179,
+          "ssim": 0.609,
+          "size_match": 0.999
+        },
+        {
+          "page": 180,
+          "ssim": 0.685,
+          "size_match": 0.999
+        },
+        {
+          "page": 181,
+          "ssim": 0.492,
+          "size_match": 0.999
+        },
+        {
+          "page": 182,
+          "ssim": 0.5168,
+          "size_match": 0.999
+        },
+        {
+          "page": 183,
+          "ssim": 0.4342,
+          "size_match": 0.999
+        },
+        {
+          "page": 184,
+          "ssim": 0.5244,
+          "size_match": 0.999
+        },
+        {
+          "page": 185,
+          "ssim": 0.4815,
+          "size_match": 0.999
+        },
+        {
+          "page": 186,
+          "ssim": 0.5252,
+          "size_match": 0.999
+        },
+        {
+          "page": 187,
+          "ssim": 0.5726,
+          "size_match": 0.999
+        },
+        {
+          "page": 188,
+          "ssim": 0.5905,
+          "size_match": 0.999
+        },
+        {
+          "page": 189,
+          "ssim": 0.6268,
+          "size_match": 0.999
+        },
+        {
+          "page": 190,
+          "ssim": 0.5151,
+          "size_match": 0.999
+        },
+        {
+          "page": 191,
+          "ssim": 0.5346,
+          "size_match": 0.999
+        },
+        {
+          "page": 192,
+          "ssim": 0.5389,
+          "size_match": 0.999
+        },
+        {
+          "page": 193,
+          "ssim": 0.5285,
+          "size_match": 0.999
+        },
+        {
+          "page": 194,
+          "ssim": 0.4884,
+          "size_match": 0.999
+        },
+        {
+          "page": 195,
+          "ssim": 0.524,
+          "size_match": 0.999
+        },
+        {
+          "page": 196,
+          "ssim": 0.5138,
+          "size_match": 0.999
+        },
+        {
+          "page": 197,
+          "ssim": 0.5348,
+          "size_match": 0.999
+        },
+        {
+          "page": 198,
+          "ssim": 0.6437,
+          "size_match": 0.999
+        },
+        {
+          "page": 199,
+          "ssim": 0.5439,
+          "size_match": 0.999
+        },
+        {
+          "page": 200,
+          "ssim": 0.5349,
+          "size_match": 0.999
+        },
+        {
+          "page": 201,
+          "ssim": 0.5499,
+          "size_match": 0.999
+        },
+        {
+          "page": 202,
+          "ssim": 0.5443,
+          "size_match": 0.999
+        },
+        {
+          "page": 203,
+          "ssim": 0.5752,
+          "size_match": 0.999
+        },
+        {
+          "page": 204,
+          "ssim": 0.5973,
+          "size_match": 0.999
+        },
+        {
+          "page": 205,
+          "ssim": 0.5719,
+          "size_match": 0.999
+        },
+        {
+          "page": 206,
+          "ssim": 0.6181,
+          "size_match": 0.999
+        },
+        {
+          "page": 207,
+          "ssim": 0.5624,
+          "size_match": 0.999
+        },
+        {
+          "page": 208,
+          "ssim": 0.5767,
+          "size_match": 0.999
+        },
+        {
+          "page": 209,
+          "ssim": 0.6044,
+          "size_match": 0.999
+        },
+        {
+          "page": 210,
+          "ssim": 0.5162,
+          "size_match": 0.999
+        },
+        {
+          "page": 211,
+          "ssim": 0.5386,
+          "size_match": 0.999
+        },
+        {
+          "page": 212,
+          "ssim": 0.5054,
+          "size_match": 0.999
+        },
+        {
+          "page": 213,
+          "ssim": 0.4096,
+          "size_match": 0.999
+        },
+        {
+          "page": 214,
+          "ssim": 0.5505,
+          "size_match": 0.999
+        },
+        {
+          "page": 215,
+          "ssim": 0.5686,
+          "size_match": 0.999
+        },
+        {
+          "page": 216,
+          "ssim": 0.4978,
+          "size_match": 0.999
+        },
+        {
+          "page": 217,
+          "ssim": 0.5898,
+          "size_match": 0.999
+        },
+        {
+          "page": 218,
+          "ssim": 0.5811,
+          "size_match": 0.999
+        },
+        {
+          "page": 219,
+          "ssim": 0.6048,
+          "size_match": 0.999
+        },
+        {
+          "page": 220,
+          "ssim": 0.5882,
+          "size_match": 0.999
+        },
+        {
+          "page": 221,
+          "ssim": 0.5932,
+          "size_match": 0.999
+        },
+        {
+          "page": 222,
+          "ssim": 0.6305,
+          "size_match": 0.999
+        },
+        {
+          "page": 223,
+          "ssim": 0.579,
+          "size_match": 0.999
+        },
+        {
+          "page": 224,
+          "ssim": 0.5809,
+          "size_match": 0.999
+        },
+        {
+          "page": 225,
+          "ssim": 0.4835,
+          "size_match": 0.999
+        },
+        {
+          "page": 226,
+          "ssim": 0.5559,
+          "size_match": 0.999
+        },
+        {
+          "page": 227,
+          "ssim": 0.5748,
+          "size_match": 0.999
+        },
+        {
+          "page": 228,
+          "ssim": 0.6112,
+          "size_match": 0.999
+        },
+        {
+          "page": 229,
+          "ssim": 0.5591,
+          "size_match": 0.999
+        },
+        {
+          "page": 230,
+          "ssim": 0.5682,
+          "size_match": 0.999
+        },
+        {
+          "page": 231,
+          "ssim": 0.4854,
+          "size_match": 0.999
+        },
+        {
+          "page": 232,
+          "ssim": 0.5078,
+          "size_match": 0.999
+        },
+        {
+          "page": 233,
+          "ssim": 0.5147,
+          "size_match": 0.999
+        },
+        {
+          "page": 234,
+          "ssim": 0.5283,
+          "size_match": 0.999
+        },
+        {
+          "page": 235,
+          "ssim": 0.4845,
+          "size_match": 0.999
+        },
+        {
+          "page": 236,
+          "ssim": 0.5353,
+          "size_match": 0.999
+        },
+        {
+          "page": 237,
+          "ssim": 0.6222,
+          "size_match": 0.999
+        },
+        {
+          "page": 238,
+          "ssim": 0.7456,
+          "size_match": 0.999
+        },
+        {
+          "page": 239,
+          "ssim": 0.5223,
+          "size_match": 0.999
+        },
+        {
+          "page": 240,
+          "ssim": 0.6103,
+          "size_match": 0.999
+        },
+        {
+          "page": 241,
+          "ssim": 0.5231,
+          "size_match": 0.999
+        },
+        {
+          "page": 242,
+          "ssim": 0.5272,
+          "size_match": 0.999
+        },
+        {
+          "page": 243,
+          "ssim": 0.5733,
+          "size_match": 0.999
+        },
+        {
+          "page": 244,
+          "ssim": 0.6203,
+          "size_match": 0.999
+        },
+        {
+          "page": 245,
+          "ssim": 0.5966,
+          "size_match": 0.999
+        },
+        {
+          "page": 246,
+          "ssim": 0.5306,
+          "size_match": 0.999
+        },
+        {
+          "page": 247,
+          "ssim": 0.6034,
+          "size_match": 0.999
+        },
+        {
+          "page": 248,
+          "ssim": 0.5626,
+          "size_match": 0.999
+        },
+        {
+          "page": 249,
+          "ssim": 0.5759,
+          "size_match": 0.999
+        },
+        {
+          "page": 250,
+          "ssim": 0.5143,
+          "size_match": 0.999
+        },
+        {
+          "page": 251,
+          "ssim": 0.5125,
+          "size_match": 0.999
+        },
+        {
+          "page": 252,
+          "ssim": 0.5491,
+          "size_match": 0.999
+        },
+        {
+          "page": 253,
+          "ssim": 0.6335,
+          "size_match": 0.999
+        },
+        {
+          "page": 254,
+          "ssim": 0.6281,
+          "size_match": 0.999
+        },
+        {
+          "page": 255,
+          "ssim": 0.6036,
+          "size_match": 0.999
+        },
+        {
+          "page": 256,
+          "ssim": 0.6585,
+          "size_match": 0.999
+        },
+        {
+          "page": 257,
+          "ssim": 0.5099,
+          "size_match": 0.999
+        },
+        {
+          "page": 258,
+          "ssim": 0.5594,
+          "size_match": 0.999
+        },
+        {
+          "page": 259,
+          "ssim": 0.5394,
+          "size_match": 0.999
+        },
+        {
+          "page": 260,
+          "ssim": 0.6182,
+          "size_match": 0.999
+        },
+        {
+          "page": 261,
+          "ssim": 0.576,
+          "size_match": 0.999
+        },
+        {
+          "page": 262,
+          "ssim": 0.5923,
+          "size_match": 0.999
+        },
+        {
+          "page": 263,
+          "ssim": 0.5599,
+          "size_match": 0.999
+        },
+        {
+          "page": 264,
+          "ssim": 0.6408,
+          "size_match": 0.999
+        },
+        {
+          "page": 265,
+          "ssim": 0.6387,
+          "size_match": 0.999
+        },
+        {
+          "page": 266,
+          "ssim": 0.5764,
+          "size_match": 0.999
+        },
+        {
+          "page": 267,
+          "ssim": 0.6044,
+          "size_match": 0.999
+        },
+        {
+          "page": 268,
+          "ssim": 0.5258,
+          "size_match": 0.999
+        },
+        {
+          "page": 269,
+          "ssim": 0.5083,
+          "size_match": 0.999
+        },
+        {
+          "page": 270,
+          "ssim": 0.5435,
+          "size_match": 0.999
+        },
+        {
+          "page": 271,
+          "ssim": 0.5605,
+          "size_match": 0.999
+        },
+        {
+          "page": 272,
+          "ssim": 0.553,
+          "size_match": 0.999
+        },
+        {
+          "page": 273,
+          "ssim": 0.5184,
+          "size_match": 0.999
+        },
+        {
+          "page": 274,
+          "ssim": 0.5385,
+          "size_match": 0.999
+        },
+        {
+          "page": 275,
+          "ssim": 0.505,
+          "size_match": 0.999
+        },
+        {
+          "page": 276,
+          "ssim": 0.5404,
+          "size_match": 0.999
+        },
+        {
+          "page": 277,
+          "ssim": 0.6006,
+          "size_match": 0.999
+        },
+        {
+          "page": 278,
+          "ssim": 0.6057,
+          "size_match": 0.999
+        },
+        {
+          "page": 279,
+          "ssim": 0.592,
+          "size_match": 0.999
+        },
+        {
+          "page": 280,
+          "ssim": 0.4931,
+          "size_match": 0.999
+        },
+        {
+          "page": 281,
+          "ssim": 0.5123,
+          "size_match": 0.999
+        },
+        {
+          "page": 282,
+          "ssim": 0.5852,
+          "size_match": 0.999
+        },
+        {
+          "page": 283,
+          "ssim": 0.5791,
+          "size_match": 0.999
+        },
+        {
+          "page": 284,
+          "ssim": 0.5937,
+          "size_match": 0.999
+        },
+        {
+          "page": 285,
+          "ssim": 0.5371,
+          "size_match": 0.999
+        },
+        {
+          "page": 286,
+          "ssim": 0.5902,
+          "size_match": 0.999
+        },
+        {
+          "page": 287,
+          "ssim": 0.5651,
+          "size_match": 0.999
+        },
+        {
+          "page": 288,
+          "ssim": 0.5191,
+          "size_match": 0.999
+        },
+        {
+          "page": 289,
+          "ssim": 0.5803,
+          "size_match": 0.999
+        },
+        {
+          "page": 290,
+          "ssim": 0.5483,
+          "size_match": 0.999
+        },
+        {
+          "page": 291,
+          "ssim": 0.6057,
+          "size_match": 0.999
+        },
+        {
+          "page": 292,
+          "ssim": 0.6083,
+          "size_match": 0.999
+        },
+        {
+          "page": 293,
+          "ssim": 0.4947,
+          "size_match": 0.999
+        },
+        {
+          "page": 294,
+          "ssim": 0.5712,
+          "size_match": 0.999
+        },
+        {
+          "page": 295,
+          "ssim": 0.5514,
+          "size_match": 0.999
+        },
+        {
+          "page": 296,
+          "ssim": 0.5684,
+          "size_match": 0.999
+        },
+        {
+          "page": 297,
+          "ssim": 0.5561,
+          "size_match": 0.999
+        },
+        {
+          "page": 298,
+          "ssim": 0.543,
+          "size_match": 0.999
+        },
+        {
+          "page": 299,
+          "ssim": 0.6138,
+          "size_match": 0.999
+        },
+        {
+          "page": 300,
+          "ssim": 0.6166,
+          "size_match": 0.999
+        },
+        {
+          "page": 301,
+          "ssim": 0.5955,
+          "size_match": 0.999
+        },
+        {
+          "page": 302,
+          "ssim": 0.6109,
+          "size_match": 0.999
+        },
+        {
+          "page": 303,
+          "ssim": 0.5863,
+          "size_match": 0.999
+        },
+        {
+          "page": 304,
+          "ssim": 0.5497,
+          "size_match": 0.999
+        },
+        {
+          "page": 305,
+          "ssim": 0.526,
+          "size_match": 0.999
+        },
+        {
+          "page": 306,
+          "ssim": 0.5021,
+          "size_match": 0.999
+        },
+        {
+          "page": 307,
+          "ssim": 0.4705,
+          "size_match": 0.999
+        },
+        {
+          "page": 308,
+          "ssim": 0.4942,
+          "size_match": 0.999
+        },
+        {
+          "page": 309,
+          "ssim": 0.4111,
+          "size_match": 0.999
+        },
+        {
+          "page": 310,
+          "ssim": 0.3825,
+          "size_match": 0.999
+        },
+        {
+          "page": 311,
+          "ssim": 0.5108,
+          "size_match": 0.999
+        },
+        {
+          "page": 312,
+          "ssim": 0.4917,
+          "size_match": 0.999
+        },
+        {
+          "page": 313,
+          "ssim": 0.4788,
+          "size_match": 0.999
+        },
+        {
+          "page": 314,
+          "ssim": 0.4773,
+          "size_match": 0.999
+        },
+        {
+          "page": 315,
+          "ssim": 0.4974,
+          "size_match": 0.999
+        },
+        {
+          "page": 316,
+          "ssim": 0.5263,
+          "size_match": 0.999
+        },
+        {
+          "page": 317,
+          "ssim": 0.4548,
+          "size_match": 0.999
+        },
+        {
+          "page": 318,
+          "ssim": 0.4568,
+          "size_match": 0.999
+        },
+        {
+          "page": 319,
+          "ssim": 0.4795,
+          "size_match": 0.999
+        },
+        {
+          "page": 320,
+          "ssim": 0.4822,
+          "size_match": 0.999
+        },
+        {
+          "page": 321,
+          "ssim": 0.596,
+          "size_match": 0.999
+        },
+        {
+          "page": 322,
+          "ssim": 0.6347,
+          "size_match": 0.999
+        },
+        {
+          "page": 323,
+          "ssim": 0.5779,
+          "size_match": 0.999
+        },
+        {
+          "page": 324,
+          "ssim": 0.7624,
+          "size_match": 0.999
+        },
+        {
+          "page": 325,
+          "ssim": 0.4943,
+          "size_match": 0.999
+        },
+        {
+          "page": 326,
+          "ssim": 0.5645,
+          "size_match": 0.999
+        },
+        {
+          "page": 327,
+          "ssim": 0.5918,
+          "size_match": 0.999
+        },
+        {
+          "page": 328,
+          "ssim": 0.5878,
+          "size_match": 0.999
+        },
+        {
+          "page": 329,
+          "ssim": 0.6082,
+          "size_match": 0.999
+        },
+        {
+          "page": 330,
+          "ssim": 0.5744,
+          "size_match": 0.999
+        },
+        {
+          "page": 331,
+          "ssim": 0.4837,
+          "size_match": 0.999
+        },
+        {
+          "page": 332,
+          "ssim": 0.4949,
+          "size_match": 0.999
+        },
+        {
+          "page": 333,
+          "ssim": 0.4719,
+          "size_match": 0.999
+        },
+        {
+          "page": 334,
+          "ssim": 0.6902,
+          "size_match": 0.999
+        },
+        {
+          "page": 335,
+          "ssim": 0.632,
+          "size_match": 0.999
+        },
+        {
+          "page": 336,
+          "ssim": 0.5925,
+          "size_match": 0.999
+        },
+        {
+          "page": 337,
+          "ssim": 0.6223,
+          "size_match": 0.999
+        },
+        {
+          "page": 338,
+          "ssim": 0.6897,
+          "size_match": 0.999
+        },
+        {
+          "page": 339,
+          "ssim": 0.545,
+          "size_match": 0.999
+        },
+        {
+          "page": 340,
+          "ssim": 0.5622,
+          "size_match": 0.999
+        },
+        {
+          "page": 341,
+          "ssim": 0.5997,
+          "size_match": 0.999
+        },
+        {
+          "page": 342,
+          "ssim": 0.578,
+          "size_match": 0.999
+        },
+        {
+          "page": 343,
+          "ssim": 0.5356,
+          "size_match": 0.999
+        },
+        {
+          "page": 344,
+          "ssim": 0.5876,
+          "size_match": 0.999
+        },
+        {
+          "page": 345,
+          "ssim": 0.5306,
+          "size_match": 0.999
+        },
+        {
+          "page": 346,
+          "ssim": 0.5819,
+          "size_match": 0.999
+        },
+        {
+          "page": 347,
+          "ssim": 0.6306,
+          "size_match": 0.999
+        },
+        {
+          "page": 348,
+          "ssim": 0.5982,
+          "size_match": 0.999
+        },
+        {
+          "page": 349,
+          "ssim": 0.5924,
+          "size_match": 0.999
+        },
+        {
+          "page": 350,
+          "ssim": 0.6973,
+          "size_match": 0.999
+        },
+        {
+          "page": 351,
+          "ssim": 0.594,
+          "size_match": 0.999
+        },
+        {
+          "page": 352,
+          "ssim": 0.629,
+          "size_match": 0.999
+        },
+        {
+          "page": 353,
+          "ssim": 0.6087,
+          "size_match": 0.999
+        },
+        {
+          "page": 354,
+          "ssim": 0.5653,
+          "size_match": 0.999
+        },
+        {
+          "page": 355,
+          "ssim": 0.5694,
+          "size_match": 0.999
+        },
+        {
+          "page": 356,
+          "ssim": 0.6363,
+          "size_match": 0.999
+        },
+        {
+          "page": 357,
+          "ssim": 0.5913,
+          "size_match": 0.999
+        },
+        {
+          "page": 358,
+          "ssim": 0.5956,
+          "size_match": 0.999
+        },
+        {
+          "page": 359,
+          "ssim": 0.5353,
+          "size_match": 0.999
+        },
+        {
+          "page": 360,
+          "ssim": 0.5429,
+          "size_match": 0.999
+        },
+        {
+          "page": 361,
+          "ssim": 0.5578,
+          "size_match": 0.999
+        },
+        {
+          "page": 362,
+          "ssim": 0.6549,
+          "size_match": 0.999
+        },
+        {
+          "page": 363,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 364,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 365,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 366,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 367,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 368,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 369,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 370,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 371,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 372,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 373,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 374,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 375,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 376,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 377,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 378,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 379,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 380,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 381,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 382,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 383,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 384,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 385,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 386,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 387,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 388,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 389,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 390,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 391,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 392,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 393,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 394,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 395,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 396,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 397,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 398,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 399,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 400,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 401,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 402,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 403,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 404,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 405,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 406,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 407,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 408,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 409,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 410,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 411,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 412,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 413,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 414,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 415,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 416,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 417,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 418,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 419,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 420,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 421,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 422,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 423,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 424,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 425,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 426,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 427,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 428,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 429,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 430,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 431,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 432,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 433,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 434,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 435,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 436,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 437,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 438,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 439,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 440,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 441,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 442,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 443,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 444,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 445,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 446,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 447,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 448,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 449,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 450,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 451,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 452,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 453,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 454,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 455,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 456,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 457,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 458,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 459,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 460,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 461,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 462,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 463,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 464,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 465,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 466,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 467,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 468,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 469,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 470,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 471,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 472,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 473,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 474,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 475,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 476,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 477,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 478,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 479,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 480,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 481,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 482,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 483,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 484,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 485,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 486,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 487,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 488,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 489,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 490,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 491,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 492,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 493,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 494,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 495,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 496,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 497,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 498,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 499,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 500,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 501,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 502,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 503,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 504,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 505,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 506,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 507,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 508,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 509,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 510,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 511,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 512,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 513,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 514,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 515,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 516,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 517,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 518,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 519,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 520,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 521,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 522,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 523,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 524,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 525,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 526,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 527,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 528,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 529,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 530,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 531,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 532,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3821,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 362,
+      "test_pages": 532
+    },
+    {
+      "reference": "real-world/education/1. 2025학년도 1학기 2차 지필평가 실시 계획.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/1. 2025학년도 1학기 2차 지필평가 실시 계획.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6664,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5372,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6126,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6431,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6358,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.678,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.5445,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.5982,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.7613,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.7012,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.7204,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.7317,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.6713,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.6816,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.5995,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 19,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 20,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4891,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 15,
+      "test_pages": 20
+    },
+    {
+      "reference": "real-world/education/1. 2025학년도 2학기 2차 지필평가 실시 계획(2).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/1. 2025학년도 2학기 2차 지필평가 실시 계획(2).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6782,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5955,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6153,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6321,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6154,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.6462,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6293,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.5797,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.6585,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.6268,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.7045,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.7064,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.7466,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.6902,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6295,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.6044,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 19,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 20,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 21,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 22,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4708,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 16,
+      "test_pages": 22
+    },
+    {
+      "reference": "real-world/education/2025 2학기 원안지 양식(A4)-3학년_역사.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/2025 2학기 원안지 양식(A4)-3학년_역사.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6396,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6804,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6594,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6354,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6581,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.7063,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.7606,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.7279,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.7719,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.7588,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 12,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 13,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 14,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 15,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 16,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 19,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3683,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 10,
+      "test_pages": 19
+    },
+    {
+      "reference": "real-world/education/2025 원안지 양식(A4)_3학년 1학기 역사.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/2025 원안지 양식(A4)_3학년 1학기 역사.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.655,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6542,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6827,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6632,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.7133,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.8522,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 8,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 9,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 10,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 11,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 12,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.3517,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 6,
+      "test_pages": 12
+    },
+    {
+      "reference": "real-world/education/2025 진로박람회 '진로캠퍼스' 직업체험 운영 계획 인솔교사 안내문.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/2025 진로박람회 '진로캠퍼스' 직업체험 운영 계획 인솔교사 안내문.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5737,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6721,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        }
+      ],
+      "avg_ssim": 0.4153,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 3,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/education/2025학년도 1차 졸업앨범 촬영 계획.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/2025학년도 1차 졸업앨범 촬영 계획.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5587,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5282,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        }
+      ],
+      "avg_ssim": 0.3623,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 3,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/education/경위서(OOO).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/경위서(OOO).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6782,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5955,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6153,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6321,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6154,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.6462,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6293,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.5797,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.6585,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.6227,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.7045,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.7064,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.7466,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.6902,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6257,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.6044,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 19,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 20,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 21,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 22,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4705,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 16,
+      "test_pages": 22
+    },
+    {
+      "reference": "real-world/education/디저트 카페 메뉴.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/디저트 카페 메뉴.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8781,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        }
+      ],
+      "avg_ssim": 0.1756,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 5,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/education/성적포기서_ 2025학년도 2학기 2차 지필평가 실시 계획(2).pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/education/성적포기서_ 2025학년도 2학기 2차 지필평가 실시 계획(2).pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6782,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.5955,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.6153,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6321,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6154,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.6462,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6293,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.5797,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.6585,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.7633,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.7045,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.7064,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.7466,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.6902,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6906,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.614,
+          "size_match": 0.999
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 19,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 20,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 21,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.5031,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 16,
+      "test_pages": 21
+    }
+  ]
+}
