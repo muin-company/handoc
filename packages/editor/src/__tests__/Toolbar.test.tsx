@@ -210,6 +210,64 @@ describe('Toolbar', () => {
     expect(dispatchSpy).toHaveBeenCalled();
   });
 
-  // Additional tests removed to avoid complex mocking issues
-  // The core functionality (button clicks, export) is already well tested above
+  it('should download file when export button clicked without onExport', async () => {
+    const view = createMockView();
+    
+    // Mock URL APIs
+    const mockUrl = 'blob:test-url';
+    const createObjectURL = vi.fn().mockReturnValue(mockUrl);
+    const revokeObjectURL = vi.fn();
+    global.URL.createObjectURL = createObjectURL;
+    global.URL.revokeObjectURL = revokeObjectURL;
+    
+    // Track anchor click
+    const clickSpy = vi.fn();
+    const origCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string, options?: any) => {
+      const el = origCreateElement(tag, options);
+      if (tag === 'a') {
+        el.click = clickSpy;
+      }
+      return el;
+    });
+    
+    render(<Toolbar view={view} />);
+    
+    const exportButton = screen.getByTitle(/HWPX로 저장/);
+    fireEvent.click(exportButton);
+    
+    // Wait for async export
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith(mockUrl);
+    
+    vi.restoreAllMocks();
+  });
+
+  it('should show alert when export fails', async () => {
+    const view = createMockView();
+    
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // Pass an onExport that throws to trigger the catch branch
+    const throwingExport = vi.fn().mockImplementation(() => {
+      throw new Error('export failed');
+    });
+    
+    render(<Toolbar view={view} onExport={throwingExport} />);
+    
+    const exportButton = screen.getByTitle(/HWPX로 저장/);
+    fireEvent.click(exportButton);
+    
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to export HWPX:', expect.any(Error));
+    expect(alertSpy).toHaveBeenCalledWith('내보내기에 실패했습니다.');
+    
+    alertSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
 });
