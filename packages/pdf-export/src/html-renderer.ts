@@ -11,6 +11,36 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Resolve font name from fontRef ID using header fontFaces */
+function resolveFontName(doc: HanDoc, fontRefId: number, lang: string = 'HANGUL'): string | undefined {
+  const faces = doc.header.refList.fontFaces;
+  if (!faces) return undefined;
+  const langFaces = faces.find(f => f.lang === lang);
+  if (!langFaces) return undefined;
+  const font = langFaces.fonts.find(f => f.id === fontRefId);
+  return font?.face;
+}
+
+/** Map Korean font names to CSS font-family with fallbacks */
+function fontFamilyCss(fontName: string): string {
+  // Map 한/글 fonts to available system fonts
+  const map: Record<string, string> = {
+    '함초롬바탕': "'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', serif",
+    '함초롬돋움': "'HCR Dotum', 'Dotum', '돋움', 'Apple SD Gothic Neo', sans-serif",
+    '바탕': "'Batang', '바탕', 'AppleMyungjo', serif",
+    '돋움': "'Dotum', '돋움', 'Apple SD Gothic Neo', sans-serif",
+    '돋움체': "'DotumChe', '돋움체', monospace",
+    '맑은 고딕': "'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif",
+    '굴림': "'Gulim', '굴림', sans-serif",
+    '궁서': "'Gungsuh', '궁서', serif",
+    '휴먼명조': "'HumanMyeongjo', 'AppleMyungjo', serif",
+    '휴먼고딕': "'HumanGothic', 'Apple SD Gothic Neo', sans-serif",
+    '한양신명조': "'HYSinMyeongJo', 'AppleMyungjo', serif",
+    '한양중고딕': "'HYJungGothic', 'Apple SD Gothic Neo', sans-serif",
+  };
+  return map[fontName] ?? `'${fontName}', sans-serif`;
+}
+
 function getCharProp(doc: HanDoc, id: number | null): CharProperty | undefined {
   if (id == null) return undefined;
   return doc.header.refList.charProperties.find(c => c.id === id);
@@ -31,12 +61,21 @@ function renderRun(doc: HanDoc, run: Run): string {
     if (charProp.underline && charProp.underline !== 'none') styles.push('text-decoration:underline');
     if (charProp.strikeout && charProp.strikeout !== 'none') styles.push('text-decoration:line-through');
     if (charProp.textColor && charProp.textColor !== '0' && charProp.textColor !== '000000') {
-      const c = charProp.textColor.padStart(6, '0');
+      const c = charProp.textColor.replace('#', '').padStart(6, '0');
       styles.push(`color:#${c}`);
     }
     if (charProp.height) {
       const pt = charProp.height / 100;
       if (pt > 0) styles.push(`font-size:${pt}pt`);
+    }
+    // Font face resolution
+    const fontRef = (charProp as any).fontRef;
+    if (fontRef) {
+      const hangulId = fontRef.hangul ?? fontRef.HANGUL;
+      if (hangulId != null) {
+        const fontName = resolveFontName(doc, hangulId, 'HANGUL');
+        if (fontName) styles.push(`font-family:${fontFamilyCss(fontName)}`);
+      }
     }
   }
 
@@ -119,7 +158,16 @@ function findDescendant(el: GenericElement, tag: string): GenericElement | undef
 
 function renderTable(doc: HanDoc, element: GenericElement): string {
   const table = parseTable(element);
-  let html = '<table style="border-collapse:collapse;width:100%">';
+  
+  // Get table total width from sz element
+  const szEl = element.children.find(c => c.tag === 'sz');
+  const tableWidth = szEl ? Number(szEl.attrs['width']) : 0;
+  const tableWidthMm = tableWidth > 0 ? (tableWidth / 7200 * 25.4).toFixed(1) : '';
+  const tableStyle = tableWidthMm
+    ? `border-collapse:collapse;table-layout:fixed;width:${tableWidthMm}mm;max-width:100%`
+    : 'border-collapse:collapse;table-layout:fixed;width:100%';
+  
+  let html = `<table style="${tableStyle}">`;
 
   for (const row of table.rows) {
     html += '<tr>';
@@ -127,8 +175,16 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       const colspan = cell.cellSpan.colSpan > 1 ? ` colspan="${cell.cellSpan.colSpan}"` : '';
       const rowspan = cell.cellSpan.rowSpan > 1 ? ` rowspan="${cell.cellSpan.rowSpan}"` : '';
       const tag = cell.header ? 'th' : 'td';
+      
+      // Cell width
+      const cellStyles: string[] = ['border:1px solid #000', 'padding:2px 4px', 'word-break:break-all', 'overflow:hidden'];
+      if (cell.cellSz.width > 0) {
+        cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
+      }
+      // Don't set fixed height — let content determine height
+      // Fixed height causes page overflow when content is smaller than cell height
 
-      html += `<${tag}${colspan}${rowspan} style="border:1px solid #000;padding:4px">`;
+      html += `<${tag}${colspan}${rowspan} style="${cellStyles.join(';')}">`;
       for (const para of cell.paragraphs) {
         html += renderParagraph(doc, para);
       }
@@ -151,8 +207,9 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
     }
     if (paraProp.lineSpacing) {
       const { type, value } = paraProp.lineSpacing;
-      if (type === 'percent') styles.push(`line-height:${value / 100}`);
-      else if (type === 'fixed' && value > 0) styles.push(`line-height:${value / 7200}in`);
+      const t = type.toLowerCase();
+      if (t === 'percent') styles.push(`line-height:${(value / 100).toFixed(2)}`);
+      else if (t === 'fixed' && value > 0) styles.push(`line-height:${(value / 7200).toFixed(3)}in`);
     }
     if (paraProp.margin) {
       const m = paraProp.margin;
@@ -216,14 +273,14 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #000; line-height: 1.6; }
-  p { margin: 2px 0; }
-  table { margin: 4px 0; border-collapse: collapse; width: 100%; }
-  td, th { border: 1px solid #000; padding: 4px; vertical-align: top; }
+  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; }
+  p { margin: 0; padding: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; }
-  .page-header { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
-  .page-footer { border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
+  .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
+  .page-footer { padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
 `;
 
 /**
