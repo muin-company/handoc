@@ -224,15 +224,17 @@ def generate_report(results: list[dict], output_dir: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="PDF 시각 비교")
-    parser.add_argument("--reference", required=True, help="한/글 레퍼런스 PDF 디렉토리")
-    parser.add_argument("--handoc", required=True, help="HanDoc PDF 디렉토리")
+    parser.add_argument("--reference", default=None, help="한/글 레퍼런스 PDF 디렉토리 (기본: ../handoc-fixtures/pdf-hancom-win)")
+    parser.add_argument("--handoc", default=None, help="HanDoc PDF 디렉토리 (기본: ../handoc-fixtures/pdf-001)")
     parser.add_argument("--output", default="./comparison", help="결과 출력 디렉토리")
     parser.add_argument("--dpi", type=int, default=150, help="비교 DPI")
     parser.add_argument("--limit", type=int, help="비교할 최대 파일 수")
     args = parser.parse_args()
 
-    ref_dir = Path(args.reference)
-    test_dir = Path(args.handoc)
+    script_dir = Path(__file__).parent
+    fixtures_dir = script_dir.parent.parent / "handoc-fixtures"
+    ref_dir = Path(args.reference) if args.reference else fixtures_dir / "pdf-hancom"
+    test_dir = Path(args.handoc) if args.handoc else fixtures_dir / "pdf-001"
     out_dir = Path(args.output)
     diff_dir = out_dir / "diffs"
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -217,23 +217,13 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #000; line-height: 1.6; }
-  .page { page-break-after: always; position: relative; margin: 0 auto; background: #fff; }
-  .page:last-child { page-break-after: auto; }
-  .page-divider { border: none; border-top: 1px dashed #ccc; margin: 0; }
-  .page-header { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
-  .page-footer { border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
-  article { flex: 1; }
   p { margin: 2px 0; }
   table { margin: 4px 0; border-collapse: collapse; width: 100%; }
   td, th { border: 1px solid #000; padding: 4px; vertical-align: top; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; }
-  @media print {
-    body { margin: 0; }
-    .page { page-break-after: always; margin: 0; box-shadow: none; border: none; }
-    .page:last-child { page-break-after: auto; }
-    .page-divider { display: none; }
-  }
+  .page-header { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
+  .page-footer { border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
 `;
 
 /**
@@ -247,19 +237,15 @@ export function renderToHtml(doc: HanDoc): string {
     const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
     const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
 
-    if (i > 0) body += '<hr class="page-divider" />';
-    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm;display:flex;flex-direction:column">`;
     body += headerHtml;
-    body += `<article>${html}</article>`;
+    body += html;
     body += footerHtml;
-    body += '</section>';
   }
 
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>${BASE_CSS}</style>
 </head>
 <body>
@@ -281,10 +267,9 @@ export function renderToStandaloneHtml(doc: HanDoc): string {
     const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
     const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
 
-    if (i > 0) body += '<hr class="page-divider" />';
-    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm;display:flex;flex-direction:column">`;
+    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm">`;
     body += headerHtml;
-    body += `<article>${html}</article>`;
+    body += html;
     body += footerHtml;
     body += '</section>';
   }

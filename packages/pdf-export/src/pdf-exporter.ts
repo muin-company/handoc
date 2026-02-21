@@ -9,19 +9,40 @@ export async function hwpxToPdf(hwpxBuffer: Uint8Array): Promise<Uint8Array> {
   const doc = await HanDoc.open(hwpxBuffer);
   const html = renderToHtml(doc);
 
-  const pageSize = doc.pageSize;
-  const margins = doc.margins;
-  const landscape = doc.landscape;
+  // Use first section's page properties (most common case)
+  const firstSection = doc.sections[0];
+  const sp = firstSection?.sectionProps;
 
-  // When landscape is true, swap width and height for PDF output
-  const pdfWidth = landscape ? pageSize.height : pageSize.width;
-  const pdfHeight = landscape ? pageSize.width : pageSize.height;
+  let pw: number, ph: number, ml: number, mr: number, mt: number, mb: number;
+  if (sp) {
+    // Convert HWP units to mm: hwpUnit / 7200 * 25.4
+    const toMm = (v: number) => Math.round((v / 7200) * 25.4 * 10) / 10;
+    pw = toMm(sp.pageWidth);
+    ph = toMm(sp.pageHeight);
+    ml = toMm(sp.margins.left);
+    mr = toMm(sp.margins.right);
+    mt = toMm(sp.margins.top);
+    mb = toMm(sp.margins.bottom);
+  } else {
+    const pageSize = doc.pageSize;
+    const margins = doc.margins;
+    pw = pageSize.width;
+    ph = pageSize.height;
+    ml = margins.left;
+    mr = margins.right;
+    mt = margins.top;
+    mb = margins.bottom;
+  }
+
+  const landscape = doc.landscape;
+  const pdfWidth = landscape ? ph : pw;
+  const pdfHeight = landscape ? pw : ph;
 
   // Dynamic import so Playwright is only needed at runtime
   let chromium: typeof import('playwright').chromium;
   try {
-    const pw = await import('playwright');
-    chromium = pw.chromium;
+    const pw2 = await import('playwright');
+    chromium = pw2.chromium;
   } catch {
     throw new Error(
       'Playwright is required for PDF export. Install it with: npm install playwright',
@@ -37,10 +58,10 @@ export async function hwpxToPdf(hwpxBuffer: Uint8Array): Promise<Uint8Array> {
       width: `${pdfWidth}mm`,
       height: `${pdfHeight}mm`,
       margin: {
-        top: `${margins.top}mm`,
-        bottom: `${margins.bottom}mm`,
-        left: `${margins.left}mm`,
-        right: `${margins.right}mm`,
+        top: `${mt}mm`,
+        bottom: `${mb}mm`,
+        left: `${ml}mm`,
+        right: `${mr}mm`,
       },
       printBackground: true,
     });
