@@ -415,26 +415,38 @@ export async function generatePdf(
 
             for (const row of tbl.rows) {
               // Calculate row height
-              let rowH = 10;
+              let rowH = 0;
               for (const cell of row.cells) {
                 const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-                let h = 4;
+                const cellPadding = 4; // total vertical padding (2pt top + 2pt bottom)
+                let h = cellPadding;
+                
                 for (const cp of cell.paragraphs) {
                   const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-                  h += cps.marginTop + cps.marginBottom;
+                  // Only add para margins if significant (> 1pt)
+                  if (cps.marginTop > 1) h += cps.marginTop * 0.5; // reduce para spacing in tables
+                  if (cps.marginBottom > 1) h += cps.marginBottom * 0.5;
+                  
                   for (const cr of cp.runs) {
                     const cts = resolveTextStyle(doc, cr.charPrIDRef);
                     const cf = getFont(cts);
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
-                        const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 8);
-                        const cellLineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * cps.lineHeight;
-                        h += cl.length * cellLineH;
+                        const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 4); // reduce horizontal padding
+                        if (cl.length > 0) {
+                          // Use actual line height, but don't multiply by lineHeight ratio for tables
+                          // Tables should be more compact
+                          const lineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.2; // reduce from 1.6 to 1.2
+                          h += cl.length * lineH;
+                        }
                       }
                     }
                   }
                 }
-                rowH = Math.max(rowH, h);
+                
+                // Minimum row height: font size + padding
+                const minH = 12 + cellPadding;
+                rowH = Math.max(rowH, Math.max(h, minH));
               }
 
               // Cap row height to content area (prevent infinite single-page rows)
@@ -460,29 +472,29 @@ export async function generatePdf(
                   borderColor: rgb(0, 0, 0), borderWidth: 0.5,
                 });
 
-                let ty = curY - 4;
+                let ty = curY - 2; // reduced top padding
                 for (const cp of cell.paragraphs) {
                   const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-                  ty -= cps.marginTop;
+                  if (cps.marginTop > 1) ty -= cps.marginTop * 0.5;
                   for (const cr of cp.runs) {
                     const cts = resolveTextStyle(doc, cr.charPrIDRef);
                     const cf = getFont(cts);
-                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * cps.lineHeight;
+                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.2;
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
-                        const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 8);
+                        const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 4);
                         for (const cl of cls) {
                           ty -= cts.fontSize;
-                          let tx = cellX + 4;
+                          let tx = cellX + 2; // reduced left padding
                           if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
-                          else if (cps.align === 'right') tx = cellX + cellW - 4 - cl.width;
+                          else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
                           drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
                           ty -= (lh - cts.fontSize);
                         }
                       }
                     }
                   }
-                  ty -= cps.marginBottom;
+                  if (cps.marginBottom > 1) ty -= cps.marginBottom * 0.5;
                 }
                 cellX += cellW;
               }
