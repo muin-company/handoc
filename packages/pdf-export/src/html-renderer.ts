@@ -95,6 +95,9 @@ function renderRun(doc: HanDoc, run: Run): string {
           html += renderImage(doc, child.element);
         }
         break;
+      case 'shape':
+        html += renderShape(doc, child.element);
+        break;
       // secPr, ctrl, trackChange — skip for rendering
     }
   }
@@ -372,4 +375,25 @@ export function renderToStandaloneHtml(doc: HanDoc): string {
 ${body}
 </body>
 </html>`;
+}
+
+function renderShape(doc: HanDoc, element: GenericElement): string {
+  let content = '';
+  
+  const visit = (el: GenericElement) => {
+    const isPara = el.tag.endsWith('p');
+    if (isPara) content += '<div>';
+    
+    if (el.text) content += esc(el.text);
+    
+    for (const child of el.children) visit(child);
+    
+    if (isPara) content += '</div>';
+  };
+  
+  visit(element);
+  
+  if (!content.replace(/<[^>]*>/g, '').trim()) return '';
+  
+  return `<div class="shape-wrapper" style="border:1px dashed #ccc; padding:4px; margin:4px; overflow:hidden;">${content}</div>`;
 }
