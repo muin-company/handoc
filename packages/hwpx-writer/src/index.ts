@@ -127,5 +127,12 @@ export function writeHwpx(doc: HwpxDocument, originalPackage?: OpcPackageLike): 
     }
   }
 
-  return zipSync(parts);
+  // Fix realm issue: ensure all Uint8Arrays are from the current realm
+  // This is necessary because TextEncoder may create arrays from a different global context
+  const normalizedParts: Record<string, Uint8Array> = {};
+  for (const [key, value] of Object.entries(parts)) {
+    normalizedParts[key] = new Uint8Array(value);
+  }
+  
+  return zipSync(normalizedParts);
 }

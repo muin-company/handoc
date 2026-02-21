@@ -584,3 +584,23 @@ function convertTableSimple(tableEl: GenericElement): Table | null {
 
   return new Table({ rows: tableRows });
 }
+
+// Export internal functions for testing
+export const __testing = {
+  hwpUnitToTwip,
+  hwpUnitToHalfPt,
+  hwpUnitToEmu,
+  mapFontName,
+  resolveFontName,
+  mimeToImageType,
+  parseBorderFill,
+  mapBorderStyle,
+  extractTextFromGeneric,
+  findImagePath,
+  findImageDimensions,
+  convertInlineObject,
+  createTextRun,
+  createDocxParagraph,
+  convertParagraphToDocx,
+  convertSectionProperties,
+};
