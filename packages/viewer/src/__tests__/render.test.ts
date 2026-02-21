@@ -297,6 +297,52 @@ describe('paragraphToHtml', () => {
     const html = paragraphToHtml(para, ctx);
     expect(html).toContain('text-align:justify');
   });
+
+  it('applies distribute alignment (mapped to justify)', () => {
+    const ctx: RenderContext = {
+      header: {
+        version: '1.0',
+        secCnt: 1,
+        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+        refList: {
+          fontFaces: [],
+          borderFills: [],
+          charProperties: [],
+          paraProperties: [
+            { id: 0, align: 'distribute' as any, attrs: {}, children: [] },
+          ],
+          styles: [],
+          others: [],
+        },
+      },
+    };
+    const para = makePara([makeRun('Distributed')], { paraPrIDRef: 0 });
+    const html = paragraphToHtml(para, ctx);
+    expect(html).toContain('text-align:justify');
+  });
+
+  it('defaults to left alignment for unknown align value', () => {
+    const ctx: RenderContext = {
+      header: {
+        version: '1.0',
+        secCnt: 1,
+        beginNum: { page: 1, footnote: 1, endnote: 1, pic: 1, tbl: 1, equation: 1 },
+        refList: {
+          fontFaces: [],
+          borderFills: [],
+          charProperties: [],
+          paraProperties: [
+            { id: 0, align: 'unknown' as any, attrs: {}, children: [] },
+          ],
+          styles: [],
+          others: [],
+        },
+      },
+    };
+    const para = makePara([makeRun('Unknown')], { paraPrIDRef: 0 });
+    const html = paragraphToHtml(para, ctx);
+    expect(html).toContain('text-align:left');
+  });
 });
 
 describe('sectionToHtml', () => {
@@ -697,6 +743,16 @@ describe('header/footer rendering', () => {
     expect(html).toContain('Footer text');
     expect(html).toContain('Body text');
   });
+
+  it('renders section without footnotes', () => {
+    const section: Section = {
+      paragraphs: [makePara([makeRun('No footnotes here')])],
+    };
+    const ctx: RenderContext = {};
+    const html = sectionToHtml(section, ctx, 0);
+    expect(html).toContain('No footnotes here');
+    expect(html).not.toContain('handoc-footnotes');
+  });
 });
 
 describe('footnote rendering', () => {
@@ -967,6 +1023,53 @@ describe('image edge cases', () => {
     const child: RunChild = { type: 'inlineObject', element: imgEl };
     const html = runChildToHtml(child, ctx);
     expect(html).toContain('data:image/jpeg;base64,');
+  });
+
+  it('finds images by filename match (name === href)', () => {
+    const imgEl: GenericElement = {
+      tag: 'hp:img',
+      attrs: {},
+      children: [{
+        tag: 'hp:binItem',
+        attrs: { binaryItemIDRef: 'photo' },
+        children: [],
+        text: null,
+      }],
+      text: null,
+    };
+    const ctx: RenderContext = {
+      images: [{
+        path: 'BinData/sub/photo.png',
+        data: new Uint8Array([137, 80, 78, 71]),
+      }],
+    };
+    const child: RunChild = { type: 'inlineObject', element: imgEl };
+    const html = runChildToHtml(child, ctx);
+    expect(html).toContain('data:image/png;base64,');
+  });
+
+  it('handles unusual extension formats', () => {
+    const imgEl: GenericElement = {
+      tag: 'hp:img',
+      attrs: {},
+      children: [{
+        tag: 'hp:binItem',
+        attrs: { binaryItemIDRef: 'noext' },
+        children: [],
+        text: null,
+      }],
+      text: null,
+    };
+    const ctx: RenderContext = {
+      images: [{
+        path: 'BinData/noext',
+        data: new Uint8Array([1, 2, 3]),
+      }],
+    };
+    const child: RunChild = { type: 'inlineObject', element: imgEl };
+    const html = runChildToHtml(child, ctx);
+    expect(html).toContain('<img class="handoc-image"');
+    expect(html).toContain('base64,');
   });
 });
 
