@@ -177,7 +177,7 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       const tag = cell.header ? 'th' : 'td';
       
       // Cell width
-      const cellStyles: string[] = ['border:1px solid #000', 'padding:2px 4px', 'word-break:break-all', 'overflow:hidden'];
+      const cellStyles: string[] = ['border:0.5px solid #000', 'padding:2px 4px', 'word-break:break-all', 'overflow:hidden'];
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
@@ -218,6 +218,10 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
       if (m.indent) styles.push(`text-indent:${m.indent / 7200}in`);
       if (m.prev) styles.push(`margin-top:${m.prev / 7200}in`);
       if (m.next) styles.push(`margin-bottom:${m.next / 7200}in`);
+    }
+    // Handle page break before paragraph
+    if (paraProp.breakSetting?.pageBreakBefore) {
+      styles.push('page-break-before:always');
     }
   }
 
