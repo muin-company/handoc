@@ -18,8 +18,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@handoc/document-model": "workspace:*",
     "@handoc/hwpx-parser": "workspace:*",
-    "@handoc/document-model": "workspace:*"
+    "pdf-lib": "^1.17.1"
   },
   "peerDependencies": {
     "playwright": ">=1.40.0"
@@ -30,12 +31,19 @@
     }
   },
   "devDependencies": {
-    "vitest": "^4.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.0"
   },
   "description": "HWPX to PDF export via HTML rendering and Playwright",
-  "keywords": ["hwpx", "pdf", "export", "converter", "hancom", "document"],
+  "keywords": [
+    "hwpx",
+    "pdf",
+    "export",
+    "converter",
+    "hancom",
+    "document"
+  ],
   "author": "MUIN <mj@muin.company>",
   "license": "MIT",
   "repository": {
@@ -47,7 +55,11 @@
   "bugs": {
     "url": "https://github.com/muin-company/handoc/issues"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }
