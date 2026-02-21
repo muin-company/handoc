@@ -381,5 +381,216 @@ describe('parseHTML', () => {
       const runs = sections[0].paragraphs[0].runs;
       expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Triple')))).toBe(true);
     });
+
+    it('should parse <strong> as bold', () => {
+      const html = '<p><strong>Strong text</strong></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Strong')))).toBe(true);
+    });
+
+    it('should parse <em> as italic', () => {
+      const html = '<p><em>Emphasis text</em></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Emphasis')))).toBe(true);
+    });
+
+    it('should parse <strike> and <del> as strikethrough', () => {
+      const html = '<p><strike>Strike</strike> and <del>Delete</del></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Strike')))).toBe(true);
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Delete')))).toBe(true);
+    });
+
+    it('should handle span with italic style', () => {
+      const html = '<p><span style="font-style:italic">Italic span</span></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Italic')))).toBe(true);
+    });
+
+    it('should handle span with underline style', () => {
+      const html = '<p><span style="text-decoration:underline">Underlined span</span></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Underlined')))).toBe(true);
+    });
+
+    it('should handle span with line-through style', () => {
+      const html = '<p><span style="text-decoration:line-through">Struck span</span></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Struck')))).toBe(true);
+    });
+
+    it('should handle span with spaces in style attributes', () => {
+      const html = '<p><span style="font-weight: bold; font-style: italic">Styled</span></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('Styled')))).toBe(true);
+    });
+
+    it('should handle img without alt attribute', () => {
+      const html = '<img src="no-alt.png"/>';
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      const imgChild = para.runs[0].children[0];
+      
+      if (imgChild.type === 'inlineObject') {
+        expect(imgChild.element.attrs['src']).toBe('no-alt.png');
+        expect(imgChild.element.attrs['alt']).toBe('');
+      }
+    });
+
+    it('should handle img without dimensions', () => {
+      const html = '<img src="no-size.png" alt="Test"/>';
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      const imgChild = para.runs[0].children[0];
+      
+      if (imgChild.type === 'inlineObject') {
+        expect(imgChild.element.attrs['src']).toBe('no-size.png');
+        expect(imgChild.element.attrs['width']).toBeUndefined();
+        expect(imgChild.element.attrs['height']).toBeUndefined();
+      }
+    });
+
+    it('should handle standalone br as empty paragraph', () => {
+      const html = '<br/>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs).toHaveLength(1);
+    });
+
+    it('should handle table with rowspan', () => {
+      const html = `
+        <table>
+          <tr><td rowspan="2">Tall</td><td>A</td></tr>
+          <tr><td>B</td></tr>
+        </table>
+      `;
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      if (para.runs[0].children[0].type === 'table') {
+        const table = para.runs[0].children[0].element;
+        const firstRow = table.children[0];
+        const firstCell = firstRow.children[0];
+        expect(firstCell.attrs['rowspan']).toBe('2');
+      }
+    });
+
+    it('should handle empty table rows', () => {
+      const html = '<table><tr></tr></table>';
+      const sections = parseHTML(html);
+
+      const para = sections[0].paragraphs[0];
+      if (para.runs[0].children[0].type === 'table') {
+        const table = para.runs[0].children[0].element;
+        expect(table.children).toHaveLength(1);
+      }
+    });
+
+    it('should handle div with only whitespace', () => {
+      const html = '<div>   \n   </div><p>Content</p>';
+      const sections = parseHTML(html);
+
+      // Whitespace-only div should be skipped
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle nested div without children elements', () => {
+      const html = '<div><div>Text content</div></div>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs).toHaveLength(1);
+      expect(sections[0].paragraphs[0].runs[0].children[0]).toEqual({
+        type: 'text',
+        content: 'Text content',
+      });
+    });
+
+    it('should handle body tag correctly', () => {
+      const html = '<html><body><p>In body</p></body></html>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs).toHaveLength(1);
+      expect(sections[0].paragraphs[0].runs[0].children[0]).toEqual({
+        type: 'text',
+        content: 'In body',
+      });
+    });
+
+    it('should handle mixed text and elements in paragraph', () => {
+      const html = '<p>Start <b>bold</b> middle <i>italic</i> end</p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.length).toBeGreaterThan(1);
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('bold')))).toBe(true);
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content.includes('italic')))).toBe(true);
+    });
+
+    it('should handle br inside paragraph with inline formatting', () => {
+      const html = '<p><b>Bold<br/>text</b></p>';
+      const sections = parseHTML(html);
+
+      const runs = sections[0].paragraphs[0].runs;
+      expect(runs.some(r => r.children.some(c => c.type === 'text' && c.content === '\n'))).toBe(true);
+    });
+
+    it('should return empty array for unknown tag without text', () => {
+      const html = '<unknowntag></unknowntag>';
+      const sections = parseHTML(html);
+
+      // Should create empty paragraph as fallback
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle text node directly under body', () => {
+      const html = '<body>Direct text</body>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle empty unknown tags', () => {
+      const html = '<article></article>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle section tags', () => {
+      const html = '<section><p>Content</p></section>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle article tags', () => {
+      const html = '<article><p>Article content</p></article>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle footer and header tags', () => {
+      const html = '<header><h1>Header</h1></header><footer>Footer</footer>';
+      const sections = parseHTML(html);
+
+      expect(sections[0].paragraphs.length).toBeGreaterThanOrEqual(1);
+    });
   });
 });

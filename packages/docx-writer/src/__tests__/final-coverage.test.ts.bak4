@@ -500,6 +500,7 @@ describe('Uncovered Lines - Surgical Coverage', () => {
       expect(result).toBeNull();
     });
   });
+});
 
   describe('Final remaining branches', () => {
     it('findImageDimensions with cx/cy attributes', () => {

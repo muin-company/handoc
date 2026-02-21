@@ -115,4 +115,24 @@ describe('HanDocViewer', () => {
     await screen.findByText((content) => content.includes('Test Document'));
     expect(container.querySelector('.custom-class')).toBeInTheDocument();
   });
+
+  it('renders error state on parsing failure', async () => {
+    const { HanDoc } = await import('@handoc/hwpx-parser');
+    vi.mocked(HanDoc.open).mockRejectedValueOnce(new Error('Invalid file format'));
+    
+    render(<HanDocViewer buffer={mockBuffer} />);
+    const errorMsg = await screen.findByText(/Error: Invalid file format/);
+    expect(errorMsg).toBeInTheDocument();
+  });
+
+  it('resets zoom to 100% when reset button clicked', async () => {
+    const onZoomChange = vi.fn();
+    render(<HanDocViewer buffer={mockBuffer} zoom={150} showZoomControls onZoomChange={onZoomChange} />);
+    await screen.findByText((content) => content.includes('Test Document'));
+    
+    const resetBtn = screen.getByLabelText('Reset zoom');
+    fireEvent.click(resetBtn);
+    
+    expect(onZoomChange).toHaveBeenCalledWith(100);
+  });
 });
