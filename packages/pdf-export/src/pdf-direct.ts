@@ -127,7 +127,8 @@ interface TextStyle {
 
 interface ParaStyle {
   align: 'left' | 'center' | 'right' | 'justify';
-  lineHeight: number;
+  lineHeight: number;       // multiplier for percent, or absolute pt for fixed
+  lineHeightFixed: boolean;  // true = lineHeight is absolute pt
   marginLeft: number;
   marginRight: number;
   marginTop: number;
@@ -169,7 +170,7 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
 }
 
 function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
-  const d: ParaStyle = { align: 'left', lineHeight: 1.6, marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, textIndent: 0 };
+  const d: ParaStyle = { align: 'left', lineHeight: 1.6, lineHeightFixed: false, marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, textIndent: 0 };
   if (paraPrIDRef == null) return d;
   const pp = doc.header.refList.paraProperties.find(p => p.id === paraPrIDRef);
   if (!pp) return d;
@@ -184,8 +185,13 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
   }
   if (pp.lineSpacing) {
     const t = pp.lineSpacing.type.toLowerCase();
-    if (t === 'percent') s.lineHeight = pp.lineSpacing.value / 100;
-    else if (t === 'fixed' && pp.lineSpacing.value > 0) s.lineHeight = hwpToPt(pp.lineSpacing.value) / 10;
+    if (t === 'percent') {
+      s.lineHeight = pp.lineSpacing.value / 100;
+      s.lineHeightFixed = false;
+    } else if (t === 'fixed' && pp.lineSpacing.value > 0) {
+      s.lineHeight = hwpToPt(pp.lineSpacing.value);
+      s.lineHeightFixed = true;
+    }
   }
   if (pp.margin) {
     if (pp.margin.left) s.marginLeft = hwpToPt(pp.margin.left);
@@ -292,8 +298,13 @@ function findDesc(el: GenericElement, tag: string): GenericElement | undefined {
 // ── Main export ──
 
 export interface PdfDirectOptions {
-  /** Custom font paths: { serif?: string, sans?: string } */
-  fonts?: { serif?: string; sans?: string };
+  /** Custom font paths by category */
+  fonts?: {
+    serif?: string;
+    sans?: string;
+  };
+  /** Custom font paths by exact 한/글 font name */
+  fontMap?: Record<string, string>;
 }
 
 /**
@@ -356,7 +367,7 @@ export async function generatePdf(
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
         const font = getFont(ts);
-        const lineH = ts.fontSize * ps.lineHeight;
+        const lineH = ps.lineHeightFixed ? ps.lineHeight : ts.fontSize * ps.lineHeight;
 
         for (const child of run.children) {
           if (child.type === 'text') {
@@ -415,7 +426,8 @@ export async function generatePdf(
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
                         const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 8);
-                        h += cl.length * cts.fontSize * cps.lineHeight;
+                        const cellLineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * cps.lineHeight;
+                        h += cl.length * cellLineH;
                       }
                     }
                   }
@@ -443,7 +455,7 @@ export async function generatePdf(
                   for (const cr of cp.runs) {
                     const cts = resolveTextStyle(doc, cr.charPrIDRef);
                     const cf = getFont(cts);
-                    const lh = cts.fontSize * cps.lineHeight;
+                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * cps.lineHeight;
                     for (const cc of cr.children) {
                       if (cc.type === 'text') {
                         const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 8);
