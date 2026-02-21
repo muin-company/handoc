@@ -455,7 +455,7 @@ export async function generatePdf(
               // Page break: if row doesn't fit, start new page
               // BUT: don't break if we're already near the top (just started fresh page)
               // This prevents "every row on new page" syndrome when rowH calc is inflated
-              const nearTop = (pageH - curY) < 30; // within ~30pt (~2-3 lines) of page top
+              const nearTop = (pageH - curY) < 50; // within ~50pt (~3-4 lines) of page top
               if (curY - rowH < mB && !nearTop) {
                 newPage();
               }
