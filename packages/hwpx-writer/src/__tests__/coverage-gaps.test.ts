@@ -478,6 +478,23 @@ describe('section-writer edge cases', () => {
     expect(xml).toContain('<hp:lineseg');
     expect(xml).toContain('textheight="80"');
   });
+
+  it('should write empty text element as self-closing', () => {
+    const section: Section = {
+      paragraphs: [{
+        id: null,
+        paraPrIDRef: 0,
+        styleIDRef: null,
+        pageBreak: false,
+        columnBreak: false,
+        merged: false,
+        runs: [{ charPrIDRef: 0, children: [{ type: 'text', content: '' }] }],
+        lineSegArray: [],
+      }],
+    };
+    const xml = writeSection(section);
+    expect(xml).toContain('<hp:t/>');
+  });
 });
 
 // ── Builder: custom fonts, lineSpacing, indent, pageNumber-only ──
