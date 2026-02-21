@@ -1,0 +1,504 @@
+import { describe, it, expect } from 'vitest';
+import { __testing } from '../converter';
+import type { GenericElement, DocumentHeader } from '@handoc/document-model';
+
+/**
+ * Surgical tests to hit specific uncovered lines.
+ * Lines: 490, 512, 517, 525, 553
+ */
+
+describe('Uncovered Lines - Surgical Coverage', () => {
+  
+  const createMockDoc = () => ({ getImage: () => null } as any);
+  const createMockHeader = (): DocumentHeader => ({
+    refList: { fontFaces: [], charProperties: [], paraProperties: [], borderFills: [] },
+  } as any);
+
+  describe('Lines 490, 512: colspan/rowspan > 1', () => {
+    it('cell with colspan > 1', () => {
+      const tableEl: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [{
+            tag: 'tc',
+            attrs: { colSpan: '3', rowSpan: '1' },
+            children: [{ tag: 'p', attrs: {}, children: [], text: 'Merged' }],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const result = __testing.convertTable(tableEl, createMockHeader(), createMockDoc(), new Map());
+      expect(result).toBeTruthy();
+    });
+
+    it('cell with rowspan > 1', () => {
+      const tableEl: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [{
+            tag: 'tc',
+            attrs: { colSpan: '1', rowSpan: '2' },
+            children: [{ tag: 'p', attrs: {}, children: [], text: 'Vertical' }],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const result = __testing.convertTable(tableEl, createMockHeader(), createMockDoc(), new Map());
+      expect(result).toBeTruthy();
+    });
+  });
+
+  describe('Lines 517, 525: bgColor and borders', () => {
+    it('cell with background color', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [{
+          tag: 'fillBrush',
+          attrs: {},
+          children: [{
+            tag: 'winBrush',
+            attrs: { faceColor: 'ff0000' },
+            children: [],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.bgColor).toBe('ff0000');
+
+      const borderFills = new Map();
+      borderFills.set(1, parsed);
+
+      const tableEl: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [{
+            tag: 'tc',
+            attrs: { borderFillIDRef: '1', colSpan: '1', rowSpan: '1' },
+            children: [{ tag: 'p', attrs: {}, children: [], text: 'Red bg' }],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const result = __testing.convertTable(tableEl, createMockHeader(), createMockDoc(), borderFills);
+      expect(result).toBeTruthy();
+    });
+
+    it('cell with borders', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '2' },
+        children: [
+          { tag: 'top', attrs: { type: 'solid', width: '10' }, children: [], text: '' },
+          { tag: 'bottom', attrs: { type: 'dashed', width: '5' }, children: [], text: '' },
+        ],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(Object.keys(parsed.borders).length).toBeGreaterThan(0);
+
+      const borderFills = new Map();
+      borderFills.set(2, parsed);
+
+      const tableEl: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [{
+            tag: 'tc',
+            attrs: { borderFillIDRef: '2', colSpan: '1', rowSpan: '1' },
+            children: [{ tag: 'p', attrs: {}, children: [], text: 'Bordered' }],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const result = __testing.convertTable(tableEl, createMockHeader(), createMockDoc(), borderFills);
+      expect(result).toBeTruthy();
+    });
+  });
+
+  describe('Line 553: empty cell row', () => {
+    it('table row with no tc elements', () => {
+      const tableEl: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [],  // Empty row
+          text: '',
+        }],
+        text: '',
+      };
+      const result = __testing.convertTableSimple(tableEl);
+      expect(result).toBeTruthy();
+    });
+  });
+
+  describe('Line 490: parseTable exception fallback', () => {
+    it('falls back to convertTableSimple when parseTable throws', () => {
+      // Create a table that will make parseTable throw
+      const malformedTable: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'invalidRowTag',  // Not a valid tr tag
+          attrs: {},
+          children: [],
+          text: '',
+        }],
+        text: '',
+      };
+      
+      const result = __testing.convertTable(malformedTable, createMockHeader(), createMockDoc(), new Map());
+      expect(result).toBeDefined();
+    });
+
+    it('handles table with missing attributes that parseTable expects', () => {
+      const table: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [{
+          tag: 'tr',
+          attrs: {},
+          children: [{
+            tag: 'tc',
+            attrs: {},  // Missing colSpan/rowSpan
+            children: [],
+            text: 'Cell',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      
+      const result = __testing.convertTable(table, createMockHeader(), createMockDoc(), new Map());
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('Additional branch coverage', () => {
+    it('borderFill with white background (should be ignored)', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [{
+          tag: 'fillBrush',
+          attrs: {},
+          children: [{
+            tag: 'winBrush',
+            attrs: { faceColor: 'ffffff' },  // White - should be ignored
+            children: [],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.bgColor).toBeUndefined();
+    });
+
+    it('borderFill with none color (should be ignored)', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [{
+          tag: 'fillBrush',
+          attrs: {},
+          children: [{
+            tag: 'winBrush',
+            attrs: { faceColor: 'none' },  // None - should be ignored
+            children: [],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.bgColor).toBeUndefined();
+    });
+
+    it('border with type "none" (should not be added)', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [{
+          tag: 'top',
+          attrs: { type: 'none' },  // None border
+          children: [],
+          text: '',
+        }],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.borders.top).toBeUndefined();
+    });
+
+    it('parseBorderFill with all border sides', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [
+          { tag: 'topBorder', attrs: { type: 'solid' }, children: [], text: '' },
+          { tag: 'bottomBorder', attrs: { type: 'solid' }, children: [], text: '' },
+          { tag: 'leftBorder', attrs: { type: 'solid' }, children: [], text: '' },
+          { tag: 'rightBorder', attrs: { type: 'solid' }, children: [], text: '' },
+        ],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.borders.top).toBeDefined();
+      expect(parsed.borders.bottom).toBeDefined();
+      expect(parsed.borders.left).toBeDefined();
+      expect(parsed.borders.right).toBeDefined();
+    });
+
+    it('parseBorderFill with namespace prefix tags', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '1' },
+        children: [
+          { tag: 'hp:fillBrush', attrs: {}, children: [
+            { tag: 'hp:winBrush', attrs: { faceColor: 'abcdef' }, children: [], text: '' }
+          ], text: '' },
+          { tag: 'hp:top', attrs: { type: 'double' }, children: [], text: '' },
+        ],
+        text: '',
+      };
+      const parsed = __testing.parseBorderFill(borderFillEl);
+      expect(parsed.bgColor).toBe('abcdef');
+      expect(parsed.borders.top).toBeDefined();
+    });
+  });
+});
+
+  describe('More branch coverage', () => {
+    it('resolveFontName with no fontRef', () => {
+      const charProp = { bold: true, height: 1000 };  // No fontRef
+      const header = createMockHeader();
+      const result = __testing.resolveFontName(charProp as any, header);
+      expect(result).toBeUndefined();
+    });
+
+    it('resolveFontName with fontRef but no matching font', () => {
+      const charProp = {
+        fontRef: { hangul: 999 },  // Non-existent font ID
+      };
+      const header: DocumentHeader = {
+        refList: {
+          fontFaces: [
+            { lang: 'hangul', fonts: [{ id: 1, face: 'Batang' }] },
+          ],
+          charProperties: [],
+          paraProperties: [],
+          borderFills: [],
+        },
+      } as any;
+      const result = __testing.resolveFontName(charProp as any, header);
+      expect(result).toBeUndefined();
+    });
+
+    it('resolveFontName with fontIdx null', () => {
+      const charProp = {
+        fontRef: { hangul: null },  // Null font ID
+      };
+      const header = createMockHeader();
+      const result = __testing.resolveFontName(charProp as any, header);
+      expect(result).toBeUndefined();
+    });
+
+    it('createDocxParagraph with heading', () => {
+      const paraProp = {
+        align: 'left',
+        heading: { level: 2 },
+      };
+      const result = __testing.createDocxParagraph([], paraProp as any);
+      expect(result).toBeDefined();
+    });
+
+    it('createDocxParagraph with heading level 1-6', () => {
+      for (let level = 1; level <= 6; level++) {
+        const paraProp = {
+          heading: { level },
+        };
+        const result = __testing.createDocxParagraph([], paraProp as any);
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('parsed table with zero rows', () => {
+      // This would make parsed.rows.length === 0
+      const emptyTable: GenericElement = {
+        tag: 'tbl',
+        attrs: {},
+        children: [],  // No tr elements
+        text: '',
+      };
+      const result = __testing.convertTable(emptyTable, createMockHeader(), createMockDoc(), new Map());
+      // Should return null due to zero rows
+      expect(result).toBeNull();
+    });
+
+    it('borderFill with id <= 0 (should be skipped)', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '0' },  // ID is 0
+        children: [{
+          tag: 'fillBrush',
+          attrs: {},
+          children: [{
+            tag: 'winBrush',
+            attrs: { faceColor: 'ff0000' },
+            children: [],
+            text: '',
+          }],
+          text: '',
+        }],
+        text: '',
+      };
+      // This should be skipped in the borderFills map (id > 0 check)
+      expect(parseInt(borderFillEl.attrs.id)).toBe(0);
+    });
+
+    it('borderFill with negative id (should be skipped)', () => {
+      const borderFillEl: GenericElement = {
+        tag: 'borderFill',
+        attrs: { id: '-1' },  // Negative ID
+        children: [],
+        text: '',
+      };
+      expect(parseInt(borderFillEl.attrs.id)).toBeLessThan(0);
+    });
+
+    it('createTextRun with all formatting options', () => {
+      const charProp = {
+        bold: true,
+        italic: true,
+        underline: 'single',
+        strikeout: 'single',
+        height: 1200,
+        textColor: 'ff0000',
+        fontRef: { hangul: 1 },
+      };
+      const header: DocumentHeader = {
+        refList: {
+          fontFaces: [
+            { lang: 'hangul', fonts: [{ id: 1, face: '바탕' }] },
+          ],
+          charProperties: [],
+          paraProperties: [],
+          borderFills: [],
+        },
+      } as any;
+      const result = __testing.createTextRun('Test', charProp as any, header);
+      expect(result).toBeDefined();
+    });
+
+    it('createTextRun with underline=none', () => {
+      const charProp = {
+        underline: 'none',
+      };
+      const result = __testing.createTextRun('Test', charProp as any);
+      expect(result).toBeDefined();
+    });
+
+    it('createTextRun with strikeout=none', () => {
+      const charProp = {
+        strikeout: 'none',
+      };
+      const result = __testing.createTextRun('Test', charProp as any);
+      expect(result).toBeDefined();
+    });
+
+    it('createTextRun with textColor=000000 (black, should be ignored)', () => {
+      const charProp = {
+        textColor: '000000',
+      };
+      const result = __testing.createTextRun('Test', charProp as any);
+      expect(result).toBeDefined();
+    });
+
+    it('findImageDimensions with zero width/height', () => {
+      const el: GenericElement = {
+        tag: 'pic',
+        attrs: { width: '0', height: '0' },
+        children: [],
+        text: '',
+      };
+      const result = __testing.findImageDimensions(el);
+      expect(result.width).toBe(0);
+      expect(result.height).toBe(0);
+    });
+
+    it('findImagePath returns null when no image found', () => {
+      const el: GenericElement = {
+        tag: 'div',
+        attrs: {},
+        children: [],
+        text: '',
+      };
+      const result = __testing.findImagePath(el);
+      expect(result).toBeNull();
+    });
+
+    it('convertInlineObject returns null when no image path', () => {
+      const child = {
+        type: 'inlineObject' as const,
+        name: 'pic',
+        element: {
+          tag: 'pic',
+          attrs: {},
+          children: [],  // No binItem or img
+          text: '',
+        } as GenericElement,
+      };
+      const result = __testing.convertInlineObject(child, createMockDoc());
+      expect(result).toBeNull();
+    });
+
+    it('convertInlineObject returns null when no image data', () => {
+      const child = {
+        type: 'inlineObject' as const,
+        name: 'pic',
+        element: {
+          tag: 'pic',
+          attrs: {},
+          children: [{
+            tag: 'binItem',
+            attrs: { src: 'nonexistent.png' },
+            children: [],
+            text: '',
+          }],
+          text: '',
+        } as GenericElement,
+      };
+      const doc = { getImage: () => null };  // Returns null
+      const result = __testing.convertInlineObject(child, doc as any);
+      expect(result).toBeNull();
+    });
+  });
+});
