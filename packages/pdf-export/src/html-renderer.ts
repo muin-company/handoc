@@ -427,13 +427,16 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; }
-  p { margin: 0; padding: 0; }
-  table { border-collapse: collapse; width: 100%; }
+  p { margin: 0; padding: 0; page-break-inside: avoid; }
+  h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; page-break-inside: avoid; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
   td, th { border: 0.5px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; line-height: 1.4; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
   .page-footer { padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
+  .shape-wrapper { page-break-inside: avoid; }
 `;
 
 /**
