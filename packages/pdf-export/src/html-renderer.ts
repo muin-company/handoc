@@ -526,20 +526,51 @@ ${body}
 function renderShape(doc: HanDoc, element: GenericElement): string {
   let content = '';
   
+  // Recursively render shape content including tables, images, and paragraphs
   const visit = (el: GenericElement) => {
-    const isPara = el.tag.endsWith('p');
-    if (isPara) content += '<div>';
+    // Check for table
+    if (el.tag.endsWith('tbl') || el.tag.endsWith(':tbl')) {
+      content += renderTable(doc, el);
+      return;
+    }
     
+    // Check for picture/image
+    if (el.tag.endsWith('pic') || el.tag.endsWith(':pic') || el.tag.endsWith('picture')) {
+      content += renderImage(doc, el);
+      return;
+    }
+    
+    // Check for paragraph
+    if (el.tag.endsWith('p') || el.tag.endsWith(':p')) {
+      // Find subList to get proper paragraph structure
+      const subList = el.children.find(c => c.tag.endsWith('subList'));
+      if (subList) {
+        for (const child of subList.children.filter(c => c.tag.endsWith('p'))) {
+          // Try to parse as proper paragraph if possible
+          content += '<div>';
+          if (child.text) content += esc(child.text);
+          for (const subChild of child.children) visit(subChild);
+          content += '</div>';
+        }
+      } else {
+        content += '<div>';
+        if (el.text) content += esc(el.text);
+        for (const child of el.children) visit(child);
+        content += '</div>';
+      }
+      return;
+    }
+    
+    // Handle text content
     if (el.text) content += esc(el.text);
     
+    // Recurse into children
     for (const child of el.children) visit(child);
-    
-    if (isPara) content += '</div>';
   };
   
   visit(element);
   
   if (!content.replace(/<[^>]*>/g, '').trim()) return '';
   
-  return `<div class="shape-wrapper" style="border:1px dashed #ccc; padding:4px; margin:4px; overflow:hidden;">${content}</div>`;
+  return `<div class="shape-wrapper" style="padding:4px; margin:4px; overflow:hidden;">${content}</div>`;
 }
