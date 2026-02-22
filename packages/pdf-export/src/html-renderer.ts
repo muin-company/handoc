@@ -243,6 +243,15 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       if (bgColor) {
         cellStyles.push(`background-color:#${bgColor}`);
       }
+      // Cell vertical alignment
+      const vertAlign = (cell as any).element?.children?.find((c: any) => c.tag === 'subList')?.attrs?.vertAlign;
+      if (vertAlign) {
+        const valignMap: Record<string, string> = { TOP: 'top', CENTER: 'middle', BOTTOM: 'bottom' };
+        const cssAlign = valignMap[vertAlign.toUpperCase()] || 'top';
+        cellStyles.push(`vertical-align:${cssAlign}`);
+      } else {
+        cellStyles.push('vertical-align:top');
+      }
       // Don't set fixed height — let content determine height
       // Fixed height causes page overflow when content is smaller than cell height
 
