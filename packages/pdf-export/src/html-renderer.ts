@@ -51,6 +51,22 @@ function getParaProp(doc: HanDoc, id: number | null): ParaProperty | undefined {
   return doc.header.refList.paraProperties.find(p => p.id === id);
 }
 
+function getBorderFillBgColor(doc: HanDoc, id: number | null): string | undefined {
+  if (id == null) return undefined;
+  const borderFill = doc.header.refList.borderFills.find(bf => Number(bf.attrs['id']) === id);
+  if (!borderFill) return undefined;
+  
+  // Look for fillBrush element (solid color fill)
+  const fillBrush = borderFill.children.find(c => c.tag.endsWith('fillBrush') || c.tag.endsWith(':fillBrush'));
+  if (!fillBrush) return undefined;
+  
+  // Get background color from attributes
+  const bgColor = fillBrush.attrs['backgroundColor'] || fillBrush.attrs['backColor'] || fillBrush.attrs['color'];
+  if (!bgColor || bgColor === 'ffffff' || bgColor === '#ffffff') return undefined;
+  
+  return bgColor.replace('#', '');
+}
+
 function renderRun(doc: HanDoc, run: Run): string {
   const charProp = getCharProp(doc, run.charPrIDRef);
   const styles: string[] = [];
@@ -221,6 +237,11 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       const cellStyles: string[] = ['border:0.5px solid #000', 'padding:2px 4px', 'word-break:keep-all', 'overflow-wrap:break-word'];
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
+      }
+      // Cell background color from borderFill
+      const bgColor = getBorderFillBgColor(doc, cell.borderFillIDRef);
+      if (bgColor) {
+        cellStyles.push(`background-color:#${bgColor}`);
       }
       // Don't set fixed height — let content determine height
       // Fixed height causes page overflow when content is smaller than cell height
