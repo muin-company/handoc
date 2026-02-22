@@ -72,6 +72,15 @@ function renderRun(doc: HanDoc, run: Run): string {
       const pt = charProp.height / 100;
       if (pt > 0) styles.push(`font-size:${pt}pt`);
     }
+    // Character spacing (letter-spacing)
+    if (charProp.spacing) {
+      const spacingVal = charProp.spacing.hangul ?? charProp.spacing.HANGUL ?? charProp.spacing.latin ?? charProp.spacing.LATIN;
+      if (spacingVal && spacingVal !== 0) {
+        // HWP spacing is in percentage of em (e.g., -5 means -5% of font size)
+        const em = spacingVal / 100;
+        styles.push(`letter-spacing:${em.toFixed(3)}em`);
+      }
+    }
     // Font face resolution
     const fontRef = (charProp as any).fontRef;
     if (fontRef) {
