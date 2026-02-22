@@ -301,9 +301,13 @@ export function renderToHtml(doc: HanDoc): string {
     const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
     const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
 
+    // Add page break before subsequent sections (not the first)
+    const sectionBreak = i > 0 ? ' style="page-break-before:always"' : '';
+    body += `<div class="section"${sectionBreak}>`;
     body += headerHtml;
     body += html;
     body += footerHtml;
+    body += '</div>';
   }
 
   return `<!DOCTYPE html>
@@ -331,7 +335,8 @@ export function renderToStandaloneHtml(doc: HanDoc): string {
     const { html, pw, ph, ml, mr, mt, mb } = renderSectionBody(doc, section);
     const { headerHtml, footerHtml } = renderHeaderFooter(doc, section);
 
-    body += `<section class="page" style="width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm">`;
+    const pageBreak = i > 0 ? 'page-break-before:always;' : '';
+    body += `<section class="page" style="${pageBreak}width:${pw}mm;min-height:${ph}mm;padding:${mt}mm ${mr}mm ${mb}mm ${ml}mm">`;
     body += headerHtml;
     body += html;
     body += footerHtml;
