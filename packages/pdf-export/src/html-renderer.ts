@@ -306,7 +306,7 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
 
       html += `<${tag}${colspan}${rowspan} style="${cellStyles.join(';')}">`;
       for (const para of cell.paragraphs) {
-        html += renderParagraph(doc, para);
+        html += renderParagraph(doc, para, true);
       }
       html += `</${tag}>`;
     }
@@ -317,7 +317,7 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
   return html;
 }
 
-function renderParagraph(doc: HanDoc, para: Paragraph): string {
+function renderParagraph(doc: HanDoc, para: Paragraph, inTable = false): string {
   const paraProp = getParaProp(doc, para.paraPrIDRef);
   const styles: string[] = [];
   let tag = 'p';
@@ -376,6 +376,11 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
 
   const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
   const inner = para.runs.map(r => renderRun(doc, r)).join('');
+
+  // Skip empty paragraphs in tables to prevent excessive vertical spacing
+  if (inTable && !inner.trim() && !headingPrefix.trim()) {
+    return '';
+  }
 
   return `<${tag}${styleAttr}>${headingPrefix}${inner || '&nbsp;'}</${tag}>`;
 }
