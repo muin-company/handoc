@@ -254,9 +254,14 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
   const szEl = element.children.find(c => c.tag === 'sz');
   const tableWidth = szEl ? Number(szEl.attrs['width']) : 0;
   const tableWidthMm = tableWidth > 0 ? (tableWidth / 7200 * 25.4).toFixed(1) : '';
+  
+  // Get table border from borderFillIDRef
+  const tableBorderFill = table.borderFillIDRef;
+  const tableBorder = tableBorderFill ? getBorderStyles(doc, tableBorderFill) : '';
+  
   const tableStyle = tableWidthMm
-    ? `border-collapse:collapse;table-layout:fixed;width:${tableWidthMm}mm;max-width:100%`
-    : 'border-collapse:collapse;table-layout:fixed;width:100%';
+    ? `border-collapse:collapse;table-layout:fixed;width:${tableWidthMm}mm;max-width:100%;${tableBorder}`
+    : `border-collapse:collapse;table-layout:fixed;width:100%;${tableBorder}`;
   
   let html = `<table style="${tableStyle}">`;
 
