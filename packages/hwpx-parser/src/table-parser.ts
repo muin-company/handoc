@@ -26,6 +26,7 @@ export interface ParsedTableCell {
   cellAddr: CellAddress;
   cellSpan: CellSpan;
   cellSz: CellSize;
+  vertAlign?: string;
   paragraphs: ReturnType<typeof parseParagraph>[];
 }
 
@@ -74,10 +75,12 @@ function parseCellFromGeneric(tc: GenericElement): ParsedTableCell {
   // Parse paragraphs from subList > p
   const paragraphs: ReturnType<typeof parseParagraph>[] = [];
   const subList = findChild(tc, 'subList');
+  let vertAlign: string | undefined;
   if (subList) {
     for (const pEl of findAllChildren(subList, 'p')) {
       paragraphs.push(parseParagraphFromGeneric(pEl));
     }
+    vertAlign = subList.attrs['vertAlign'];
   }
 
   return {
@@ -96,6 +99,7 @@ function parseCellFromGeneric(tc: GenericElement): ParsedTableCell {
       width: int(sz?.attrs['width']),
       height: int(sz?.attrs['height']),
     },
+    vertAlign,
     paragraphs,
   };
 }

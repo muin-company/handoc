@@ -244,10 +244,9 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
         cellStyles.push(`background-color:#${bgColor}`);
       }
       // Cell vertical alignment
-      const vertAlign = (cell as any).element?.children?.find((c: any) => c.tag === 'subList')?.attrs?.vertAlign;
-      if (vertAlign) {
+      if (cell.vertAlign) {
         const valignMap: Record<string, string> = { TOP: 'top', CENTER: 'middle', BOTTOM: 'bottom' };
-        const cssAlign = valignMap[vertAlign.toUpperCase()] || 'top';
+        const cssAlign = valignMap[cell.vertAlign.toUpperCase()] || 'top';
         cellStyles.push(`vertical-align:${cssAlign}`);
       } else {
         cellStyles.push('vertical-align:top');
