@@ -91,6 +91,21 @@ function renderRun(doc: HanDoc, run: Run): string {
         styles.push(`display:inline-block`);
       }
     }
+    // Superscript/subscript (vertical offset)
+    if (charProp.superscript) {
+      styles.push('vertical-align:super');
+      styles.push('font-size:0.75em');
+    } else if (charProp.subscript) {
+      styles.push('vertical-align:sub');
+      styles.push('font-size:0.75em');
+    } else if (charProp.offset) {
+      const offsetVal = charProp.offset.hangul ?? charProp.offset.HANGUL ?? charProp.offset.latin ?? charProp.offset.LATIN;
+      if (offsetVal && offsetVal !== 0) {
+        // HWP offset is in percentage points
+        const pct = offsetVal / 100;
+        styles.push(`vertical-align:${pct.toFixed(1)}%`);
+      }
+    }
     // Font face resolution
     const fontRef = (charProp as any).fontRef;
     if (fontRef) {
