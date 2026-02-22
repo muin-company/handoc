@@ -270,6 +270,17 @@ function findDesc(el: GenericElement, tag: string): GenericElement | undefined {
   return undefined;
 }
 
+/** Find all descendant elements matching a tag */
+function findAllDesc(el: GenericElement, tag: string): GenericElement[] {
+  const results: GenericElement[] = [];
+  for (const c of el.children) {
+    const t = c.tag.includes(':') ? c.tag.split(':').pop()! : c.tag;
+    if (t === tag) results.push(c);
+    results.push(...findAllDesc(c, tag));
+  }
+  return results;
+}
+
 /** Extract text from shape/drawing elements */
 function extractShapeText(el: GenericElement): string {
   let text = '';
@@ -448,16 +459,8 @@ export async function generatePdf(
             if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, pL, pW);
             } else {
-              // Try to extract text from shapes/drawings
-              const shapeText = extractShapeText(child.element);
-              if (shapeText.trim()) {
-                const lines = wrapText(shapeText.trim(), font, ts.fontSize, pW);
-                for (const line of lines) {
-                  checkBreak(lineH);
-                  drawText(page, line.text, pL, curY - ts.fontSize, font, ts.fontSize, ts.color);
-                  curY -= lineH;
-                }
-              }
+              // Shape/drawing: render internal content (tables, images, text)
+              renderShapeContent(doc, child.element, pL, pW, font, ts, ps, getFont);
             }
           }
         }
@@ -636,6 +639,40 @@ export async function generatePdf(
       checkBreak(h);
       page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
       curY -= h;
+    }
+
+    // ── Shape/drawing content rendering ──
+    function renderShapeContent(
+      doc: HanDoc, element: GenericElement,
+      shapeX: number, shapeW: number,
+      defaultFont: PDFFont, defaultTs: TextStyle, defaultPs: ParaStyle,
+      getFont: (s: TextStyle) => PDFFont,
+    ) {
+      // Find tables inside shape
+      const tables = findAllDesc(element, 'tbl');
+      for (const tbl of tables) {
+        renderTable(doc, tbl, shapeX, shapeW, getFont);
+      }
+
+      // Find images inside shape
+      const pics = [...findAllDesc(element, 'picture'), ...findAllDesc(element, 'pic')];
+      for (const pic of pics) {
+        renderImage(doc, pic, shapeX, shapeW);
+      }
+
+      // Extract and render text (if no tables/images found)
+      if (tables.length === 0 && pics.length === 0) {
+        const shapeText = extractShapeText(element);
+        if (shapeText.trim()) {
+          const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
+          const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW);
+          for (const line of lines) {
+            checkBreak(lineH);
+            drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
+            curY -= lineH;
+          }
+        }
+      }
     }
   }
 
