@@ -447,9 +447,9 @@ const BASE_CSS = `
   body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; }
   p { margin: 0; padding: 0; page-break-inside: avoid; orphans: 2; widows: 2; }
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
-  table { border-collapse: collapse; width: 100%; page-break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  td, th { border: 0.5px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; line-height: 1.4; orphans: 2; widows: 2; }
+  td, th { border: 0.5px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; line-height: 1.4; orphans: 2; widows: 2; max-height: none; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
