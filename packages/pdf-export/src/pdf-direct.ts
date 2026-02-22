@@ -11,7 +11,95 @@ import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as zlib from 'zlib';
 import type { GenericElement } from '@handoc/document-model';
+
+// ── BMP to PNG conversion (no external dependencies) ──
+
+function bmpToPng(bmpData: Uint8Array): Uint8Array {
+  // BMP header: 14 bytes file header + DIB header
+  const dataOffset = bmpData[10] | (bmpData[11] << 8) | (bmpData[12] << 16) | (bmpData[13] << 24);
+  const width = bmpData[18] | (bmpData[19] << 8) | (bmpData[20] << 16) | (bmpData[21] << 24);
+  const height = Math.abs((bmpData[22] | (bmpData[23] << 8) | (bmpData[24] << 16) | (bmpData[25] << 24)) | 0);
+  const bpp = bmpData[28] | (bmpData[29] << 8);
+  const topDown = ((bmpData[22] | (bmpData[23] << 8) | (bmpData[24] << 16) | (bmpData[25] << 24)) | 0) < 0;
+
+  // Build raw RGBA rows (PNG filter byte 0 = None per row)
+  const rowBytes = Math.ceil((width * bpp / 8) / 4) * 4; // BMP rows are 4-byte aligned
+  const raw = Buffer.alloc((width * 3 + 1) * height); // RGB + filter byte per row
+
+  for (let y = 0; y < height; y++) {
+    const srcY = topDown ? y : (height - 1 - y);
+    const srcOff = dataOffset + srcY * rowBytes;
+    const dstOff = y * (width * 3 + 1);
+    raw[dstOff] = 0; // filter: None
+    for (let x = 0; x < width; x++) {
+      const si = srcOff + x * (bpp / 8);
+      if (bpp === 24) {
+        raw[dstOff + 1 + x * 3] = bmpData[si + 2]; // R
+        raw[dstOff + 1 + x * 3 + 1] = bmpData[si + 1]; // G
+        raw[dstOff + 1 + x * 3 + 2] = bmpData[si]; // B
+      } else if (bpp === 32) {
+        raw[dstOff + 1 + x * 3] = bmpData[si + 2];
+        raw[dstOff + 1 + x * 3 + 1] = bmpData[si + 1];
+        raw[dstOff + 1 + x * 3 + 2] = bmpData[si];
+      }
+    }
+  }
+
+  // Compress with zlib
+  const compressed = zlib.deflateSync(raw);
+
+  // Build minimal PNG
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  function chunk(type: string, data: Buffer): Buffer {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const typeB = Buffer.from(type, 'ascii');
+    const body = Buffer.concat([typeB, data]);
+    const crcVal = crc32(body);
+    const crcB = Buffer.alloc(4);
+    crcB.writeUInt32BE(crcVal >>> 0);
+    return Buffer.concat([len, body, crcB]);
+  }
+
+  // IHDR
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // color type: RGB
+  ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+
+  // IDAT
+  const idat = Buffer.from(compressed);
+
+  // IEND
+  const iend = Buffer.alloc(0);
+
+  return new Uint8Array(Buffer.concat([
+    signature,
+    chunk('IHDR', ihdr),
+    chunk('IDAT', idat),
+    chunk('IEND', iend),
+  ]));
+}
+
+// CRC32 for PNG chunks
+function crc32(buf: Buffer): number {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) {
+    c = crc32Table[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  }
+  return c ^ 0xFFFFFFFF;
+}
+const crc32Table = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+  crc32Table[i] = c;
+}
 
 // ── Constants ──
 
@@ -360,8 +448,14 @@ export async function generatePdf(
   for (const img of doc.images) {
     try {
       const ext = img.path.split('.').pop()?.toLowerCase() ?? '';
-      if (ext === 'png') imageCache.set(img.path, await pdfDoc.embedPng(img.data));
-      else if (ext === 'jpg' || ext === 'jpeg') imageCache.set(img.path, await pdfDoc.embedJpg(img.data));
+      let data = img.data;
+      let format = ext;
+      // Convert BMP/GIF/TIFF to PNG
+      if (ext === 'bmp' || ext === 'dib') {
+        try { data = bmpToPng(data); format = 'png'; } catch { continue; }
+      }
+      if (format === 'png') imageCache.set(img.path, await pdfDoc.embedPng(data));
+      else if (format === 'jpg' || format === 'jpeg') imageCache.set(img.path, await pdfDoc.embedJpg(data));
     } catch { /* skip */ }
   }
 
@@ -482,31 +576,62 @@ export async function generatePdf(
       const szEl = element.children.find(c => c.tag === 'sz');
       const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
 
+      // ── Build grid column widths from colSpan=1 cells ──
+      const colWidths: number[] = new Array(tbl.colCnt).fill(0);
+      for (const row of tbl.rows) {
+        for (const cell of row.cells) {
+          if (cell.cellSpan.colSpan === 1 && cell.cellSz.width > 0) {
+            const ci = cell.cellAddr.colAddr;
+            if (ci >= 0 && ci < tbl.colCnt && colWidths[ci] === 0) {
+              colWidths[ci] = hwpToPt(cell.cellSz.width);
+            }
+          }
+        }
+      }
+      // Fill any missing columns with equal distribution
+      const knownW = colWidths.reduce((a, b) => a + b, 0);
+      const missingCols = colWidths.filter(w => w === 0).length;
+      if (missingCols > 0 && tblW > knownW) {
+        const eachW = (tblW - knownW) / missingCols;
+        for (let i = 0; i < colWidths.length; i++) {
+          if (colWidths[i] === 0) colWidths[i] = eachW;
+        }
+      }
+      // Column X offsets
+      const colX: number[] = [0];
+      for (let i = 0; i < colWidths.length; i++) {
+        colX.push(colX[i] + colWidths[i]);
+      }
+
+      // Helper: get cell width from grid
+      function gridCellW(cell: any): number {
+        const ci = cell.cellAddr.colAddr;
+        const cs = cell.cellSpan.colSpan;
+        if (ci + cs <= colX.length) return colX[ci + cs] - colX[ci];
+        return cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : (tblW / tbl.colCnt) * cs;
+      }
+
       // ── Pass 1: Calculate row heights ──
-      // Only consider rowSpan=1 cells for base row heights
       const rowHeights: number[] = [];
       for (let ri = 0; ri < tbl.rows.length; ri++) {
-        let rh = 12; // minimum row height
+        let rh = 12;
         for (const cell of tbl.rows[ri].cells) {
-          if (cell.cellSpan.rowSpan > 1) continue; // skip merged cells in pass 1
-          const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-          const h = estimateCellHeight(doc, cell, cellW, getFont);
+          if (cell.cellSpan.rowSpan > 1) continue;
+          const h = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
           rh = Math.max(rh, h);
         }
         rowHeights.push(rh);
       }
 
-      // Adjust for rowSpan>1 cells: distribute excess height across spanned rows
+      // Adjust for rowSpan>1 cells
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         for (const cell of tbl.rows[ri].cells) {
           const rs = cell.cellSpan.rowSpan;
           if (rs <= 1) continue;
-          const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-          const neededH = estimateCellHeight(doc, cell, cellW, getFont);
+          const neededH = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
           let spanH = 0;
           for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) spanH += rowHeights[j];
           if (neededH > spanH) {
-            // Distribute extra evenly
             const extra = (neededH - spanH) / rs;
             for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) rowHeights[j] += extra;
           }
@@ -520,11 +645,11 @@ export async function generatePdf(
         // Page break
         if (curY - rowH < mB) newPage();
 
-        let cellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
-          const cellW = cell.cellSz.width > 0
-            ? hwpToPt(cell.cellSz.width)
-            : (tblW / tbl.colCnt) * cell.cellSpan.colSpan;
+          const ci = cell.cellAddr.colAddr;
+          // Use grid-based X and width for accuracy
+          const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
+          const cellW = gridCellW(cell);
 
           // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
@@ -542,8 +667,6 @@ export async function generatePdf(
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
-
-          cellX += cellW;
         }
         curY -= rowH;
       }
@@ -568,6 +691,18 @@ export async function generatePdf(
               h += wrapText(text, cf, cts.fontSize, cellW - 4).length * lh;
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+            } else if (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) {
+              const imgEl = findDesc(cc.element, 'img') ?? findDesc(cc.element, 'imgRect');
+              if (imgEl) {
+                const imgH = Number(imgEl.attrs['height'] ?? 0);
+                h += imgH > 0 ? hwpToPt(imgH) : lh;
+              } else { h += lh; }
+            } else if (cc.type === 'shape') {
+              const curSzEl = findDesc(cc.element, 'curSz');
+              if (curSzEl) {
+                const shH = Number(curSzEl.attrs['height'] ?? 0);
+                h += shH > 0 ? hwpToPt(shH) : lh;
+              } else { h += lh; }
             }
           }
         }
@@ -578,7 +713,18 @@ export async function generatePdf(
 
     /** Render cell content (text + nested tables) */
     function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
-      let ty = cellTop - 2; // 2pt top padding
+      const pad = 4; // cell padding
+      // Vertical alignment: estimate content height first
+      const vAlign = cell.vertAlign ?? 'TOP';
+      let contentHeight = 0;
+      if (vAlign === 'CENTER' || vAlign === 'BOTTOM') {
+        contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - pad;
+      }
+      let yOffset = 0;
+      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - pad / 2);
+      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - pad);
+
+      let ty = cellTop - pad / 2 - yOffset;
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         ty -= cps.marginTop;
@@ -607,6 +753,22 @@ export async function generatePdf(
               renderTable(doc, cc.element, cellX + 2, cellW - 4, getFont);
               ty = curY;
               curY = savedCurY;
+            } else if (cc.type === 'inlineObject') {
+              // Image (pic/picture) inside cell
+              if (cc.name === 'picture' || cc.name === 'pic') {
+                const savedCurY = curY;
+                curY = ty;
+                renderImage(doc, cc.element, cellX + 2, cellW - 4);
+                ty = curY;
+                curY = savedCurY;
+              }
+            } else if (cc.type === 'shape') {
+              // Shape/container inside cell — may contain pics, tables, text
+              const savedCurY = curY;
+              curY = ty;
+              renderShapeContent(doc, cc.element, cellX + 2, cellW - 4, cf, cts, cps, getFont);
+              ty = curY;
+              curY = savedCurY;
             }
           }
         }
@@ -616,9 +778,14 @@ export async function generatePdf(
 
     // ── Image rendering ──
     function renderImage(doc: HanDoc, element: GenericElement, imgX: number, maxWidth: number) {
+      // Try fileRef first, then fall back to img/imgRect binaryItemIDRef
       const fileRef = findDesc(element, 'fileRef');
-      if (!fileRef) return;
-      const binRef = fileRef.attrs['binItemIDRef'] ?? '';
+      const imgTag = findDesc(element, 'img');
+      const binRef = fileRef?.attrs['binItemIDRef']
+        ?? imgTag?.attrs['binaryItemIDRef']
+        ?? imgTag?.attrs['binItemIDRef']
+        ?? '';
+      if (!binRef) return;
       const img = doc.images.find(i => i.path.includes(binRef));
       if (!img) return;
       const pdfImg = imageCache.get(img.path);
