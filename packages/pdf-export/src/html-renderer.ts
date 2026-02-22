@@ -81,6 +81,16 @@ function renderRun(doc: HanDoc, run: Run): string {
         styles.push(`letter-spacing:${em.toFixed(3)}em`);
       }
     }
+    // Character width ratio (장평)
+    if (charProp.ratio) {
+      const ratioVal = charProp.ratio.hangul ?? charProp.ratio.HANGUL ?? charProp.ratio.latin ?? charProp.ratio.LATIN;
+      if (ratioVal && ratioVal !== 100) {
+        // HWP ratio is percentage (100 = normal, 50 = half-width, 200 = double-width)
+        const scaleX = ratioVal / 100;
+        styles.push(`transform:scaleX(${scaleX.toFixed(2)})`);
+        styles.push(`display:inline-block`);
+      }
+    }
     // Font face resolution
     const fontRef = (charProp as any).fontRef;
     if (fontRef) {
