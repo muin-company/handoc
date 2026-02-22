@@ -180,7 +180,7 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       const tag = cell.header ? 'th' : 'td';
       
       // Cell width
-      const cellStyles: string[] = ['border:0.5px solid #000', 'padding:2px 4px', 'word-break:break-all', 'overflow:hidden'];
+      const cellStyles: string[] = ['border:0.5px solid #000', 'padding:2px 4px', 'word-break:keep-all', 'overflow-wrap:break-word'];
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
