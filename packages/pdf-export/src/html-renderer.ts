@@ -274,7 +274,7 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       
       // Cell width and border
       const borderStyle = getBorderStyles(doc, cell.borderFillIDRef);
-      const cellStyles: string[] = [borderStyle, 'word-break:keep-all', 'overflow-wrap:break-word'];
+      const cellStyles: string[] = [borderStyle, 'word-break:normal', 'overflow-wrap:anywhere'];
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
