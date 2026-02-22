@@ -392,9 +392,27 @@ function renderSectionBody(doc: HanDoc, section: Section): { html: string; pw: n
   const mb = sProps ? Math.round((sProps.margins.bottom / 7200) * 25.4 * 10) / 10 : margins.bottom;
 
   let html = '';
+  
+  // Check for multi-column layout
+  const hasColumns = sProps?.columns && sProps.columns.count > 1;
+  if (hasColumns) {
+    const colCount = sProps!.columns!.count;
+    const colGap = sProps!.columns!.gap ? (sProps!.columns!.gap / 7200 * 25.4).toFixed(1) : '10';
+    html += `<div style="column-count:${colCount};column-gap:${colGap}mm;column-fill:auto;">`;
+  }
+  
   for (const para of section.paragraphs) {
+    // Handle column breaks
+    if (para.columnBreak && hasColumns) {
+      html += '<div style="break-after:column;"></div>';
+    }
     html += renderParagraph(doc, para);
   }
+  
+  if (hasColumns) {
+    html += '</div>';
+  }
+  
   return { html, pw, ph, ml, mr, mt, mb };
 }
 
