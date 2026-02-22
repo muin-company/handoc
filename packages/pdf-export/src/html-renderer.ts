@@ -67,6 +67,40 @@ function getBorderFillBgColor(doc: HanDoc, id: number | null): string | undefine
   return bgColor.replace('#', '');
 }
 
+function getBorderStyles(doc: HanDoc, id: number | null): string {
+  if (id == null) return 'border:0.5px solid #000';
+  const borderFill = doc.header.refList.borderFills.find(bf => Number(bf.attrs['id']) === id);
+  if (!borderFill) return 'border:0.5px solid #000';
+  
+  // Parse border elements (left, right, top, bottom)
+  const borders: Record<string, string> = {};
+  for (const side of ['left', 'right', 'top', 'bottom']) {
+    const borderEl = borderFill.children.find(c => c.tag.endsWith(side) || c.tag.endsWith(`:${side}`));
+    if (borderEl) {
+      const type = borderEl.attrs['type'] || 'Solid';
+      const width = Number(borderEl.attrs['width'] || 12); // HWPUNIT (1/7200 inch)
+      const color = borderEl.attrs['color'] || '000000';
+      
+      const widthPx = Math.max(0.5, width / 7200 * 96); // Convert to pixels
+      const style = type === 'None' ? 'none' : 
+                    type === 'Dash' ? 'dashed' :
+                    type === 'Dot' ? 'dotted' : 'solid';
+      
+      borders[`border-${side}`] = `${widthPx.toFixed(2)}px ${style} #${color.replace('#', '')}`;
+    }
+  }
+  
+  if (Object.keys(borders).length === 0) return 'border:0.5px solid #000';
+  
+  // Check if all sides are the same
+  const values = Object.values(borders);
+  if (values.every(v => v === values[0])) {
+    return `border:${values[0]}`;
+  }
+  
+  return Object.entries(borders).map(([k, v]) => `${k}:${v}`).join(';');
+}
+
 function renderRun(doc: HanDoc, run: Run): string {
   const charProp = getCharProp(doc, run.charPrIDRef);
   const styles: string[] = [];
@@ -233,8 +267,9 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       const rowspan = cell.cellSpan.rowSpan > 1 ? ` rowspan="${cell.cellSpan.rowSpan}"` : '';
       const tag = cell.header ? 'th' : 'td';
       
-      // Cell width
-      const cellStyles: string[] = ['border:0.5px solid #000', 'word-break:keep-all', 'overflow-wrap:break-word'];
+      // Cell width and border
+      const borderStyle = getBorderStyles(doc, cell.borderFillIDRef);
+      const cellStyles: string[] = [borderStyle, 'word-break:keep-all', 'overflow-wrap:break-word'];
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
@@ -315,7 +350,8 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
       if (bgColor) {
         styles.push(`background-color:#${bgColor}`);
       }
-      styles.push('border:0.5px solid #000');
+      const borderStyle = getBorderStyles(doc, paraProp.border.borderFillIDRef);
+      styles.push(borderStyle);
       const b = paraProp.border;
       if (b.offsetLeft) styles.push(`padding-left:${b.offsetLeft / 7200}in`);
       if (b.offsetRight) styles.push(`padding-right:${b.offsetRight / 7200}in`);
