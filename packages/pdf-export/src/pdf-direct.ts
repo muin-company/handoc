@@ -62,6 +62,7 @@ async function embedFonts(pdfDoc: PDFDocument, customFonts?: { serif?: string; s
     return await pdfDoc.embedFont(fallback as any);
   }
 
+  // Note: Noto CJK OTF (CFF-based) causes fontkit subsetting crash. Use TTF only.
   const serifPath = customFonts?.serif
     ?? findSystemFont('AppleMyungjo.ttf')
     ?? findSystemFont('NanumMyeongjo.ttf')
@@ -73,10 +74,13 @@ async function embedFonts(pdfDoc: PDFDocument, customFonts?: { serif?: string; s
     ?? findSystemFont('NanumGothic.ttf')
     ?? findSystemFont('malgun.ttf');
 
+  const serifBoldPath = serifPath; // Same file, weight handled by pdf-lib
+  const sansBoldPath = sansPath;
+
   const serif = await tryEmbed(serifPath, StandardFonts.TimesRoman);
-  const serifBold = await tryEmbed(serifPath, StandardFonts.TimesRomanBold); // Same font, pdf-lib handles weight
+  const serifBold = await tryEmbed(serifBoldPath, StandardFonts.TimesRomanBold);
   const sans = await tryEmbed(sansPath, StandardFonts.Helvetica);
-  const sansBold = await tryEmbed(sansPath, StandardFonts.HelveticaBold);
+  const sansBold = await tryEmbed(sansBoldPath, StandardFonts.HelveticaBold);
 
   return { serif, serifBold, sans, sansBold };
 }
@@ -469,64 +473,62 @@ export async function generatePdf(
       curY -= ps.marginBottom;
     }
 
-    // ── Table rendering (nested function for page access) ──
+    // ── Table rendering with proper rowSpan/colSpan support ──
     function renderTable(doc: HanDoc, element: GenericElement, tableX: number, maxWidth: number, getFont: (s: TextStyle) => PDFFont) {
       const tbl = parseTable(element);
       const szEl = element.children.find(c => c.tag === 'sz');
       const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
 
-      for (const row of tbl.rows) {
-        // Calculate row height from content
-        let rowH = 0;
-        for (const cell of row.cells) {
+      // ── Pass 1: Calculate row heights ──
+      // Only consider rowSpan=1 cells for base row heights
+      const rowHeights: number[] = [];
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        let rh = 12; // minimum row height
+        for (const cell of tbl.rows[ri].cells) {
+          if (cell.cellSpan.rowSpan > 1) continue; // skip merged cells in pass 1
           const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-          // Use cellSz.height if available
-          const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
-          const cellPad = 4; // 2pt top + 2pt bottom
-          let cellContentH = cellPad;
-
-          for (const cp of cell.paragraphs) {
-            const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-            cellContentH += cps.marginTop;
-            for (const cr of cp.runs) {
-              const cts = resolveTextStyle(doc, cr.charPrIDRef);
-              const cf = getFont(cts);
-              const lh = calcLineHeight(cps, cts.fontSize);
-              for (const cc of cr.children) {
-                if (cc.type === 'text') {
-                  const text = cc.content;
-                  if (!text) { cellContentH += lh; continue; }
-                  const cl = wrapText(text, cf, cts.fontSize, cellW - 4);
-                  cellContentH += cl.length * lh;
-                } else if (cc.type === 'table') {
-                  // Nested table: estimate height recursively
-                  cellContentH += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
-                }
-              }
-            }
-            cellContentH += cps.marginBottom;
-          }
-
-          // Use max of declared height and content height
-          const cellH = Math.max(cellDeclaredH, cellContentH);
-          rowH = Math.max(rowH, cellH);
+          const h = estimateCellHeight(doc, cell, cellW, getFont);
+          rh = Math.max(rh, h);
         }
+        rowHeights.push(rh);
+      }
 
-        // Ensure minimum row height
-        if (rowH < 12) rowH = 12;
-        // Cap to page content area
-        if (rowH > contentH) rowH = contentH;
+      // Adjust for rowSpan>1 cells: distribute excess height across spanned rows
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        for (const cell of tbl.rows[ri].cells) {
+          const rs = cell.cellSpan.rowSpan;
+          if (rs <= 1) continue;
+          const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
+          const neededH = estimateCellHeight(doc, cell, cellW, getFont);
+          let spanH = 0;
+          for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) spanH += rowHeights[j];
+          if (neededH > spanH) {
+            // Distribute extra evenly
+            const extra = (neededH - spanH) / rs;
+            for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) rowHeights[j] += extra;
+          }
+        }
+      }
+
+      // ── Pass 2: Render ──
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        const rowH = Math.min(rowHeights[ri], contentH);
 
         // Page break
         if (curY - rowH < mB) newPage();
 
-        // Draw cells
         let cellX = tableX;
-        for (const cell of row.cells) {
+        for (const cell of tbl.rows[ri].cells) {
           const cellW = cell.cellSz.width > 0
             ? hwpToPt(cell.cellSz.width)
             : (tblW / tbl.colCnt) * cell.cellSpan.colSpan;
-          const cellH = rowH; // TODO: handle rowSpan properly
+
+          // Calculate actual cell height (sum of spanned rows)
+          let cellH = 0;
+          for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
+            cellH += rowHeights[j];
+          }
+          if (cellH > contentH) cellH = contentH;
 
           // Cell border
           page.drawRectangle({
@@ -536,45 +538,76 @@ export async function generatePdf(
           });
 
           // Cell text
-          let ty = curY - 2; // 2pt top padding
-          for (const cp of cell.paragraphs) {
-            const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-            ty -= cps.marginTop;
-            for (const cr of cp.runs) {
-              const cts = resolveTextStyle(doc, cr.charPrIDRef);
-              const cf = getFont(cts);
-              const lh = calcLineHeight(cps, cts.fontSize);
-              for (const cc of cr.children) {
-                if (cc.type === 'text') {
-                  const text = cc.content;
-                  if (!text) { ty -= lh; continue; }
-                  const cls = wrapText(text, cf, cts.fontSize, cellW - 4);
-                  for (const cl of cls) {
-                    ty -= cts.fontSize;
-                    let tx = cellX + 2;
-                    if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
-                    else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
-                    if (ty > curY - cellH) {
-                      drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
-                    }
-                    ty -= (lh - cts.fontSize);
-                  }
-                } else if (cc.type === 'table') {
-                  // Render nested table — save/restore curY
-                  const savedCurY = curY;
-                  curY = ty;
-                  renderTable(doc, cc.element, cellX + 2, cellW - 4, getFont);
-                  ty = curY;
-                  curY = savedCurY;
-                }
-              }
-            }
-            ty -= cps.marginBottom;
-          }
+          renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
 
           cellX += cellW;
         }
         curY -= rowH;
+      }
+    }
+
+    /** Estimate cell height from content */
+    function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont): number {
+      const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
+      const pad = 4;
+      let h = pad;
+      for (const cp of cell.paragraphs) {
+        const cps = resolveParaStyle(doc, cp.paraPrIDRef);
+        h += cps.marginTop;
+        for (const cr of cp.runs) {
+          const cts = resolveTextStyle(doc, cr.charPrIDRef);
+          const cf = getFont(cts);
+          const lh = calcLineHeight(cps, cts.fontSize);
+          for (const cc of cr.children) {
+            if (cc.type === 'text') {
+              const text = cc.content;
+              if (!text) { h += lh; continue; }
+              h += wrapText(text, cf, cts.fontSize, cellW - 4).length * lh;
+            } else if (cc.type === 'table') {
+              h += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+            }
+          }
+        }
+        h += cps.marginBottom;
+      }
+      return Math.max(cellDeclaredH, h);
+    }
+
+    /** Render cell content (text + nested tables) */
+    function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
+      let ty = cellTop - 2; // 2pt top padding
+      for (const cp of cell.paragraphs) {
+        const cps = resolveParaStyle(doc, cp.paraPrIDRef);
+        ty -= cps.marginTop;
+        for (const cr of cp.runs) {
+          const cts = resolveTextStyle(doc, cr.charPrIDRef);
+          const cf = getFont(cts);
+          const lh = calcLineHeight(cps, cts.fontSize);
+          for (const cc of cr.children) {
+            if (cc.type === 'text') {
+              const text = cc.content;
+              if (!text) { ty -= lh; continue; }
+              const cls = wrapText(text, cf, cts.fontSize, cellW - 4);
+              for (const cl of cls) {
+                ty -= cts.fontSize;
+                let tx = cellX + 2;
+                if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
+                else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
+                if (ty > cellTop - cellH) {
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
+                }
+                ty -= (lh - cts.fontSize);
+              }
+            } else if (cc.type === 'table') {
+              const savedCurY = curY;
+              curY = ty;
+              renderTable(doc, cc.element, cellX + 2, cellW - 4, getFont);
+              ty = curY;
+              curY = savedCurY;
+            }
+          }
+        }
+        ty -= cps.marginBottom;
       }
     }
 
