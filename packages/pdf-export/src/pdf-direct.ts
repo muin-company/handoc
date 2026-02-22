@@ -815,28 +815,67 @@ export async function generatePdf(
       defaultFont: PDFFont, defaultTs: TextStyle, defaultPs: ParaStyle,
       getFont: (s: TextStyle) => PDFFont,
     ) {
-      // Find tables inside shape
-      const tables = findAllDesc(element, 'tbl');
-      for (const tbl of tables) {
-        renderTable(doc, tbl, shapeX, shapeW, getFont);
+      // Process shape's direct children only (not recursive) to avoid duplication.
+      // Tables/images inside cells are handled by renderCellContent.
+      let hasContent = false;
+      for (const child of element.children) {
+        const tag = child.tag.includes(':') ? child.tag.split(':').pop()! : child.tag;
+        if (tag === 'tbl') {
+          renderTable(doc, child, shapeX, shapeW, getFont);
+          hasContent = true;
+        } else if (tag === 'pic' || tag === 'picture') {
+          renderImage(doc, child, shapeX, shapeW);
+          hasContent = true;
+        } else if (tag === 'drawText' || tag === 'subList') {
+          // drawText contains paragraphs — render text from them
+          const paras = findAllDesc(child, 'p');
+          for (const p of paras) {
+            // Extract text from runs
+            const texts: string[] = [];
+            const tEls = findAllDesc(p, 't');
+            for (const t of tEls) {
+              const txt = t.attrs['#text'] ?? '';
+              if (txt) texts.push(txt);
+            }
+            if (texts.length > 0) {
+              const text = texts.join('');
+              const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
+              const lines = wrapText(text, defaultFont, defaultTs.fontSize, shapeW);
+              for (const line of lines) {
+                checkBreak(lineH);
+                drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
+                curY -= lineH;
+              }
+              hasContent = true;
+            }
+          }
+        }
       }
 
-      // Find images inside shape
-      const pics = [...findAllDesc(element, 'picture'), ...findAllDesc(element, 'pic')];
-      for (const pic of pics) {
-        renderImage(doc, pic, shapeX, shapeW);
-      }
-
-      // Extract and render text (if no tables/images found)
-      if (tables.length === 0 && pics.length === 0) {
-        const shapeText = extractShapeText(element);
-        if (shapeText.trim()) {
-          const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
-          const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW);
-          for (const line of lines) {
-            checkBreak(lineH);
-            drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
-            curY -= lineH;
+      // Fallback: if no direct children matched, try recursive search (legacy behavior)
+      if (!hasContent) {
+        const tables = findAllDesc(element, 'tbl');
+        for (const tbl of tables) {
+          renderTable(doc, tbl, shapeX, shapeW, getFont);
+          hasContent = true;
+        }
+        if (!hasContent) {
+          const pics = [...findAllDesc(element, 'picture'), ...findAllDesc(element, 'pic')];
+          for (const pic of pics) {
+            renderImage(doc, pic, shapeX, shapeW);
+            hasContent = true;
+          }
+        }
+        if (!hasContent) {
+          const shapeText = extractShapeText(element);
+          if (shapeText.trim()) {
+            const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
+            const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW);
+            for (const line of lines) {
+              checkBreak(lineH);
+              drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
+              curY -= lineH;
+            }
           }
         }
       }
