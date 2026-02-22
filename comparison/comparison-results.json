@@ -1,13 +1,13 @@
 {
-  "generated": "2026-02-21T21:28:00.173826",
+  "generated": "2026-02-23T05:02:08.533971",
   "dpi": 150,
-  "total": 30,
+  "total": 43,
   "grades": {
-    "A": 0,
-    "B": 2,
-    "C": 4,
-    "D": 7,
-    "F": 17
+    "A": 2,
+    "B": 3,
+    "C": 5,
+    "D": 13,
+    "F": 20
   },
   "results": [
     {
@@ -6136,6 +6136,807 @@
       "grade": "D",
       "ref_pages": 16,
       "test_pages": 21
+    },
+    {
+      "reference": "real-world/opensource/2015년_12월_재난안전종합상황_분석_및_전망.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/2015년_12월_재난안전종합상황_분석_및_전망.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5593,
+          "size_match": 0.9984
+        },
+        {
+          "page": 2,
+          "ssim": 0.8164,
+          "size_match": 0.9984
+        },
+        {
+          "page": 3,
+          "ssim": 0.6391,
+          "size_match": 0.9984
+        },
+        {
+          "page": 4,
+          "ssim": 0.647,
+          "size_match": 0.9984
+        },
+        {
+          "page": 5,
+          "ssim": 0.6299,
+          "size_match": 0.9984
+        },
+        {
+          "page": 6,
+          "ssim": 0.6557,
+          "size_match": 0.9984
+        },
+        {
+          "page": 7,
+          "ssim": 0.6754,
+          "size_match": 0.9984
+        },
+        {
+          "page": 8,
+          "ssim": 0.839,
+          "size_match": 0.9984
+        },
+        {
+          "page": 9,
+          "ssim": 0.682,
+          "size_match": 0.9984
+        },
+        {
+          "page": 10,
+          "ssim": 0.7093,
+          "size_match": 0.9984
+        },
+        {
+          "page": 11,
+          "ssim": 0.58,
+          "size_match": 0.9984
+        },
+        {
+          "page": 12,
+          "ssim": 0.5962,
+          "size_match": 0.9984
+        },
+        {
+          "page": 13,
+          "ssim": 0.5421,
+          "size_match": 0.9984
+        },
+        {
+          "page": 14,
+          "ssim": 0.482,
+          "size_match": 0.9984
+        },
+        {
+          "page": 15,
+          "ssim": 0.6323,
+          "size_match": 0.9984
+        },
+        {
+          "page": 16,
+          "ssim": 0.6346,
+          "size_match": 0.9984
+        },
+        {
+          "page": 17,
+          "ssim": 0.5964,
+          "size_match": 0.9984
+        },
+        {
+          "page": 18,
+          "ssim": 0.6123,
+          "size_match": 0.9984
+        },
+        {
+          "page": 19,
+          "ssim": 0.5911,
+          "size_match": 0.9984
+        },
+        {
+          "page": 20,
+          "ssim": 0.6174,
+          "size_match": 0.9984
+        },
+        {
+          "page": 21,
+          "ssim": 0.6975,
+          "size_match": 0.9984
+        },
+        {
+          "page": 22,
+          "ssim": 0.5714,
+          "size_match": 0.9984
+        },
+        {
+          "page": 23,
+          "ssim": 0.5361,
+          "size_match": 0.9984
+        },
+        {
+          "page": 24,
+          "ssim": 0.6335,
+          "size_match": 0.9984
+        },
+        {
+          "page": 25,
+          "ssim": 0.5494,
+          "size_match": 0.9984
+        },
+        {
+          "page": 26,
+          "ssim": 0.5368,
+          "size_match": 0.9984
+        },
+        {
+          "page": 27,
+          "ssim": 0.5791,
+          "size_match": 0.9984
+        },
+        {
+          "page": 28,
+          "ssim": 0.569,
+          "size_match": 0.9984
+        },
+        {
+          "page": 29,
+          "ssim": 0.651,
+          "size_match": 0.9984
+        },
+        {
+          "page": 30,
+          "ssim": 0.612,
+          "size_match": 0.9984
+        },
+        {
+          "page": 31,
+          "ssim": 0.5531,
+          "size_match": 0.9984
+        },
+        {
+          "page": 32,
+          "ssim": 0.5741,
+          "size_match": 0.9984
+        },
+        {
+          "page": 33,
+          "ssim": 0.5681,
+          "size_match": 0.9984
+        },
+        {
+          "page": 34,
+          "ssim": 0.5881,
+          "size_match": 0.9984
+        },
+        {
+          "page": 35,
+          "ssim": 0.5921,
+          "size_match": 0.9984
+        },
+        {
+          "page": 36,
+          "ssim": 0.578,
+          "size_match": 0.9984
+        },
+        {
+          "page": 37,
+          "ssim": 0.5857,
+          "size_match": 0.9984
+        },
+        {
+          "page": 38,
+          "ssim": 0.621,
+          "size_match": 0.9984
+        },
+        {
+          "page": 39,
+          "ssim": 0.6085,
+          "size_match": 0.9984
+        },
+        {
+          "page": 40,
+          "ssim": 0.6273,
+          "size_match": 0.9984
+        },
+        {
+          "page": 41,
+          "ssim": 0.5122,
+          "size_match": 0.9984
+        },
+        {
+          "page": 42,
+          "ssim": 0.6611,
+          "size_match": 0.9984
+        },
+        {
+          "page": 43,
+          "ssim": 0.6293,
+          "size_match": 0.9984
+        },
+        {
+          "page": 44,
+          "ssim": 0.6118,
+          "size_match": 0.9984
+        },
+        {
+          "page": 45,
+          "ssim": 0.6738,
+          "size_match": 0.9984
+        },
+        {
+          "page": 46,
+          "ssim": 0.6235,
+          "size_match": 0.9984
+        },
+        {
+          "page": 47,
+          "ssim": 0.6686,
+          "size_match": 0.9984
+        },
+        {
+          "page": 48,
+          "ssim": 0.6436,
+          "size_match": 0.9984
+        },
+        {
+          "page": 49,
+          "ssim": 0.6858,
+          "size_match": 0.9984
+        },
+        {
+          "page": 50,
+          "ssim": 0.6219,
+          "size_match": 0.9984
+        },
+        {
+          "page": 51,
+          "ssim": 0.6,
+          "size_match": 0.9984
+        },
+        {
+          "page": 52,
+          "ssim": 0.5156,
+          "size_match": 0.9984
+        },
+        {
+          "page": 53,
+          "ssim": 0.551,
+          "size_match": 0.9984
+        },
+        {
+          "page": 54,
+          "ssim": 0.5589,
+          "size_match": 0.9984
+        },
+        {
+          "page": 55,
+          "ssim": 0.5341,
+          "size_match": 0.9984
+        },
+        {
+          "page": 56,
+          "ssim": 0.5481,
+          "size_match": 0.9984
+        },
+        {
+          "page": 57,
+          "ssim": 0.5251,
+          "size_match": 0.9984
+        },
+        {
+          "page": 58,
+          "ssim": 0.5438,
+          "size_match": 0.9984
+        },
+        {
+          "page": 59,
+          "ssim": 0.5074,
+          "size_match": 0.9984
+        },
+        {
+          "page": 60,
+          "ssim": 0.5509,
+          "size_match": 0.9984
+        },
+        {
+          "page": 61,
+          "ssim": 0.5049,
+          "size_match": 0.9984
+        },
+        {
+          "page": 62,
+          "ssim": 0.4719,
+          "size_match": 0.9984
+        },
+        {
+          "page": 63,
+          "ssim": 0.593,
+          "size_match": 0.9984
+        },
+        {
+          "page": 64,
+          "ssim": 0.694,
+          "size_match": 0.9984
+        },
+        {
+          "page": 65,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 66,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 67,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 68,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 69,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 70,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 71,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 72,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 73,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 74,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        },
+        {
+          "page": 75,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_test"
+        }
+      ],
+      "avg_ssim": 0.5147,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 75,
+      "test_pages": 64
+    },
+    {
+      "reference": "real-world/opensource/HwpxTest1.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/HwpxTest1.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9066,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.8983,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.837,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6605,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 3,
+      "test_pages": 4
+    },
+    {
+      "reference": "real-world/opensource/SimpleContainer.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/SimpleContainer.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9935,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.9935,
+      "min_ssim": 0.9935,
+      "grade": "A",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/opensource/SimplePicture.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/SimplePicture.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9664,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.9664,
+      "min_ssim": 0.9664,
+      "grade": "A",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/opensource/SimpleVideo.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/SimpleVideo.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.8999,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.8999,
+      "min_ssim": 0.8999,
+      "grade": "B",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/opensource/ai-writing.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/ai-writing.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9061,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.885,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7052,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.708,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6409,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 4,
+      "test_pages": 5
+    },
+    {
+      "reference": "real-world/opensource/mot.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/mot.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5567,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.8501,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.7034,
+      "min_ssim": 0.5567,
+      "grade": "C",
+      "ref_pages": 2,
+      "test_pages": 2
+    },
+    {
+      "reference": "real-world/opensource/multipara.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/multipara.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6469,
+          "size_match": 0.999
+        }
+      ],
+      "avg_ssim": 0.6469,
+      "min_ssim": 0.6469,
+      "grade": "D",
+      "ref_pages": 1,
+      "test_pages": 1
+    },
+    {
+      "reference": "real-world/opensource/svg_template.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/svg_template.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9106,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.8872,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7931,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.7949,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6772,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 4,
+      "test_pages": 5
+    },
+    {
+      "reference": "real-world/opensource/test.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/test.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.584,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.589,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.644,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4542,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 3,
+      "test_pages": 4
+    },
+    {
+      "reference": "real-world/opensource/test_re.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/test_re.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.5196,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.6446,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7048,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.6658,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.6706,
+          "size_match": 0.999
+        },
+        {
+          "page": 6,
+          "ssim": 0.6296,
+          "size_match": 0.999
+        },
+        {
+          "page": 7,
+          "ssim": 0.6939,
+          "size_match": 0.999
+        },
+        {
+          "page": 8,
+          "ssim": 0.4906,
+          "size_match": 0.999
+        },
+        {
+          "page": 9,
+          "ssim": 0.5114,
+          "size_match": 0.999
+        },
+        {
+          "page": 10,
+          "ssim": 0.4779,
+          "size_match": 0.999
+        },
+        {
+          "page": 11,
+          "ssim": 0.4164,
+          "size_match": 0.999
+        },
+        {
+          "page": 12,
+          "ssim": 0.4976,
+          "size_match": 0.999
+        },
+        {
+          "page": 13,
+          "ssim": 0.5245,
+          "size_match": 0.999
+        },
+        {
+          "page": 14,
+          "ssim": 0.5526,
+          "size_match": 0.999
+        },
+        {
+          "page": 15,
+          "ssim": 0.6116,
+          "size_match": 0.999
+        },
+        {
+          "page": 16,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 17,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        },
+        {
+          "page": 18,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4784,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 15,
+      "test_pages": 18
+    },
+    {
+      "reference": "real-world/opensource/브라더_양식.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/브라더_양식.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.9004,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.8723,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.7835,
+          "size_match": 0.999
+        },
+        {
+          "page": 4,
+          "ssim": 0.7966,
+          "size_match": 0.999
+        },
+        {
+          "page": 5,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.6706,
+      "min_ssim": 0.0,
+      "grade": "D",
+      "ref_pages": 4,
+      "test_pages": 5
+    },
+    {
+      "reference": "real-world/opensource/프로젝트 계획서.pdf",
+      "test": "/Users/mj/handoc-fixtures/pdf-001/real-world/opensource/프로젝트 계획서.pdf",
+      "status": "compared",
+      "pages": [
+        {
+          "page": 1,
+          "ssim": 0.6299,
+          "size_match": 0.999
+        },
+        {
+          "page": 2,
+          "ssim": 0.796,
+          "size_match": 0.999
+        },
+        {
+          "page": 3,
+          "ssim": 0.0,
+          "size_match": 0.0,
+          "note": "missing_in_reference"
+        }
+      ],
+      "avg_ssim": 0.4753,
+      "min_ssim": 0.0,
+      "grade": "F",
+      "ref_pages": 2,
+      "test_pages": 3
     }
   ]
 }

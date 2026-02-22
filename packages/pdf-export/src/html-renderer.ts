@@ -278,15 +278,15 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
-      // Cell padding from cellMargin
+      // Cell padding from cellMargin (scale down to 50% to prevent excessive spacing)
       if (cell.cellMargin) {
-        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200).toFixed(3)}in` : '2px';
-        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200).toFixed(3)}in` : '4px';
-        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200).toFixed(3)}in` : '2px';
-        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200).toFixed(3)}in` : '4px';
+        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200 * 0.5).toFixed(3)}in` : '1px';
+        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200 * 0.5).toFixed(3)}in` : '2px';
+        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200 * 0.5).toFixed(3)}in` : '1px';
+        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200 * 0.5).toFixed(3)}in` : '2px';
         cellStyles.push(`padding:${padTop} ${padRight} ${padBottom} ${padLeft}`);
       } else {
-        cellStyles.push('padding:2px 4px');
+        cellStyles.push('padding:1px 2px');
       }
       // Cell background color from borderFill
       const bgColor = getBorderFillBgColor(doc, cell.borderFillIDRef);
@@ -449,7 +449,7 @@ const BASE_CSS = `
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: avoid; page-break-after: auto; }
-  td, th { border: 0.5px solid #000; padding: 2px 4px; vertical-align: top; font-size: inherit; line-height: 1.4; orphans: 2; widows: 2; max-height: none; }
+  td, th { border: 0.5px solid #000; padding: 1px 2px; vertical-align: top; font-size: inherit; line-height: 1.2; orphans: 2; widows: 2; max-height: none; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
