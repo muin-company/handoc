@@ -2,11 +2,7 @@
  * Direct PDF generation — HWPX → PDF via pdf-lib with embedded Korean fonts.
  * No HTML, no Playwright, no browser. Production-grade.
  *
- * Architecture:
- * 1. Parse HWPX → document model
- * 2. Layout: walk paragraphs/tables/images, compute positions with Y cursor
- * 3. Render: emit pdf-lib drawing commands with embedded CJK fonts
- * 4. Page breaks: when Y cursor exceeds content area, start new page
+ * Key principle: Use HWPX values exactly as specified. No heuristic adjustments.
  */
 
 import { HanDoc } from '@handoc/hwpx-parser';
@@ -25,7 +21,7 @@ const hwpToPt = (v: number) => (v / HWP_PER_INCH) * PT_PER_INCH;
 
 // ── Font resolution ──
 
-const SERIF_NAMES = ['함초롬바탕', '바탕', '바탕체', '궁서', '궁서체', '휴먼명조', '한양신명조', '신명조'];
+const SERIF_NAMES = new Set(['함초롬바탕', '바탕', '바탕체', '궁서', '궁서체', '휴먼명조', '한양신명조', '신명조', 'Times New Roman']);
 
 interface FontSet {
   serif: PDFFont;
@@ -34,23 +30,17 @@ interface FontSet {
   sansBold: PDFFont;
 }
 
-/**
- * Locate a system font file by name. Returns path or undefined.
- */
 function findSystemFont(name: string): string | undefined {
-  const searchDirs = [
-    '/System/Library/Fonts',
+  const dirs = [
     '/System/Library/Fonts/Supplemental',
+    '/System/Library/Fonts',
     '/Library/Fonts',
     path.join(process.env.HOME ?? '', 'Library/Fonts'),
-    // Linux
     '/usr/share/fonts',
     '/usr/local/share/fonts',
-    // Windows
     'C:\\Windows\\Fonts',
   ];
-
-  for (const dir of searchDirs) {
+  for (const dir of dirs) {
     try {
       const target = path.join(dir, name);
       if (fs.existsSync(target)) return target;
@@ -59,56 +49,34 @@ function findSystemFont(name: string): string | undefined {
   return undefined;
 }
 
-async function embedFonts(pdfDoc: PDFDocument): Promise<FontSet> {
+async function embedFonts(pdfDoc: PDFDocument, customFonts?: { serif?: string; sans?: string }): Promise<FontSet> {
   pdfDoc.registerFontkit(fontkit);
+  const { StandardFonts } = await import('pdf-lib');
 
-  // Try to find Korean fonts
-  const serifPath = findSystemFont('AppleMyungjo.ttf')
-    ?? findSystemFont('batang.ttc')
-    ?? findSystemFont('NanumMyeongjo.ttf');
+  async function tryEmbed(fontPath: string | undefined, fallback: string): Promise<PDFFont> {
+    if (fontPath) {
+      try {
+        return await pdfDoc.embedFont(fs.readFileSync(fontPath), { subset: true });
+      } catch { /* fall through */ }
+    }
+    return await pdfDoc.embedFont(fallback as any);
+  }
 
-  const sansPath = findSystemFont('AppleSDGothicNeo.ttc')
-    ?? findSystemFont('malgun.ttf')
+  const serifPath = customFonts?.serif
+    ?? findSystemFont('AppleMyungjo.ttf')
+    ?? findSystemFont('NanumMyeongjo.ttf')
+    ?? findSystemFont('batang.ttc');
+
+  const sansPath = customFonts?.sans
+    ?? findSystemFont('AppleSDGothicNeo.ttc')
+    ?? findSystemFont('AppleGothic.ttf')
     ?? findSystemFont('NanumGothic.ttf')
-    ?? findSystemFont('AppleGothic.ttf');
+    ?? findSystemFont('malgun.ttf');
 
-  let serif: PDFFont;
-  let serifBold: PDFFont;
-  let sans: PDFFont;
-  let sansBold: PDFFont;
-
-  if (serifPath) {
-    try {
-      const fontBytes = fs.readFileSync(serifPath);
-      serif = await pdfDoc.embedFont(fontBytes, { subset: true });
-      serifBold = serif; // AppleMyungjo doesn't have bold variant
-    } catch {
-      const { StandardFonts } = await import('pdf-lib');
-      serif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-      serifBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-    }
-  } else {
-    const { StandardFonts } = await import('pdf-lib');
-    serif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-    serifBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  }
-
-  if (sansPath) {
-    try {
-      const fontBytes = fs.readFileSync(sansPath);
-      // For .ttc files, pdf-lib/fontkit picks the first font
-      sans = await pdfDoc.embedFont(fontBytes, { subset: true });
-      sansBold = sans;
-    } catch {
-      const { StandardFonts } = await import('pdf-lib');
-      sans = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      sansBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    }
-  } else {
-    const { StandardFonts } = await import('pdf-lib');
-    sans = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    sansBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  }
+  const serif = await tryEmbed(serifPath, StandardFonts.TimesRoman);
+  const serifBold = await tryEmbed(serifPath, StandardFonts.TimesRomanBold); // Same font, pdf-lib handles weight
+  const sans = await tryEmbed(sansPath, StandardFonts.Helvetica);
+  const sansBold = await tryEmbed(sansPath, StandardFonts.HelveticaBold);
 
   return { serif, serifBold, sans, sansBold };
 }
@@ -127,13 +95,13 @@ interface TextStyle {
 
 interface ParaStyle {
   align: 'left' | 'center' | 'right' | 'justify';
-  lineHeight: number;       // multiplier for percent, or absolute pt for fixed
-  lineHeightFixed: boolean;  // true = lineHeight is absolute pt
-  marginLeft: number;
-  marginRight: number;
-  marginTop: number;
-  marginBottom: number;
-  textIndent: number;
+  lineSpacingValue: number;   // raw value from HWPX
+  lineSpacingType: string;    // 'percent' | 'fixed'
+  marginLeft: number;   // pt
+  marginRight: number;  // pt
+  marginTop: number;    // pt
+  marginBottom: number; // pt
+  textIndent: number;   // pt
 }
 
 // ── Style resolution ──
@@ -155,14 +123,13 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
   }
 
-  // Font resolution
   const fontRef = (cp as any).fontRef;
   if (fontRef && doc.header.refList.fontFaces) {
     const hangulId = fontRef.hangul ?? fontRef.HANGUL;
     if (hangulId != null) {
       const langFaces = doc.header.refList.fontFaces.find(f => f.lang === 'HANGUL');
       const fontName = langFaces?.fonts.find(f => f.id === hangulId)?.face;
-      if (fontName) s.isSerif = SERIF_NAMES.includes(fontName);
+      if (fontName) s.isSerif = SERIF_NAMES.has(fontName);
     }
   }
 
@@ -170,7 +137,11 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
 }
 
 function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
-  const d: ParaStyle = { align: 'left', lineHeight: 1.6, lineHeightFixed: false, marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, textIndent: 0 };
+  const d: ParaStyle = {
+    align: 'left',
+    lineSpacingValue: 160, lineSpacingType: 'percent',
+    marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, textIndent: 0,
+  };
   if (paraPrIDRef == null) return d;
   const pp = doc.header.refList.paraProperties.find(p => p.id === paraPrIDRef);
   if (!pp) return d;
@@ -184,14 +155,8 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
     s.align = m[pp.align] ?? 'left';
   }
   if (pp.lineSpacing) {
-    const t = pp.lineSpacing.type.toLowerCase();
-    if (t === 'percent') {
-      s.lineHeight = pp.lineSpacing.value / 100;
-      s.lineHeightFixed = false;
-    } else if (t === 'fixed' && pp.lineSpacing.value > 0) {
-      s.lineHeight = hwpToPt(pp.lineSpacing.value);
-      s.lineHeightFixed = true;
-    }
+    s.lineSpacingType = pp.lineSpacing.type.toLowerCase();
+    s.lineSpacingValue = pp.lineSpacing.value;
   }
   if (pp.margin) {
     if (pp.margin.left) s.marginLeft = hwpToPt(pp.margin.left);
@@ -203,13 +168,21 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
   return s;
 }
 
-// ── Text measurement with embedded font ──
+/** Calculate line height in pt from paragraph style and font size */
+function calcLineHeight(ps: ParaStyle, fontSize: number): number {
+  if (ps.lineSpacingType === 'fixed') {
+    return hwpToPt(ps.lineSpacingValue);
+  }
+  // percent: value is percentage (e.g., 160 = 160%)
+  return fontSize * (ps.lineSpacingValue / 100);
+}
+
+// ── Text measurement ──
 
 function measureText(text: string, font: PDFFont, fontSize: number): number {
   try {
     return font.widthOfTextAtSize(text, fontSize);
   } catch {
-    // Fallback for chars not in font
     let w = 0;
     for (const ch of text) {
       try { w += font.widthOfTextAtSize(ch, fontSize); }
@@ -234,17 +207,18 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
       const fullW = measureText(remaining, font, fontSize);
       if (fullW <= maxWidth) { lines.push({ text: remaining, width: fullW }); break; }
 
+      // Binary search for fit
       let lo = 1, hi = remaining.length;
       while (lo < hi) {
         const mid = (lo + hi + 1) >> 1;
         if (measureText(remaining.substring(0, mid), font, fontSize) <= maxWidth) lo = mid;
         else hi = mid - 1;
       }
-      // Word boundary
+      // CJK can break at any character; for spaces, break after space
       let brk = lo;
       for (let i = lo; i > Math.max(0, lo - 15); i--) {
         const code = remaining.codePointAt(i) ?? 0;
-        if (code === 32 || code > 0x2E80) { brk = i + (code === 32 ? 1 : 0); break; }
+        if (code === 32) { brk = i + 1; break; }
       }
       if (brk <= 0) brk = lo;
       const lineText = remaining.substring(0, brk);
@@ -255,22 +229,19 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
   return lines;
 }
 
-// ── Draw text with fallback for unsupported glyphs ──
+// ── Draw text ──
 
 function drawText(
-  page: PDFPage,
-  text: string,
+  page: PDFPage, text: string,
   x: number, y: number,
   font: PDFFont, fontSize: number,
   color: [number, number, number],
 ): number {
   let drawX = x;
-  // Try drawing the whole string first
   try {
-    page.drawText(text, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
+    page.drawText(text, { x, y, size: fontSize, font, color: rgb(...color) });
     return measureText(text, font, fontSize);
   } catch {
-    // Char-by-char fallback
     for (const ch of text) {
       try {
         page.drawText(ch, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
@@ -295,29 +266,74 @@ function findDesc(el: GenericElement, tag: string): GenericElement | undefined {
   return undefined;
 }
 
+/** Extract text from shape/drawing elements */
+function extractShapeText(el: GenericElement): string {
+  let text = '';
+  if (el.tag === 'hp:t' || el.tag === 't') {
+    text += el.text ?? '';
+  }
+  for (const child of el.children) {
+    text += extractShapeText(child);
+  }
+  return text;
+}
+
+// ── Table height estimation (for nested tables) ──
+
+function estimateTableHeight(
+  doc: HanDoc, element: GenericElement, maxWidth: number,
+  getFont: (s: TextStyle) => PDFFont,
+): number {
+  const tbl = parseTable(element);
+  const szEl = element.children.find(c => c.tag === 'sz');
+  const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
+  let totalH = 0;
+
+  for (const row of tbl.rows) {
+    let rowH = 12; // minimum
+    for (const cell of row.cells) {
+      const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
+      let h = 4;
+      for (const cp of cell.paragraphs) {
+        const cps = resolveParaStyle(doc, cp.paraPrIDRef);
+        h += cps.marginTop;
+        for (const cr of cp.runs) {
+          const cts = resolveTextStyle(doc, cr.charPrIDRef);
+          const cf = getFont(cts);
+          const lh = calcLineHeight(cps, cts.fontSize);
+          for (const cc of cr.children) {
+            if (cc.type === 'text') {
+              const text = cc.content;
+              if (!text) { h += lh; continue; }
+              h += wrapText(text, cf, cts.fontSize, cellW - 4).length * lh;
+            } else if (cc.type === 'table') {
+              h += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+            }
+          }
+        }
+        h += cps.marginBottom;
+      }
+      rowH = Math.max(rowH, h);
+    }
+    totalH += rowH;
+  }
+  return totalH;
+}
+
 // ── Main export ──
 
 export interface PdfDirectOptions {
-  /** Custom font paths by category */
-  fonts?: {
-    serif?: string;
-    sans?: string;
-  };
-  /** Custom font paths by exact 한/글 font name */
+  fonts?: { serif?: string; sans?: string };
   fontMap?: Record<string, string>;
 }
 
-/**
- * Generate PDF directly from HWPX buffer.
- * Production-grade: embedded Korean fonts, accurate layout.
- */
 export async function generatePdf(
   hwpxBuffer: Uint8Array,
   options: PdfDirectOptions = {},
 ): Promise<Uint8Array> {
   const doc = await HanDoc.open(hwpxBuffer);
   const pdfDoc = await PDFDocument.create();
-  const fonts = await embedFonts(pdfDoc);
+  const fonts = await embedFonts(pdfDoc, options.fonts);
 
   function getFont(style: TextStyle): PDFFont {
     if (style.isSerif) return style.bold ? fonts.serifBold : fonts.serif;
@@ -331,7 +347,7 @@ export async function generatePdf(
       const ext = img.path.split('.').pop()?.toLowerCase() ?? '';
       if (ext === 'png') imageCache.set(img.path, await pdfDoc.embedPng(img.data));
       else if (ext === 'jpg' || ext === 'jpeg') imageCache.set(img.path, await pdfDoc.embedJpg(img.data));
-    } catch { /* skip unsupported images */ }
+    } catch { /* skip */ }
   }
 
   for (const section of doc.sections) {
@@ -343,9 +359,10 @@ export async function generatePdf(
     const mT = sp ? hwpToPt(sp.margins.top) : 56.69;
     const mB = sp ? hwpToPt(sp.margins.bottom) : 56.69;
     const cW = pageW - mL - mR;
+    const contentH = pageH - mT - mB;
 
     let page = pdfDoc.addPage([pageW, pageH]);
-    let curY = pageH - mT; // PDF Y: bottom-up
+    let curY = pageH - mT;
 
     function newPage() {
       page = pdfDoc.addPage([pageW, pageH]);
@@ -362,22 +379,35 @@ export async function generatePdf(
       const pW = cW - ps.marginLeft - ps.marginRight;
 
       curY -= ps.marginTop;
+
+      // Track if paragraph has any content
+      let hasContent = false;
       let firstLine = true;
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
         const font = getFont(ts);
-        const lineH = ps.lineHeightFixed ? ps.lineHeight : ts.fontSize * ps.lineHeight;
+        const lineH = calcLineHeight(ps, ts.fontSize);
 
         for (const child of run.children) {
           if (child.type === 'text') {
+            const content = child.content;
+            if (!content && !hasContent) {
+              // Empty text run — still takes up one line height
+              checkBreak(lineH);
+              curY -= lineH;
+              hasContent = true;
+              continue;
+            }
+            if (!content) continue;
+
             const indent = firstLine ? ps.textIndent : 0;
-            const lines = wrapText(child.content, font, ts.fontSize, pW - indent);
+            const lines = wrapText(content, font, ts.fontSize, pW - indent);
 
             for (const line of lines) {
               checkBreak(lineH);
 
-              let x = pL + indent;
+              let x = pL + (firstLine ? ps.textIndent : 0);
               if (ps.align === 'center') x = pL + (pW - line.width) / 2;
               else if (ps.align === 'right') x = pL + pW - line.width;
 
@@ -394,10 +424,9 @@ export async function generatePdf(
               }
 
               if (ts.strikeout) {
-                const sy = textY + ts.fontSize * 0.35;
                 page.drawLine({
-                  start: { x, y: sy },
-                  end: { x: x + line.width, y: sy },
+                  start: { x, y: textY + ts.fontSize * 0.35 },
+                  end: { x: x + line.width, y: textY + ts.fontSize * 0.35 },
                   thickness: 0.5,
                   color: rgb(...ts.color),
                 });
@@ -405,136 +434,175 @@ export async function generatePdf(
 
               curY -= lineH;
               firstLine = false;
+              hasContent = true;
             }
           } else if (child.type === 'table') {
-            // Table — with proper page break handling per row
-            const tbl = parseTable(child.element);
-            const szEl = child.element.children.find(c => c.tag === 'sz');
-            const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : pW;
-            const contentH = pageH - mT - mB;
-
-            for (let rowIdx = 0; rowIdx < tbl.rows.length; rowIdx++) {
-              const row = tbl.rows[rowIdx];
-              // Calculate row height
-              let rowH = 0;
-              for (const cell of row.cells) {
-                const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-                const cellPadding = 3; // total vertical padding (balanced)
-                let h = cellPadding;
-                
-                for (const cp of cell.paragraphs) {
-                  const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-                  // Only add para margins if significant (> 1pt)
-                  if (cps.marginTop > 1) h += cps.marginTop * 0.4; // balanced reduction
-                  if (cps.marginBottom > 1) h += cps.marginBottom * 0.4;
-                  
-                  for (const cr of cp.runs) {
-                    const cts = resolveTextStyle(doc, cr.charPrIDRef);
-                    const cf = getFont(cts);
-                    for (const cc of cr.children) {
-                      if (cc.type === 'text') {
-                        const cl = wrapText(cc.content, cf, cts.fontSize, cellW - 3); // balanced horizontal padding
-                        if (cl.length > 0) {
-                          // Use actual line height, but don't multiply by lineHeight ratio for tables
-                          // Tables should be more compact
-                          const lineH = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.1; // balanced line height
-                          h += cl.length * lineH;
-                        }
-                      }
-                    }
-                  }
-                }
-                
-                // Minimum row height: font size + padding
-                const minH = 11 + cellPadding; // balanced minimum
-                rowH = Math.max(rowH, Math.max(h, minH));
-              }
-
-              // Cap row height to content area (prevent infinite single-page rows)
-              if (rowH > contentH) rowH = contentH;
-
-              // Page break: if row doesn't fit, start new page
-              // BUT: don't break if:
-              // 1. We're already near the top (just started fresh page)
-              // 2. This is one of the first 2 rows of the table (keep table headers together)
-              const nearTop = (pageH - curY) < 50; // within ~50pt (~3-4 lines) of page top
-              const isTableStart = rowIdx < 2; // first 2 rows of table
-              if (curY - rowH < mB && !nearTop && !isTableStart) {
-                newPage();
-              }
-
-              // Draw cells
-              let cellX = pL;
-              for (const cell of row.cells) {
-                const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : (tblW / tbl.colCnt) * cell.cellSpan.colSpan;
-                const cellH = rowH * cell.cellSpan.rowSpan;
-
-                page.drawRectangle({
-                  x: cellX, y: curY - cellH,
-                  width: cellW, height: cellH,
-                  borderColor: rgb(0, 0, 0), borderWidth: 0.5,
-                });
-
-                let ty = curY - 1.5; // balanced top padding
-                for (const cp of cell.paragraphs) {
-                  const cps = resolveParaStyle(doc, cp.paraPrIDRef);
-                  if (cps.marginTop > 1) ty -= cps.marginTop * 0.4;
-                  for (const cr of cp.runs) {
-                    const cts = resolveTextStyle(doc, cr.charPrIDRef);
-                    const cf = getFont(cts);
-                    const lh = cps.lineHeightFixed ? cps.lineHeight : cts.fontSize * 1.1;
-                    for (const cc of cr.children) {
-                      if (cc.type === 'text') {
-                        const cls = wrapText(cc.content, cf, cts.fontSize, cellW - 3);
-                        for (const cl of cls) {
-                          ty -= cts.fontSize;
-                          let tx = cellX + 1.5; // balanced left padding
-                          if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
-                          else if (cps.align === 'right') tx = cellX + cellW - 1.5 - cl.width;
-                          drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
-                          ty -= (lh - cts.fontSize);
-                        }
-                      }
-                    }
-                  }
-                  if (cps.marginBottom > 1) ty -= cps.marginBottom * 0.4;
-                }
-                cellX += cellW;
-              }
-              curY -= rowH;
-            }
-          } else if (child.type === 'inlineObject' && (child.name === 'picture' || child.name === 'pic')) {
-            // Image
-            const fileRef = findDesc(child.element, 'fileRef');
-            if (fileRef) {
-              const binRef = fileRef.attrs['binItemIDRef'] ?? '';
-              const img = doc.images.find(i => i.path.includes(binRef));
-              if (img) {
-                const pdfImg = imageCache.get(img.path);
-                if (pdfImg) {
-                  const imgEl = findDesc(child.element, 'img') ?? findDesc(child.element, 'imgRect');
-                  let w = pW, h = pW * 0.75;
-                  if (imgEl) {
-                    const wH = Number(imgEl.attrs['width'] ?? 0);
-                    const hH = Number(imgEl.attrs['height'] ?? 0);
-                    if (wH > 0) w = hwpToPt(wH);
-                    if (hH > 0) h = hwpToPt(hH);
-                  }
-                  if (w > pW) { const sc = pW / w; w = pW; h *= sc; }
-                  // Cap image height to content area
-                  const maxImgH = pageH - mT - mB;
-                  if (h > maxImgH) { const sc = maxImgH / h; h = maxImgH; w *= sc; }
-
-                  checkBreak(h);
-                  page.drawImage(pdfImg, { x: pL, y: curY - h, width: w, height: h });
-                  curY -= h;
+            hasContent = true;
+            renderTable(doc, child.element, pL, pW, getFont);
+          } else if (child.type === 'inlineObject') {
+            hasContent = true;
+            if (child.name === 'picture' || child.name === 'pic') {
+              renderImage(doc, child.element, pL, pW);
+            } else {
+              // Try to extract text from shapes/drawings
+              const shapeText = extractShapeText(child.element);
+              if (shapeText.trim()) {
+                const lines = wrapText(shapeText.trim(), font, ts.fontSize, pW);
+                for (const line of lines) {
+                  checkBreak(lineH);
+                  drawText(page, line.text, pL, curY - ts.fontSize, font, ts.fontSize, ts.color);
+                  curY -= lineH;
                 }
               }
             }
           }
         }
       }
+
+      // If paragraph had no content at all, still advance by one default line
+      if (!hasContent) {
+        const defaultLineH = calcLineHeight(ps, 10);
+        checkBreak(defaultLineH);
+        curY -= defaultLineH;
+      }
+
       curY -= ps.marginBottom;
+    }
+
+    // ── Table rendering (nested function for page access) ──
+    function renderTable(doc: HanDoc, element: GenericElement, tableX: number, maxWidth: number, getFont: (s: TextStyle) => PDFFont) {
+      const tbl = parseTable(element);
+      const szEl = element.children.find(c => c.tag === 'sz');
+      const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
+
+      for (const row of tbl.rows) {
+        // Calculate row height from content
+        let rowH = 0;
+        for (const cell of row.cells) {
+          const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
+          // Use cellSz.height if available
+          const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
+          const cellPad = 4; // 2pt top + 2pt bottom
+          let cellContentH = cellPad;
+
+          for (const cp of cell.paragraphs) {
+            const cps = resolveParaStyle(doc, cp.paraPrIDRef);
+            cellContentH += cps.marginTop;
+            for (const cr of cp.runs) {
+              const cts = resolveTextStyle(doc, cr.charPrIDRef);
+              const cf = getFont(cts);
+              const lh = calcLineHeight(cps, cts.fontSize);
+              for (const cc of cr.children) {
+                if (cc.type === 'text') {
+                  const text = cc.content;
+                  if (!text) { cellContentH += lh; continue; }
+                  const cl = wrapText(text, cf, cts.fontSize, cellW - 4);
+                  cellContentH += cl.length * lh;
+                } else if (cc.type === 'table') {
+                  // Nested table: estimate height recursively
+                  cellContentH += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+                }
+              }
+            }
+            cellContentH += cps.marginBottom;
+          }
+
+          // Use max of declared height and content height
+          const cellH = Math.max(cellDeclaredH, cellContentH);
+          rowH = Math.max(rowH, cellH);
+        }
+
+        // Ensure minimum row height
+        if (rowH < 12) rowH = 12;
+        // Cap to page content area
+        if (rowH > contentH) rowH = contentH;
+
+        // Page break
+        if (curY - rowH < mB) newPage();
+
+        // Draw cells
+        let cellX = tableX;
+        for (const cell of row.cells) {
+          const cellW = cell.cellSz.width > 0
+            ? hwpToPt(cell.cellSz.width)
+            : (tblW / tbl.colCnt) * cell.cellSpan.colSpan;
+          const cellH = rowH; // TODO: handle rowSpan properly
+
+          // Cell border
+          page.drawRectangle({
+            x: cellX, y: curY - cellH,
+            width: cellW, height: cellH,
+            borderColor: rgb(0, 0, 0), borderWidth: 0.5,
+          });
+
+          // Cell text
+          let ty = curY - 2; // 2pt top padding
+          for (const cp of cell.paragraphs) {
+            const cps = resolveParaStyle(doc, cp.paraPrIDRef);
+            ty -= cps.marginTop;
+            for (const cr of cp.runs) {
+              const cts = resolveTextStyle(doc, cr.charPrIDRef);
+              const cf = getFont(cts);
+              const lh = calcLineHeight(cps, cts.fontSize);
+              for (const cc of cr.children) {
+                if (cc.type === 'text') {
+                  const text = cc.content;
+                  if (!text) { ty -= lh; continue; }
+                  const cls = wrapText(text, cf, cts.fontSize, cellW - 4);
+                  for (const cl of cls) {
+                    ty -= cts.fontSize;
+                    let tx = cellX + 2;
+                    if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
+                    else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
+                    if (ty > curY - cellH) {
+                      drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
+                    }
+                    ty -= (lh - cts.fontSize);
+                  }
+                } else if (cc.type === 'table') {
+                  // Render nested table — save/restore curY
+                  const savedCurY = curY;
+                  curY = ty;
+                  renderTable(doc, cc.element, cellX + 2, cellW - 4, getFont);
+                  ty = curY;
+                  curY = savedCurY;
+                }
+              }
+            }
+            ty -= cps.marginBottom;
+          }
+
+          cellX += cellW;
+        }
+        curY -= rowH;
+      }
+    }
+
+    // ── Image rendering ──
+    function renderImage(doc: HanDoc, element: GenericElement, imgX: number, maxWidth: number) {
+      const fileRef = findDesc(element, 'fileRef');
+      if (!fileRef) return;
+      const binRef = fileRef.attrs['binItemIDRef'] ?? '';
+      const img = doc.images.find(i => i.path.includes(binRef));
+      if (!img) return;
+      const pdfImg = imageCache.get(img.path);
+      if (!pdfImg) return;
+
+      const imgEl = findDesc(element, 'img') ?? findDesc(element, 'imgRect');
+      let w = maxWidth, h = maxWidth * 0.75;
+      if (imgEl) {
+        const wH = Number(imgEl.attrs['width'] ?? 0);
+        const hH = Number(imgEl.attrs['height'] ?? 0);
+        if (wH > 0) w = hwpToPt(wH);
+        if (hH > 0) h = hwpToPt(hH);
+      }
+      // Clamp to page
+      if (w > maxWidth) { const sc = maxWidth / w; w = maxWidth; h *= sc; }
+      if (h > contentH) { const sc = contentH / h; h = contentH; w *= sc; }
+
+      checkBreak(h);
+      page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
+      curY -= h;
     }
   }
 
