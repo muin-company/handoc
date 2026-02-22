@@ -183,17 +183,22 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
 
 // ── Text measurement ──
 
+// Font width compensation: AppleMyungjo is narrower than 함초롬바탕 (HWP default).
+// Apply a scaling factor to text measurement so line breaks occur at similar positions.
+const FONT_WIDTH_SCALE = 1.15;
+
 function measureText(text: string, font: PDFFont, fontSize: number): number {
+  let raw: number;
   try {
-    return font.widthOfTextAtSize(text, fontSize);
+    raw = font.widthOfTextAtSize(text, fontSize);
   } catch {
-    let w = 0;
+    raw = 0;
     for (const ch of text) {
-      try { w += font.widthOfTextAtSize(ch, fontSize); }
-      catch { w += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
+      try { raw += font.widthOfTextAtSize(ch, fontSize); }
+      catch { raw += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
     }
-    return w;
   }
+  return raw * FONT_WIDTH_SCALE;
 }
 
 // ── Word wrap ──

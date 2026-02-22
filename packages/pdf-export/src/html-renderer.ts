@@ -270,10 +270,20 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
 function renderParagraph(doc: HanDoc, para: Paragraph): string {
   const paraProp = getParaProp(doc, para.paraPrIDRef);
   const styles: string[] = [];
+  let tag = 'p';
+  let headingPrefix = '';
 
   if (paraProp) {
     if (paraProp.align) {
       styles.push(`text-align:${paraProp.align === 'distribute' ? 'justify' : paraProp.align}`);
+    }
+    // Heading level
+    if (paraProp.heading) {
+      const level = Math.min(paraProp.heading.level, 6);
+      if (level > 0) {
+        tag = `h${level}`;
+        styles.push('font-weight:bold');
+      }
     }
     if (paraProp.lineSpacing) {
       const { type, value } = paraProp.lineSpacing;
@@ -306,12 +316,17 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
     if (paraProp.breakSetting?.pageBreakBefore) {
       styles.push('page-break-before:always');
     }
+    // Extract numbering/bullet prefix from paraProp children
+    const paraHead = paraProp.children.find(c => c.tag.endsWith('paraHead') || c.tag.endsWith(':paraHead'));
+    if (paraHead && paraHead.text) {
+      headingPrefix = paraHead.text + ' ';
+    }
   }
 
   const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
   const inner = para.runs.map(r => renderRun(doc, r)).join('');
 
-  return `<p${styleAttr}>${inner || '&nbsp;'}</p>`;
+  return `<${tag}${styleAttr}>${headingPrefix}${inner || '&nbsp;'}</${tag}>`;
 }
 
 function renderSectionBody(doc: HanDoc, section: Section): { html: string; pw: number; ph: number; ml: number; mr: number; mt: number; mb: number } {
