@@ -281,6 +281,19 @@ function renderParagraph(doc: HanDoc, para: Paragraph): string {
       if (m.prev) styles.push(`margin-top:${m.prev / 7200}in`);
       if (m.next) styles.push(`margin-bottom:${m.next / 7200}in`);
     }
+    // Paragraph border
+    if (paraProp.border && paraProp.border.borderFillIDRef) {
+      const bgColor = getBorderFillBgColor(doc, paraProp.border.borderFillIDRef);
+      if (bgColor) {
+        styles.push(`background-color:#${bgColor}`);
+      }
+      styles.push('border:0.5px solid #000');
+      const b = paraProp.border;
+      if (b.offsetLeft) styles.push(`padding-left:${b.offsetLeft / 7200}in`);
+      if (b.offsetRight) styles.push(`padding-right:${b.offsetRight / 7200}in`);
+      if (b.offsetTop) styles.push(`padding-top:${b.offsetTop / 7200}in`);
+      if (b.offsetBottom) styles.push(`padding-bottom:${b.offsetBottom / 7200}in`);
+    }
     // Handle page break before paragraph
     if (paraProp.breakSetting?.pageBreakBefore) {
       styles.push('page-break-before:always');
