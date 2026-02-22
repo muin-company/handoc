@@ -19,6 +19,13 @@ export interface CellSize {
   height: number;
 }
 
+export interface CellMargin {
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+}
+
 export interface ParsedTableCell {
   name: string;
   header: boolean;
@@ -26,6 +33,7 @@ export interface ParsedTableCell {
   cellAddr: CellAddress;
   cellSpan: CellSpan;
   cellSz: CellSize;
+  cellMargin?: CellMargin;
   vertAlign?: string;
   paragraphs: ReturnType<typeof parseParagraph>[];
 }
@@ -71,6 +79,7 @@ function parseCellFromGeneric(tc: GenericElement): ParsedTableCell {
   const addr = findChild(tc, 'cellAddr');
   const span = findChild(tc, 'cellSpan');
   const sz = findChild(tc, 'cellSz');
+  const margin = findChild(tc, 'cellMargin');
 
   // Parse paragraphs from subList > p
   const paragraphs: ReturnType<typeof parseParagraph>[] = [];
@@ -82,6 +91,13 @@ function parseCellFromGeneric(tc: GenericElement): ParsedTableCell {
     }
     vertAlign = subList.attrs['vertAlign'];
   }
+
+  const cellMargin: CellMargin | undefined = margin ? {
+    left: int(margin.attrs['left'], 0),
+    right: int(margin.attrs['right'], 0),
+    top: int(margin.attrs['top'], 0),
+    bottom: int(margin.attrs['bottom'], 0),
+  } : undefined;
 
   return {
     name: tc.attrs['name'] ?? '',
@@ -99,6 +115,7 @@ function parseCellFromGeneric(tc: GenericElement): ParsedTableCell {
       width: int(sz?.attrs['width']),
       height: int(sz?.attrs['height']),
     },
+    cellMargin,
     vertAlign,
     paragraphs,
   };
