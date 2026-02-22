@@ -64,6 +64,10 @@ function renderRun(doc: HanDoc, run: Run): string {
       const c = charProp.textColor.replace('#', '').padStart(6, '0');
       styles.push(`color:#${c}`);
     }
+    if (charProp.shadeColor && charProp.shadeColor !== '0' && charProp.shadeColor !== 'ffffff') {
+      const bgc = charProp.shadeColor.replace('#', '').padStart(6, '0');
+      styles.push(`background-color:#${bgc}`);
+    }
     if (charProp.height) {
       const pt = charProp.height / 100;
       if (pt > 0) styles.push(`font-size:${pt}pt`);
