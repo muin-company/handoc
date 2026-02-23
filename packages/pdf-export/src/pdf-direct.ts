@@ -791,9 +791,22 @@ export async function generatePdf(
       const pdfImg = imageCache.get(img.path);
       if (!pdfImg) return;
 
+      // Use curSz (display size) > orgSz > imgRect dimensions
+      const curSzEl = findDesc(element, 'curSz');
+      const orgSzEl = findDesc(element, 'orgSz');
       const imgEl = findDesc(element, 'img') ?? findDesc(element, 'imgRect');
       let w = maxWidth, h = maxWidth * 0.75;
-      if (imgEl) {
+      if (curSzEl) {
+        const wH = Number(curSzEl.attrs['width'] ?? 0);
+        const hH = Number(curSzEl.attrs['height'] ?? 0);
+        if (wH > 0) w = hwpToPt(wH);
+        if (hH > 0) h = hwpToPt(hH);
+      } else if (orgSzEl) {
+        const wH = Number(orgSzEl.attrs['width'] ?? 0);
+        const hH = Number(orgSzEl.attrs['height'] ?? 0);
+        if (wH > 0) w = hwpToPt(wH);
+        if (hH > 0) h = hwpToPt(hH);
+      } else if (imgEl) {
         const wH = Number(imgEl.attrs['width'] ?? 0);
         const hH = Number(imgEl.attrs['height'] ?? 0);
         if (wH > 0) w = hwpToPt(wH);
