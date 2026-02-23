@@ -455,7 +455,7 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.5; }
+  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.5; letter-spacing: -0.015em; }
   p { margin: 0; padding: 0; page-break-inside: avoid; orphans: 2; widows: 2; }
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
