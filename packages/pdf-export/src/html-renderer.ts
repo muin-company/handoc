@@ -278,12 +278,12 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
-      // Cell padding from cellMargin (scale down to 25% to prevent excessive spacing)
+      // Cell padding from cellMargin (scale down to 20% to prevent excessive spacing)
       if (cell.cellMargin) {
-        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200 * 0.25).toFixed(3)}in` : '0.5px';
-        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200 * 0.25).toFixed(3)}in` : '1px';
-        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200 * 0.25).toFixed(3)}in` : '0.5px';
-        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200 * 0.25).toFixed(3)}in` : '1px';
+        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200 * 0.20).toFixed(3)}in` : '0.5px';
+        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200 * 0.20).toFixed(3)}in` : '1px';
+        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200 * 0.20).toFixed(3)}in` : '0.5px';
+        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200 * 0.20).toFixed(3)}in` : '1px';
         cellStyles.push(`padding:${padTop} ${padRight} ${padBottom} ${padLeft}`);
       } else {
         cellStyles.push('padding:0.5px 1px');
