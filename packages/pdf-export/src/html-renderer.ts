@@ -459,7 +459,7 @@ const BASE_CSS = `
   p { margin: 0; padding: 0; page-break-inside: avoid; orphans: 2; widows: 2; }
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
-  tr { page-break-inside: avoid; page-break-after: auto; }
+  tr { page-break-inside: auto; page-break-after: auto; }
   td, th { border: 0.5px solid #000; padding: 1px 2px; vertical-align: top; font-size: inherit; line-height: 1.2; orphans: 2; widows: 2; max-height: none; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: 1.2 !important; }
   th { background-color: #f0f0f0; font-weight: bold; }
