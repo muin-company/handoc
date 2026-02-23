@@ -1,5 +1,5 @@
 {
-  "generated": "2026-02-23T10:02:12.283686",
+  "generated": "2026-02-23T12:02:09.980867",
   "dpi": 150,
   "total": 43,
   "grades": {
@@ -1688,12 +1688,12 @@
       "pages": [
         {
           "page": 1,
-          "ssim": 0.6552,
+          "ssim": 0.6238,
           "size_match": 0.999
         },
         {
           "page": 2,
-          "ssim": 0.7359,
+          "ssim": 0.7196,
           "size_match": 0.999
         },
         {
@@ -1743,37 +1743,13 @@
           "ssim": 0.0,
           "size_match": 0.0,
           "note": "missing_in_reference"
-        },
-        {
-          "page": 11,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 12,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 13,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 14,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
         }
       ],
-      "avg_ssim": 0.0994,
+      "avg_ssim": 0.1343,
       "min_ssim": 0.0,
       "grade": "F",
       "ref_pages": 2,
-      "test_pages": 14
+      "test_pages": 10
     },
     {
       "reference": "real-world/20260220/[별지 3] 클라우드컴퓨팅서비스 보안인증 명세서(클라우드컴퓨팅서비스 보안인증에 관한 고시).pdf",
@@ -2376,12 +2352,12 @@
       "pages": [
         {
           "page": 1,
-          "ssim": 0.6476,
+          "ssim": 0.6336,
           "size_match": 0.999
         },
         {
           "page": 2,
-          "ssim": 0.7348,
+          "ssim": 0.7197,
           "size_match": 0.999
         },
         {
@@ -2431,37 +2407,13 @@
           "ssim": 0.0,
           "size_match": 0.0,
           "note": "missing_in_reference"
-        },
-        {
-          "page": 11,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 12,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 13,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
-        },
-        {
-          "page": 14,
-          "ssim": 0.0,
-          "size_match": 0.0,
-          "note": "missing_in_reference"
         }
       ],
-      "avg_ssim": 0.0987,
+      "avg_ssim": 0.1353,
       "min_ssim": 0.0,
       "grade": "F",
       "ref_pages": 2,
-      "test_pages": 14
+      "test_pages": 10
     },
     {
       "reference": "real-world/education/(새양식)2025학년도 동아리 활동 연간지도계획(독후활동반).pdf",

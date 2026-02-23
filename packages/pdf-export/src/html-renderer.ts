@@ -349,8 +349,8 @@ function renderParagraph(doc: HanDoc, para: Paragraph, inTable = false): string 
       if (m.prev) styles.push(`margin-top:${m.prev / 7200}in`);
       if (m.next) styles.push(`margin-bottom:${m.next / 7200}in`);
     }
-    // Paragraph border
-    if (paraProp.border && paraProp.border.borderFillIDRef) {
+    // Paragraph border (skip in table cells to prevent layout explosion)
+    if (!inTable && paraProp.border && paraProp.border.borderFillIDRef) {
       const bgColor = getBorderFillBgColor(doc, paraProp.border.borderFillIDRef);
       if (bgColor) {
         styles.push(`background-color:#${bgColor}`);
