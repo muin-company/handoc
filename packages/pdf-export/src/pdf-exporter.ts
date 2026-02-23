@@ -34,9 +34,10 @@ export async function hwpxToPdf(hwpxBuffer: Uint8Array): Promise<Uint8Array> {
     mb = margins.bottom;
   }
 
-  const landscape = doc.landscape;
-  const pdfWidth = landscape ? ph : pw;
-  const pdfHeight = landscape ? pw : ph;
+  // Don't swap dimensions - use pageWidth/pageHeight as-is
+  // The HTML renderer already uses these correctly
+  const pdfWidth = pw;
+  const pdfHeight = ph;
 
   // Dynamic import so Playwright is only needed at runtime
   let chromium: typeof import('playwright').chromium;
