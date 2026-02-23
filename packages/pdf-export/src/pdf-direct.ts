@@ -156,11 +156,12 @@ async function embedFonts(pdfDoc: PDFDocument, customFonts?: { serif?: string; s
     ?? findSystemFont('NanumMyeongjo.ttf')
     ?? findSystemFont('batang.ttc');
 
+  // Note: .ttc files cause fontkit subsetting crash. Prefer .ttf first.
   const sansPath = customFonts?.sans
-    ?? findSystemFont('AppleSDGothicNeo.ttc')
     ?? findSystemFont('AppleGothic.ttf')
     ?? findSystemFont('NanumGothic.ttf')
-    ?? findSystemFont('malgun.ttf');
+    ?? findSystemFont('malgun.ttf')
+    ?? findSystemFont('AppleSDGothicNeo.ttc');
 
   const serifBoldPath = serifPath; // Same file, weight handled by pdf-lib
   const sansBoldPath = sansPath;
