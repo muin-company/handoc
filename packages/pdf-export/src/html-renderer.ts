@@ -389,12 +389,18 @@ function renderSectionBody(doc: HanDoc, section: Section): { html: string; pw: n
   const pageSize = doc.pageSize;
   const margins = doc.margins;
   const sProps = section.sectionProps;
-  const pw = sProps ? Math.round((sProps.pageWidth / 7200) * 25.4) : pageSize.width;
-  const ph = sProps ? Math.round((sProps.pageHeight / 7200) * 25.4) : pageSize.height;
+  let pw = sProps ? Math.round((sProps.pageWidth / 7200) * 25.4) : pageSize.width;
+  let ph = sProps ? Math.round((sProps.pageHeight / 7200) * 25.4) : pageSize.height;
   const ml = sProps ? Math.round((sProps.margins.left / 7200) * 25.4 * 10) / 10 : margins.left;
   const mr = sProps ? Math.round((sProps.margins.right / 7200) * 25.4 * 10) / 10 : margins.right;
   const mt = sProps ? Math.round((sProps.margins.top / 7200) * 25.4 * 10) / 10 : margins.top;
   const mb = sProps ? Math.round((sProps.margins.bottom / 7200) * 25.4 * 10) / 10 : margins.bottom;
+
+  // If section is landscape but dimensions are portrait, swap them for HTML rendering
+  const isLandscape = sProps?.landscape ?? false;
+  if (isLandscape && pw < ph) {
+    [pw, ph] = [ph, pw];
+  }
 
   let html = '';
   
