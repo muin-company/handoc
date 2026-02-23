@@ -455,12 +455,12 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; }
+  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 10pt; line-height: 1.6; word-break: keep-all; overflow-wrap: break-word; }
   p { margin: 0; padding: 0; page-break-inside: avoid; orphans: 2; widows: 2; }
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: 0.5px solid #000; padding: 1px 2px; vertical-align: top; font-size: inherit; line-height: 1.2; orphans: 1; widows: 1; max-height: none; }
+  td, th { border: 0.5px solid #000; padding: 1px 2px; vertical-align: top; font-size: inherit; line-height: 1.2; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: 1.2 !important; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
