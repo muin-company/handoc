@@ -483,9 +483,10 @@ const BASE_CSS = `
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: ${HWP_BORDER_NORMAL}px solid #000; padding: 0.5px 1px; vertical-align: top; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
+  td, th { border: ${HWP_BORDER_NORMAL}px solid #000; padding: 0.5px 1px; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
+  td { vertical-align: top; }
+  th { vertical-align: middle; background-color: #f0f0f0; font-weight: bold; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: inherit !important; page-break-inside: auto !important; }
-  th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
   .page-footer { padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
