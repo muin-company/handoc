@@ -5,7 +5,7 @@
  * Key principle: Use HWPX values exactly as specified. No heuristic adjustments.
  */
 
-import { HanDoc, extractAnnotationText } from '@handoc/hwpx-parser';
+import { HanDoc, extractAnnotationText, parseFootnote } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
 import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
@@ -356,6 +356,119 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
   return s;
 }
 
+// ── Numbering / Bullet prefix helpers ──
+
+const HANGUL_SYLLABLES = '가나다라마바사아자차카타파하';
+const HANGUL_JAMO = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ';
+const CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+const CIRCLED_HANGUL = '㉮㉯㉰㉱㉲㉳㉴㉵㉶㉷㉸㉹㉺㉻';
+
+function formatNumber(n: number, fmt: string): string {
+  switch (fmt) {
+    case 'DIGIT': return String(n);
+    case 'HANGUL_SYLLABLE': return HANGUL_SYLLABLES[n - 1] ?? String(n);
+    case 'HANGUL_JAMO': return HANGUL_JAMO[n - 1] ?? String(n);
+    case 'CIRCLED_DIGIT': return CIRCLED_DIGITS[n - 1] ?? String(n);
+    case 'CIRCLED_HANGUL_SYLLABLE': return CIRCLED_HANGUL[n - 1] ?? String(n);
+    case 'ROMAN_SMALL': {
+      const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+      const syms = ['m', 'cm', 'd', 'cd', 'c', 'xc', 'l', 'xl', 'x', 'ix', 'v', 'iv', 'i'];
+      let r = '', v = n;
+      for (let i = 0; i < vals.length; i++) { while (v >= vals[i]) { r += syms[i]; v -= vals[i]; } }
+      return r;
+    }
+    case 'ROMAN_CAPITAL': {
+      const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+      const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+      let r = '', v = n;
+      for (let i = 0; i < vals.length; i++) { while (v >= vals[i]) { r += syms[i]; v -= vals[i]; } }
+      return r;
+    }
+    case 'LATIN_SMALL': return String.fromCharCode(96 + n); // a, b, c...
+    case 'LATIN_CAPITAL': return String.fromCharCode(64 + n); // A, B, C...
+    default: return String(n);
+  }
+}
+
+interface NumberingState {
+  /** counters[idRef][level] = current count */
+  counters: Map<number, number[]>;
+}
+
+function createNumberingState(): NumberingState {
+  return { counters: new Map() };
+}
+
+/**
+ * Get the numbering/bullet prefix for a paragraph, advancing counters as needed.
+ * Returns the prefix string (e.g., "1. ", "가. ", "● ") and whether autoIndent applies.
+ */
+function getParaPrefix(
+  doc: HanDoc,
+  paraPrIDRef: number | null,
+  state: NumberingState,
+): { prefix: string; autoIndent: boolean; level: number } {
+  if (paraPrIDRef == null) return { prefix: '', autoIndent: false, level: 0 };
+  const pp = doc.header.refList.paraProperties.find(p => p.id === paraPrIDRef);
+  if (!pp?.heading) return { prefix: '', autoIndent: false, level: 0 };
+
+  const { type, idRef, level } = pp.heading;
+
+  // BULLET type
+  if (type === 'BULLET') {
+    const bullet = doc.header.refList.bullets?.find(b => b.id === idRef);
+    if (bullet) {
+      const paraHead = bullet.levels.find(l => l.level === level);
+      const ai = paraHead?.autoIndent ?? false;
+      if (paraHead?.text) {
+        return { prefix: paraHead.text + ' ', autoIndent: ai, level };
+      }
+      if (bullet.char) {
+        return { prefix: bullet.char + ' ', autoIndent: ai, level };
+      }
+    }
+    return { prefix: '', autoIndent: false, level };
+  }
+
+  // NUMBER or OUTLINE type
+  if (type === 'NUMBER' || type === 'OUTLINE') {
+    const numbering = doc.header.refList.numberings?.find(n => n.id === idRef);
+    if (!numbering) return { prefix: '', autoIndent: false, level };
+
+    // Initialize counters for this numbering id
+    if (!state.counters.has(idRef)) {
+      state.counters.set(idRef, new Array(10).fill(0));
+    }
+    const counters = state.counters.get(idRef)!;
+
+    // Increment this level's counter
+    counters[level]++;
+    // Reset all deeper levels
+    for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
+
+    const paraHead = numbering.levels.find(l => l.level === level + 1); // levels use 1-based
+    const ai = paraHead?.autoIndent ?? false;
+
+    if (paraHead?.text) {
+      // Replace ^N placeholders with formatted numbers
+      let prefix = paraHead.text;
+      prefix = prefix.replace(/\^(\d+)/g, (_m, idxStr) => {
+        const idx = parseInt(idxStr, 10) - 1; // ^1 = level 0, ^2 = level 1, etc.
+        const lvDef = numbering.levels.find(l => l.level === idx + 1);
+        const fmt = lvDef?.numFormat ?? 'DIGIT';
+        const count = counters[idx] || 1;
+        return formatNumber(count, fmt);
+      });
+      return { prefix: prefix + ' ', autoIndent: ai, level };
+    }
+
+    // Fallback: generate simple number
+    return { prefix: counters[level] + '. ', autoIndent: ai, level };
+  }
+
+  return { prefix: '', autoIndent: false, level: 0 };
+}
+
 /** Calculate line height in pt from paragraph style and font size */
 function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   if (ps.lineSpacingType === 'fixed') {
@@ -400,7 +513,7 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
 
 // ── Word wrap ──
 
-interface WLine { text: string; width: number; }
+interface WLine { text: string; width: number; isWrapped?: boolean; }
 
 function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number, charSpacing = 0): WLine[] {
   if (!text || maxWidth <= 0) return [];
@@ -433,7 +546,7 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
       }
       if (brk <= 0) brk = lo;
       const lineText = remaining.substring(0, brk);
-      lines.push({ text: lineText, width: measure(lineText) });
+      lines.push({ text: lineText, width: measure(lineText), isWrapped: true });
       remaining = remaining.substring(brk).trimStart();
     }
   }
@@ -648,6 +761,10 @@ export async function generatePdf(
     let curCol = 0;
     const sectionPages: PDFPage[] = [page];
 
+    // ── Footnote tracking ──
+    let footnoteCounter = 0;
+    const pageFootnotes = new Map<PDFPage, { num: number; text: string }[]>();
+
     function newColumn() {
       curCol++;
       if (curCol >= colLayouts.length) {
@@ -785,11 +902,16 @@ export async function generatePdf(
               const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
 
               let x = activePL + (firstLine ? ps.textIndent : 0);
+              let justifyCs = ts.charSpacing;
               if (ps.align === 'center') x = activePL + (activePW - line.width) / 2;
               else if (ps.align === 'right') x = activePL + activePW - line.width;
+              else if (ps.align === 'justify' && line.isWrapped && line.text.length > 1) {
+                const extra = activePW - line.width;
+                justifyCs = ts.charSpacing + extra / (line.text.length - 1);
+              }
 
               const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, ts.charSpacing, ts.bold, ts.italic);
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
 
               if (ts.underline) {
                 page.drawLine({
@@ -827,6 +949,17 @@ export async function generatePdf(
             } else {
               // Shape/drawing: render internal content (tables, images, text)
               renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
+            }
+          } else if (child.type === 'ctrl') {
+            // Check for footnote/endnote
+            const fn = parseFootnote(child.element);
+            if (fn) {
+              footnoteCounter++;
+              const fnText = extractAnnotationText(fn);
+
+              // Collect footnote for rendering at page bottom
+              if (!pageFootnotes.has(page)) pageFootnotes.set(page, []);
+              pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText });
             }
           }
         }
@@ -1010,6 +1143,13 @@ export async function generatePdf(
         }
         h += cps.marginBottom;
       }
+      // If the cell has a declared height, use the larger of declared vs estimated
+      // BUT: cap estimated height to avoid dramatic overestimation from font metric differences.
+      // When estimated height exceeds declared by more than 50%, the font is likely wider than
+      // the original, causing excessive text wrapping. Trust the declared height more.
+      if (cellDeclaredH > 0 && h > cellDeclaredH * 1.5) {
+        return cellDeclaredH;
+      }
       return Math.max(cellDeclaredH, h);
     }
 
@@ -1043,10 +1183,15 @@ export async function generatePdf(
               for (const cl of cls) {
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
+                let cellJustifyCs = cts.charSpacing;
                 if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
+                else if (cps.align === 'justify' && cl.isWrapped && cl.text.length > 1) {
+                  const extra = innerW - cl.width;
+                  cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
+                }
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cts.charSpacing, cts.bold, cts.italic);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
 
                   // Underline / strikethrough in table cells
                   if (cts.underline) {
@@ -1212,6 +1357,38 @@ export async function generatePdf(
             }
           }
         }
+      }
+    }
+
+    // ── Footnote rendering at page bottom ──
+    const fnFont = fonts.sans;
+    const fnFontSize = 8;
+    const fnLineH = fnFontSize * 1.4;
+    for (const [pg, footnotes] of pageFootnotes) {
+      if (footnotes.length === 0) continue;
+      // Calculate total footnote area height
+      const totalFnH = fnLineH * footnotes.length + 6; // 6pt for separator line + spacing
+      // Start from bottom margin + footer space, going up
+      let fnY = mB + totalFnH;
+
+      // Draw separator line
+      const sepY = fnY + 4;
+      pg.drawLine({
+        start: { x: mL, y: sepY },
+        end: { x: mL + cW * 0.3, y: sepY },
+        thickness: 0.5,
+        color: rgb(0, 0, 0),
+      });
+
+      // Draw each footnote
+      for (const fn of footnotes) {
+        const numStr = `${fn.num}) `;
+        const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
+        // Draw number
+        drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        // Draw text
+        drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        fnY -= fnLineH;
       }
     }
 
