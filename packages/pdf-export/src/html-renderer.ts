@@ -346,8 +346,9 @@ function renderParagraph(doc: HanDoc, para: Paragraph, inTable = false): string 
       if (m.left) styles.push(`margin-left:${m.left / 7200}in`);
       if (m.right) styles.push(`margin-right:${m.right / 7200}in`);
       if (m.indent) styles.push(`text-indent:${m.indent / 7200}in`);
-      if (m.prev) styles.push(`margin-top:${m.prev / 7200}in`);
-      if (m.next) styles.push(`margin-bottom:${m.next / 7200}in`);
+      // Reduce vertical margins by 50% to prevent excessive spacing and page overflow
+      if (m.prev) styles.push(`margin-top:${(m.prev / 7200 * 0.5).toFixed(3)}in`);
+      if (m.next) styles.push(`margin-bottom:${(m.next / 7200 * 0.5).toFixed(3)}in`);
     }
     // Paragraph border (skip in table cells to prevent layout explosion)
     if (!inTable && paraProp.border && paraProp.border.borderFillIDRef) {
