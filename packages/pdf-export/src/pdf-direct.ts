@@ -852,6 +852,8 @@ export async function generatePdf(
       // Track if paragraph has any content
       let hasContent = false;
       let firstLine = true;
+      let prefixApplied = false;
+      let prefixWidth = 0; // measured width of prefix for autoIndent hanging indent
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
@@ -860,7 +862,7 @@ export async function generatePdf(
 
         for (const child of run.children) {
           if (child.type === 'text') {
-            const content = child.content;
+            let content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
               const emptyH = lineH * 0.75;
@@ -871,6 +873,13 @@ export async function generatePdf(
             }
             if (!content) continue;
 
+            // Prepend numbering/bullet prefix to first text content of this paragraph
+            if (paraPrefix && !prefixApplied) {
+              content = paraPrefix + content;
+              prefixWidth = measureText(paraPrefix, font, ts.fontSize);
+              prefixApplied = true;
+            }
+
             // Use current column dimensions
             const curColLayout = colLayouts[curCol];
             const curPW = curColLayout.width - ps.marginLeft - ps.marginRight;
@@ -878,21 +887,24 @@ export async function generatePdf(
             // Wrap text with proper first-line indent handling:
             // First line uses curPW - indent (narrower for positive indent, wider for negative/hanging indent)
             // Subsequent lines always use curPW
-            const indent = firstLine ? ps.textIndent : 0;
+            // When autoIndent is active, continuation lines get a hanging indent equal to the prefix width
+            const autoIndentOffset = (prefixAutoIndent && prefixWidth > 0) ? prefixWidth : 0;
+            const indent = firstLine ? ps.textIndent : autoIndentOffset;
+            const contWidth = curPW - autoIndentOffset; // continuation line width
             let lines: WLine[];
-            if (indent !== 0) {
-              // Split wrapping: first line at indented width, rest at full width
+            if (indent !== 0 || autoIndentOffset !== 0) {
+              // Split wrapping: first line at indented width, rest at continuation width
               const firstLineWidth = curPW - indent;
               const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing);
               if (firstLines.length <= 1) {
                 lines = firstLines;
               } else {
-                // Take only the first line, re-wrap the rest at full paragraph width
+                // Take only the first line, re-wrap the rest at continuation width
                 lines = [firstLines[0]];
                 const usedText = firstLines[0].text;
                 const remaining = content.substring(usedText.length).trimStart();
                 if (remaining) {
-                  lines.push(...wrapText(remaining, font, ts.fontSize, curPW, ts.charSpacing));
+                  lines.push(...wrapText(remaining, font, ts.fontSize, contWidth, ts.charSpacing));
                 }
               }
             } else {
@@ -906,12 +918,14 @@ export async function generatePdf(
               const activePL = activeCol.x + ps.marginLeft;
               const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
 
-              let x = activePL + (firstLine ? ps.textIndent : 0);
+              const lineIndent = firstLine ? ps.textIndent : autoIndentOffset;
+              const effectiveW = activePW - lineIndent;
+              let x = activePL + lineIndent;
               let justifyCs = ts.charSpacing;
-              if (ps.align === 'center') x = activePL + (activePW - line.width) / 2;
-              else if (ps.align === 'right') x = activePL + activePW - line.width;
+              if (ps.align === 'center') x = activePL + lineIndent + (effectiveW - line.width) / 2;
+              else if (ps.align === 'right') x = activePL + lineIndent + effectiveW - line.width;
               else if (ps.align === 'justify' && line.isWrapped && line.text.length > 1) {
-                const extra = activePW - line.width;
+                const extra = effectiveW - line.width;
                 justifyCs = ts.charSpacing + extra / (line.text.length - 1);
               }
 
@@ -1143,9 +1157,13 @@ export async function generatePdf(
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             } else if (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) {
+              // Use curSz > orgSz > imgRect for height estimation (matching renderImage logic)
+              const curSzE = findDesc(cc.element, 'curSz');
+              const orgSzE = findDesc(cc.element, 'orgSz');
               const imgEl = findDesc(cc.element, 'img') ?? findDesc(cc.element, 'imgRect');
-              if (imgEl) {
-                const imgH = Number(imgEl.attrs['height'] ?? 0);
+              const szEl = curSzE ?? orgSzE ?? imgEl;
+              if (szEl) {
+                const imgH = Number(szEl.attrs['height'] ?? 0);
                 h += imgH > 0 ? hwpToPt(imgH) : lh;
               } else { h += lh; }
             } else if (cc.type === 'shape') {
