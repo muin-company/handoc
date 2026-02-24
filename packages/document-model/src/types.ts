@@ -19,6 +19,8 @@ export interface SectionProperties {
     count: number;
     gap: number;
     type: string;
+    /** Per-column widths and gaps (HWP units). Present when sameSz=0 */
+    sizes?: Array<{ width: number; gap: number }>;
   };
   pageStartNumber?: number;
 }

@@ -48,6 +48,14 @@ export function parseSectionProps(element: GenericElement): SectionProperties {
       gap: num(colPr.attrs['sameGap']),
       type: colPr.attrs['type'] ?? 'NEWSPAPER',
     };
+    // Parse per-column sizes (colSz children)
+    const colSizes = colPr.children.filter((c) => c.tag === 'colSz');
+    if (colSizes.length > 0) {
+      result.columns.sizes = colSizes.map((cs) => ({
+        width: num(cs.attrs['width']),
+        gap: num(cs.attrs['gap']),
+      }));
+    }
   }
 
   if (startNum) {
