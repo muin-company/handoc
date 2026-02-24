@@ -790,6 +790,8 @@ export async function generatePdf(
       }
     }
 
+    const numberingState = createNumberingState();
+
     for (const para of section.paragraphs) {
       // Handle column break
       if (para.columnBreak && colLayouts.length > 1) {
@@ -797,6 +799,9 @@ export async function generatePdf(
       }
 
       const ps = resolveParaStyle(doc, para.paraPrIDRef);
+
+      // Resolve numbering/bullet prefix
+      const { prefix: paraPrefix, autoIndent: prefixAutoIndent, level: headingLevel } = getParaPrefix(doc, para.paraPrIDRef, numberingState);
 
       // Check for inline column definition changes (ctrl > colPr)
       for (const run of para.runs) {
