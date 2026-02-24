@@ -740,9 +740,10 @@ export async function generatePdf(
           if (child.type === 'text') {
             const content = child.content;
             if (!content && !hasContent) {
-              // Empty text run — still takes up one line height
-              checkBreak(lineH);
-              curY -= lineH;
+              // Empty text run — reduced height for empty paragraphs
+              const emptyH = lineH * 0.5;
+              checkBreak(emptyH);
+              curY -= emptyH;
               hasContent = true;
               continue;
             }
@@ -831,11 +832,13 @@ export async function generatePdf(
         }
       }
 
-      // If paragraph had no content at all, still advance by one default line
+      // If paragraph had no content at all, advance by reduced height
+      // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
         const defaultLineH = calcLineHeight(ps, 10);
-        checkBreak(defaultLineH);
-        curY -= defaultLineH;
+        const emptyLineH = defaultLineH * 0.5;
+        checkBreak(emptyLineH);
+        curY -= emptyLineH;
       }
 
       curY -= ps.marginBottom;
@@ -846,8 +849,7 @@ export async function generatePdf(
     function renderTable(doc: HanDoc, element: GenericElement, tableX: number, maxWidth: number, getFont: (s: TextStyle) => PDFFont) {
       const tbl = parseTable(element);
       const szEl = element.children.find(c => c.tag === 'sz');
-      const rawTblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
-      const tblW = Math.min(rawTblW, maxWidth);
+      const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
 
       // ── Build grid column widths from colSpan=1 cells ──
       const colWidths: number[] = new Array(tbl.colCnt).fill(0);
@@ -870,15 +872,6 @@ export async function generatePdf(
           if (colWidths[i] === 0) colWidths[i] = eachW;
         }
       }
-      // Scale column widths to fit within tblW if they exceed it
-      const totalColW = colWidths.reduce((a, b) => a + b, 0);
-      if (totalColW > tblW && totalColW > 0) {
-        const scale = tblW / totalColW;
-        for (let i = 0; i < colWidths.length; i++) {
-          colWidths[i] *= scale;
-        }
-      }
-
       // Column X offsets
       const colX: number[] = [0];
       for (let i = 0; i < colWidths.length; i++) {
@@ -918,15 +911,6 @@ export async function generatePdf(
             for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) rowHeights[j] += extra;
           }
         }
-      }
-
-      // Debug table grid
-      if (process.env.HANDOC_DEBUG_TABLE) {
-        console.log(`TABLE: ${tbl.colCnt}x${tbl.rows.length} tblW=${tblW.toFixed(1)}`);
-        console.log(`  colWidths: [${colWidths.map(w => w.toFixed(1)).join(', ')}]`);
-        console.log(`  colX: [${colX.map(w => w.toFixed(1)).join(', ')}]`);
-        console.log(`  rowHeights: [${rowHeights.map(h => h.toFixed(1)).join(', ')}]`);
-        console.log(`  tableX=${tableX.toFixed(1)} curY=${curY.toFixed(1)} maxW=${maxWidth.toFixed(1)}`);
       }
 
       // Resolve table-level border fill for outer frame
