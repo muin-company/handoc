@@ -61,47 +61,153 @@ interface ParagraphData {
   style: ParagraphStyle;
 }
 
+type SectionItem = ParagraphData | { type: 'table'; rows: string[][] };
+
+function readUint16LE(data: Uint8Array, offset: number): number {
+  return data[offset] | (data[offset + 1] << 8);
+}
+
+function readUint32LE(data: Uint8Array, offset: number): number {
+  return (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24)) >>> 0;
+}
+
 /**
- * Extract paragraph texts and styles from a single body text section stream.
+ * Extract section items (paragraphs and tables) from a body text section stream.
+ * Tables are parsed using record-level nesting:
+ *   CTRL_HEADER(tbl) → TABLE(rows/cols) → LIST_HEADER(cell) → PARA_HEADER/TEXT
  */
-function extractSectionParagraphs(
+function extractSectionItems(
   sectionData: Uint8Array,
   docInfo: DocInfo,
-): ParagraphData[] {
+): SectionItem[] {
   const records = parseRecords(sectionData);
-  const paragraphs: ParagraphData[] = [];
-  
+  const items: SectionItem[] = [];
+
+  // State for current paragraph
   let currentParaShapeId = 0;
   let currentCharShapeIds: number[] = [];
+  // State for table parsing
+  let inTable = false;
+  let tableRows = 0;
+  let tableCols = 0;
+  let tableBaseLevel = 0;
+  let cellTexts: string[] = [];     // text per cell
+  let currentCellText = '';
+  let cellCount = 0;
 
-  for (const rec of records) {
-    if (rec.tagId === HWPTAG.PARA_HEADER) {
-      // Parse PARA_HEADER to get shape IDs
-      // Layout: multiple fields, paraPrIDRef at offset 4 (uint32)
+  for (let i = 0; i < records.length; i++) {
+    const rec = records[i];
+
+    // Detect table control: CTRL_HEADER with 'tbl ' control ID
+    if (rec.tagId === HWPTAG.CTRL_HEADER) {
+      if (rec.data.byteLength >= 4) {
+        const id = readUint32LE(rec.data, 0);
+        // 'tbl ' in HWP = 0x7462_6C20 but stored reversed
+        const ctrlId = String.fromCharCode(
+          (id >> 24) & 0xff, (id >> 16) & 0xff, (id >> 8) & 0xff, id & 0xff,
+        );
+        if (ctrlId === 'tbl ') {
+          inTable = true;
+          tableBaseLevel = rec.level;
+          cellTexts = [];
+          cellCount = 0;
+          continue;
+        }
+      }
+    }
+
+    // Parse table info record (tag 77) to get dimensions
+    if (rec.tagId === 77 && inTable) {
       if (rec.data.byteLength >= 8) {
+        tableRows = readUint16LE(rec.data, 4);
+        tableCols = readUint16LE(rec.data, 6);
+      }
+      continue;
+    }
+
+    // When inside a table, collect cell text
+    if (inTable) {
+      // LIST_HEADER marks start of a new cell
+      if (rec.tagId === HWPTAG.LIST_HEADER && rec.level === tableBaseLevel + 1) {
+        // Save previous cell if any
+        if (cellCount > 0) {
+          cellTexts.push(currentCellText.trim());
+        }
+        currentCellText = '';
+        cellCount++;
+        continue;
+      }
+
+      // Collect text within table cells
+      if (rec.tagId === HWPTAG.PARA_TEXT && rec.level > tableBaseLevel) {
+        const text = decodeParaText(rec.data).replace(/\n+$/, '');
+        if (currentCellText && text) currentCellText += '\n';
+        currentCellText += text;
+        continue;
+      }
+
+      // Check if we've left the table (level drops back to or below base)
+      if (rec.level <= tableBaseLevel && rec.tagId !== HWPTAG.TABLE) {
+        // Flush last cell
+        if (cellCount > 0) {
+          cellTexts.push(currentCellText.trim());
+        }
+
+        // Build table rows
+        if (tableCols > 0 && cellTexts.length > 0) {
+          const rows: string[][] = [];
+          for (let c = 0; c < cellTexts.length; c += tableCols) {
+            rows.push(cellTexts.slice(c, c + tableCols));
+          }
+          items.push({ type: 'table', rows });
+        }
+
+        inTable = false;
+        cellTexts = [];
+        cellCount = 0;
+        // Fall through to process current record normally
+      } else {
+        continue; // Still inside table, skip other records
+      }
+    }
+
+    // Normal paragraph processing
+    if (rec.tagId === HWPTAG.PARA_HEADER) {
+      if (rec.data.byteLength >= 10) {
         const view = new DataView(rec.data.buffer, rec.data.byteOffset, rec.data.byteLength);
-        currentParaShapeId = view.getUint32(4, true);
+        currentParaShapeId = view.getUint16(8, true);
       }
       currentCharShapeIds = [];
     } else if (rec.tagId === HWPTAG_PARA_CHAR_SHAPE) {
-      // PARA_CHAR_SHAPE: array of uint32 (char pos, char shape ID) pairs
       const view = new DataView(rec.data.buffer, rec.data.byteOffset, rec.data.byteLength);
       const count = rec.data.byteLength / 8;
-      for (let i = 0; i < count; i++) {
-        const charShapeId = view.getUint32(i * 8 + 4, true);
+      for (let j = 0; j < count; j++) {
+        const charShapeId = view.getUint32(j * 8 + 4, true);
         currentCharShapeIds.push(charShapeId);
       }
-    } else if (rec.tagId === HWPTAG_PARA_TEXT) {
+    } else if (rec.tagId === HWPTAG.PARA_TEXT) {
       const text = decodeParaText(rec.data);
       const style = extractStyle(docInfo, currentParaShapeId, currentCharShapeIds[0] ?? 0);
-      paragraphs.push({
+      items.push({
         text: text.replace(/\n+$/, ''),
         style,
       });
     }
   }
 
-  return paragraphs;
+  // Flush any remaining table
+  if (inTable && cellCount > 0) {
+    cellTexts.push(currentCellText.trim());
+    if (tableCols > 0 && cellTexts.length > 0) {
+      const rows: string[][] = [];
+      for (let c = 0; c < cellTexts.length; c += tableCols) {
+        rows.push(cellTexts.slice(c, c + tableCols));
+      }
+      items.push({ type: 'table', rows });
+    }
+  }
+
+  return items;
 }
 
 /**
@@ -184,14 +290,18 @@ export function convertHwpToHwpx(hwpBuffer: Uint8Array): Uint8Array {
     }
     isFirstSection = false;
 
-    const paragraphs = extractSectionParagraphs(sectionData, docInfo);
+    const sectionItems = extractSectionItems(sectionData, docInfo);
 
-    if (paragraphs.length === 0) {
-      // Empty section — add empty paragraph
+    if (sectionItems.length === 0) {
       builder.addParagraph('');
     } else {
-      for (const para of paragraphs) {
-        builder.addParagraph(para.text, para.style);
+      for (const item of sectionItems) {
+        if ('type' in item && item.type === 'table') {
+          builder.addTable(item.rows);
+        } else {
+          const para = item as ParagraphData;
+          builder.addParagraph(para.text, para.style);
+        }
       }
     }
 

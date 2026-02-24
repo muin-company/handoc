@@ -154,7 +154,7 @@ export function parseSectionContent(records: HwpRecord[]): SectionContent {
         currentText = '';
         currentCharShapes = [];
         currentLevel = rec.level;
-        currentParaShapeId = rec.data.byteLength >= 8 ? readUint16LE(rec.data, 6) : 0;
+        currentParaShapeId = rec.data.byteLength >= 10 ? readUint16LE(rec.data, 8) : 0;
         inPara = true;
         break;
       }

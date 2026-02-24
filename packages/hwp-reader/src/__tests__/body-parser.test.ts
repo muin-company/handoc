@@ -21,10 +21,10 @@ describe('parseSectionContent', () => {
   });
 
   it('should parse a simple paragraph with PARA_HEADER and PARA_TEXT', () => {
-    // PARA_HEADER: para shape ID at offset 6-7 (uint16)
+    // PARA_HEADER: para shape ID at offset 8-9 (uint16)
     const paraHeader = new Uint8Array(10);
-    paraHeader[6] = 0x05; // para shape ID = 5
-    paraHeader[7] = 0x00;
+    paraHeader[8] = 0x05; // para shape ID = 5
+    paraHeader[9] = 0x00;
 
     // PARA_TEXT: UTF-16LE "안녕"
     // '안' = U+C548 → 0x48 0xC5, '녕' = U+B155 → 0x55 0xB1
