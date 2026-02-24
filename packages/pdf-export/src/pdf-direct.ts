@@ -1028,10 +1028,21 @@ export async function generatePdf(
       const rowHeights: number[] = [];
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         let rh = 12;
+        let declaredRowH = 0;
         for (const cell of tbl.rows[ri].cells) {
           if (cell.cellSpan.rowSpan > 1) continue;
           const h = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
+          const declH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
+          declaredRowH = Math.max(declaredRowH, declH);
           rh = Math.max(rh, h);
+        }
+        // Cap overestimation: use declared row height when estimated exceeds it.
+        // Our embedded fonts are wider than the original Korean fonts, causing excessive
+        // text wrapping in narrow table cells. The declared height from HWP is calculated
+        // with the correct fonts and is more accurate. Content that overflows the cell
+        // boundary is clipped in renderCellContent (matching 한/글 behavior).
+        if (declaredRowH > 0 && rh > declaredRowH) {
+          rh = declaredRowH;
         }
         rowHeights.push(rh);
       }
