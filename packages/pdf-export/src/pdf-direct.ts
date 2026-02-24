@@ -720,8 +720,10 @@ export async function generatePdf(
 
   for (const section of doc.sections) {
     const sp = section.sectionProps;
-    const pageW = sp ? hwpToPt(sp.pageWidth) : 595.28;
-    const pageH = sp ? hwpToPt(sp.pageHeight) : 841.89;
+    // Handle landscape orientation: if marked landscape but dimensions are portrait, swap
+    const isLandscape = sp?.landscape && sp.pageWidth < sp.pageHeight;
+    const pageW = sp ? hwpToPt(isLandscape ? sp.pageHeight : sp.pageWidth) : 595.28;
+    const pageH = sp ? hwpToPt(isLandscape ? sp.pageWidth : sp.pageHeight) : 841.89;
     const mL = sp ? hwpToPt(sp.margins.left) : 56.69;
     const mR = sp ? hwpToPt(sp.margins.right) : 56.69;
     const mT = sp ? hwpToPt(sp.margins.top) : 56.69;
@@ -966,9 +968,15 @@ export async function generatePdf(
             if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, activePL, activePW);
             } else {
-              // Shape/drawing: render internal content (tables, images, text)
-              renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
+              // Shape/drawing: render outline + internal content
+              renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont, child.name);
             }
+          } else if (child.type === 'shape') {
+            hasContent = true;
+            const activeCol = colLayouts[curCol];
+            const activePL = activeCol.x + ps.marginLeft;
+            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
+            renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont, child.name);
           } else if (child.type === 'ctrl') {
             // Check for footnote/endnote
             const fn = parseFootnote(child.element);
@@ -1050,13 +1058,12 @@ export async function generatePdf(
           declaredRowH = Math.max(declaredRowH, declH);
           rh = Math.max(rh, h);
         }
-        // Cap overestimation: use declared row height when estimated exceeds it.
-        // Our embedded fonts are wider than the original Korean fonts, causing excessive
-        // text wrapping in narrow table cells. The declared height from HWP is calculated
-        // with the correct fonts and is more accurate. Content that overflows the cell
-        // boundary is clipped in renderCellContent (matching 한/글 behavior).
-        if (declaredRowH > 0 && rh > declaredRowH) {
-          rh = declaredRowH;
+        // HWP declared row height is a MINIMUM, not a maximum.
+        // Content that exceeds declared height expands the row (한/글 behavior).
+        // Only cap extreme overestimation (>1.8x) to handle font metric differences
+        // between our embedded fonts and the original Korean fonts.
+        if (declaredRowH > 0 && rh > declaredRowH * 1.8) {
+          rh = declaredRowH * 1.2;
         }
         rowHeights.push(rh);
       }
@@ -1190,12 +1197,10 @@ export async function generatePdf(
         }
         h += cps.marginBottom;
       }
-      // If the cell has a declared height, use the larger of declared vs estimated
-      // BUT: cap estimated height to avoid dramatic overestimation from font metric differences.
-      // When estimated height exceeds declared by more than 50%, the font is likely wider than
-      // the original, causing excessive text wrapping. Trust the declared height more.
-      if (cellDeclaredH > 0 && h > cellDeclaredH * 1.5) {
-        return cellDeclaredH;
+      // If the cell has a declared height, use the larger of declared vs estimated.
+      // Cap extreme overestimation (>2.5x) from font metric differences.
+      if (cellDeclaredH > 0 && h > cellDeclaredH * 2.5) {
+        return cellDeclaredH * 1.2;
       }
       return Math.max(cellDeclaredH, h);
     }
@@ -1276,10 +1281,10 @@ export async function generatePdf(
                 curY = savedCurY;
               }
             } else if (cc.type === 'shape') {
-              // Shape/container inside cell — may contain pics, tables, text
+              // Shape/container inside cell — draw outline + content
               const savedCurY = curY;
               curY = ty;
-              renderShapeContent(doc, cc.element, cellX + 2, cellW - 4, cf, cts, cps, getFont);
+              renderShapeContent(doc, cc.element, cellX + 2, cellW - 4, cf, cts, cps, getFont, cc.name);
               ty = curY;
               curY = savedCurY;
             }
@@ -1334,13 +1339,157 @@ export async function generatePdf(
       curY -= h;
     }
 
+    // ── Shape outline/fill rendering ──
+    /** Extract shape visual properties and draw outline/fill */
+    function renderShapeOutline(
+      element: GenericElement, shapeName: string,
+      shapeX: number, shapeW: number,
+    ) {
+      // Extract size
+      const curSzEl = findDesc(element, 'curSz') ?? findDesc(element, 'sz');
+      const orgSzEl = findDesc(element, 'orgSz');
+      const szEl = curSzEl ?? orgSzEl;
+      let w = shapeW;
+      let h = 0;
+      if (szEl) {
+        const sw = Number(szEl.attrs['width'] ?? 0);
+        const sh = Number(szEl.attrs['height'] ?? 0);
+        if (sw > 0) w = Math.min(hwpToPt(sw), shapeW);
+        if (sh > 0) h = hwpToPt(sh);
+      }
+      if (h <= 0) return 0; // no size info, skip outline
+
+      // Extract line properties
+      const lineShapeEl = findDesc(element, 'lineShape');
+      let lineColor = { red: 0, green: 0, blue: 0 };
+      let lineWidth = 0.5;
+      let lineStyle = 'SOLID';
+      if (lineShapeEl) {
+        const lc = parseColor(lineShapeEl.attrs['color']);
+        if (lc) lineColor = lc;
+        const lw = Number(lineShapeEl.attrs['width'] ?? 0);
+        if (lw > 0) lineWidth = hwpToPt(lw);
+        // Cap line width to reasonable range
+        if (lineWidth > 5) lineWidth = 5;
+        if (lineWidth < 0.1) lineWidth = 0.5;
+        lineStyle = lineShapeEl.attrs['style'] ?? 'SOLID';
+      }
+      const noLine = lineStyle === 'NONE' || (lineShapeEl && lineShapeEl.attrs['style'] === 'NONE');
+
+      // Extract fill
+      const fillEl = findDesc(element, 'fillBrush');
+      let fillColor: { red: number; green: number; blue: number } | undefined;
+      if (fillEl) {
+        // Solid fill from winBrush
+        const winBrush = findDesc(fillEl, 'winBrush');
+        if (winBrush) {
+          fillColor = parseColor(winBrush.attrs['faceColor']);
+        }
+        // Gradient: use first color as approximation
+        if (!fillColor) {
+          const gradation = findDesc(fillEl, 'gradation');
+          if (gradation) {
+            const colors = gradation.children.filter(c => c.tag === 'color' || c.tag.endsWith(':color'));
+            if (colors.length > 0) {
+              fillColor = parseColor(colors[0].attrs['value']);
+            }
+          }
+        }
+      }
+
+      // Ensure space
+      checkBreak(h);
+      const y = curY - h;
+
+      // Draw based on shape type
+      const tag = shapeName.includes(':') ? shapeName.split(':').pop()! : shapeName;
+
+      if (tag === 'ellipse') {
+        const cx = shapeX + w / 2;
+        const cy = y + h / 2;
+        if (fillColor) {
+          page.drawEllipse({
+            x: cx, y: cy,
+            xScale: w / 2, yScale: h / 2,
+            color: rgb(fillColor.red, fillColor.green, fillColor.blue),
+          });
+        }
+        if (!noLine) {
+          page.drawEllipse({
+            x: cx, y: cy,
+            xScale: w / 2, yScale: h / 2,
+            borderColor: rgb(lineColor.red, lineColor.green, lineColor.blue),
+            borderWidth: lineWidth,
+          });
+        }
+      } else if (tag === 'line' || tag === 'connectLine') {
+        // Line shape: draw from top-left to bottom-right of bounding box
+        // TODO: parse actual start/end points if available
+        const startX = shapeX;
+        const startY = curY;
+        const endX = shapeX + w;
+        const endY = y;
+        page.drawLine({
+          start: { x: startX, y: startY },
+          end: { x: endX, y: endY },
+          thickness: lineWidth,
+          color: rgb(lineColor.red, lineColor.green, lineColor.blue),
+        });
+      } else if (tag === 'polygon') {
+        // Polygon: try to extract points, fallback to rect
+        // For now draw as rect outline
+        if (fillColor) {
+          page.drawRectangle({
+            x: shapeX, y: y, width: w, height: h,
+            color: rgb(fillColor.red, fillColor.green, fillColor.blue),
+          });
+        }
+        if (!noLine) {
+          page.drawRectangle({
+            x: shapeX, y: y, width: w, height: h,
+            borderColor: rgb(lineColor.red, lineColor.green, lineColor.blue),
+            borderWidth: lineWidth,
+          });
+        }
+      } else {
+        // rect, arc, and other shapes: draw rectangle
+        if (fillColor) {
+          page.drawRectangle({
+            x: shapeX, y: y, width: w, height: h,
+            color: rgb(fillColor.red, fillColor.green, fillColor.blue),
+          });
+        }
+        if (!noLine) {
+          page.drawRectangle({
+            x: shapeX, y: y, width: w, height: h,
+            borderColor: rgb(lineColor.red, lineColor.green, lineColor.blue),
+            borderWidth: lineWidth,
+          });
+        }
+      }
+
+      return h;
+    }
+
     // ── Shape/drawing content rendering ──
     function renderShapeContent(
       doc: HanDoc, element: GenericElement,
       shapeX: number, shapeW: number,
       defaultFont: PDFFont, defaultTs: TextStyle, defaultPs: ParaStyle,
       getFont: (s: TextStyle) => PDFFont,
+      shapeName?: string,
     ) {
+      // Draw shape outline/fill first
+      if (shapeName) {
+        const tag = shapeName.includes(':') ? shapeName.split(':').pop()! : shapeName;
+        // For line/connectLine, only draw the line, no content
+        if (tag === 'line' || tag === 'connectLine') {
+          const h = renderShapeOutline(element, shapeName, shapeX, shapeW);
+          if (h > 0) curY -= h;
+          return;
+        }
+        renderShapeOutline(element, shapeName, shapeX, shapeW);
+      }
       // Process shape's direct children only (not recursive) to avoid duplication.
       // Tables/images inside cells are handled by renderCellContent.
       let hasContent = false;
