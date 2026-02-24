@@ -107,6 +107,86 @@ const HWP_PER_INCH = 7200;
 const PT_PER_INCH = 72;
 const hwpToPt = (v: number) => (v / HWP_PER_INCH) * PT_PER_INCH;
 
+/** Convert mm string like "0.12 mm" to pt */
+function mmToPt(mmStr: string | undefined): number {
+  if (!mmStr) return 0.5;
+  const m = mmStr.match(/([\d.]+)/);
+  return m ? (parseFloat(m[1]) / 25.4) * 72 : 0.5;
+}
+
+/** Parse hex color string like "#000000" to rgb() */
+function parseColor(colorStr: string | undefined): { red: number; green: number; blue: number } | undefined {
+  if (!colorStr || colorStr === 'none') return undefined;
+  const m = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 16);
+  return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
+}
+
+interface BorderSide {
+  type: string;   // NONE, SOLID, etc.
+  width: number;  // in pt
+  color: { red: number; green: number; blue: number };
+}
+
+interface ResolvedBorderFill {
+  left: BorderSide;
+  right: BorderSide;
+  top: BorderSide;
+  bottom: BorderSide;
+  bgColor?: { red: number; green: number; blue: number };
+}
+
+const defaultBorder: BorderSide = { type: 'SOLID', width: 0.5, color: { red: 0, green: 0, blue: 0 } };
+const defaultBorderFill: ResolvedBorderFill = { left: defaultBorder, right: defaultBorder, top: defaultBorder, bottom: defaultBorder };
+
+function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorderFill {
+  const bfs = doc.header.refList.borderFills;
+  const bf = bfs.find(b => b.attrs['id'] === String(borderFillIDRef));
+  if (!bf) return defaultBorderFill;
+
+  function parseSide(tag: string): BorderSide {
+    const el = bf!.children.find(c => c.tag === tag);
+    if (!el) return defaultBorder;
+    const t = el.attrs['type'] ?? 'SOLID';
+    const w = mmToPt(el.attrs['width']);
+    const c = parseColor(el.attrs['color']) ?? { red: 0, green: 0, blue: 0 };
+    return { type: t, width: w, color: c };
+  }
+
+  // Background color from fillBrush > winBrush
+  let bgColor: { red: number; green: number; blue: number } | undefined;
+  const fillBrush = bf.children.find(c => c.tag === 'fillBrush');
+  if (fillBrush) {
+    const winBrush = fillBrush.children.find(c => c.tag === 'winBrush');
+    if (winBrush) {
+      bgColor = parseColor(winBrush.attrs['faceColor']);
+    }
+  }
+
+  return {
+    left: parseSide('leftBorder'),
+    right: parseSide('rightBorder'),
+    top: parseSide('topBorder'),
+    bottom: parseSide('bottomBorder'),
+    bgColor,
+  };
+}
+
+/** Get cell padding from cellMargin (HWP units) or default */
+function getCellPadding(cell: any): { left: number; right: number; top: number; bottom: number } {
+  const m = cell.cellMargin;
+  if (m && (m.left || m.right || m.top || m.bottom)) {
+    return {
+      left: hwpToPt(m.left ?? 0),
+      right: hwpToPt(m.right ?? 0),
+      top: hwpToPt(m.top ?? 0),
+      bottom: hwpToPt(m.bottom ?? 0),
+    };
+  }
+  return { left: 2, right: 2, top: 2, bottom: 2 };
+}
+
 // ── Font resolution ──
 
 const SERIF_NAMES = new Set(['함초롬바탕', '바탕', '바탕체', '궁서', '궁서체', '휴먼명조', '한양신명조', '신명조', 'Times New Roman']);
@@ -268,8 +348,10 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   }
   // percent: value is percentage (e.g., 160 = 160%)
   // HWP lineSpacing PERCENT is based on font em-square, not font size alone.
-  // Apply 1.08x correction to match 한/글's actual line height output.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.08;
+  // Apply line height correction to match 한/글's actual line height output.
+  // 1.08x caused 12 regressions (page overflow); 1.03x balances 
+  // improving under-spaced docs without worsening already-dense ones.
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
 }
 
 // ── Text measurement ──
@@ -399,7 +481,9 @@ function estimateTableHeight(
     let rowH = 12; // minimum
     for (const cell of row.cells) {
       const cellW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : tblW / tbl.colCnt;
-      let h = 4;
+      const cm = getCellPadding(cell);
+      const innerW = cellW - cm.left - cm.right;
+      let h = cm.top + cm.bottom;
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         h += cps.marginTop;
@@ -411,9 +495,9 @@ function estimateTableHeight(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, cellW - 4).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1)).length * lh;
             } else if (cc.type === 'table') {
-              h += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+              h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             }
           }
         }
@@ -661,12 +745,36 @@ export async function generatePdf(
           }
           if (cellH > contentH) cellH = contentH;
 
-          // Cell border
-          page.drawRectangle({
-            x: cellX, y: curY - cellH,
-            width: cellW, height: cellH,
-            borderColor: rgb(0, 0, 0), borderWidth: 0.5,
-          });
+          // Resolve border fill for this cell
+          const bf = resolveBorderFill(doc, cell.borderFillIDRef);
+
+          // Cell background fill
+          if (bf.bgColor) {
+            page.drawRectangle({
+              x: cellX, y: curY - cellH,
+              width: cellW, height: cellH,
+              color: rgb(bf.bgColor.red, bf.bgColor.green, bf.bgColor.blue),
+            });
+          }
+
+          // Cell borders (draw each side individually for proper width/type)
+          const bx = cellX, by = curY - cellH;
+          if (bf.left.type !== 'NONE') {
+            page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
+              thickness: bf.left.width, color: rgb(bf.left.color.red, bf.left.color.green, bf.left.color.blue) });
+          }
+          if (bf.right.type !== 'NONE') {
+            page.drawLine({ start: { x: bx + cellW, y: by }, end: { x: bx + cellW, y: by + cellH },
+              thickness: bf.right.width, color: rgb(bf.right.color.red, bf.right.color.green, bf.right.color.blue) });
+          }
+          if (bf.top.type !== 'NONE') {
+            page.drawLine({ start: { x: bx, y: by + cellH }, end: { x: bx + cellW, y: by + cellH },
+              thickness: bf.top.width, color: rgb(bf.top.color.red, bf.top.color.green, bf.top.color.blue) });
+          }
+          if (bf.bottom.type !== 'NONE') {
+            page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
+              thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
+          }
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
@@ -678,8 +786,10 @@ export async function generatePdf(
     /** Estimate cell height from content */
     function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont): number {
       const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
-      const pad = 4;
-      let h = pad;
+      const cm = getCellPadding(cell);
+      const padH = cm.top + cm.bottom;
+      const innerW = cellW - cm.left - cm.right;
+      let h = padH;
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         h += cps.marginTop;
@@ -691,9 +801,9 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, cellW - 4).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1)).length * lh;
             } else if (cc.type === 'table') {
-              h += estimateTableHeight(doc, cc.element, cellW - 4, getFont);
+              h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             } else if (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) {
               const imgEl = findDesc(cc.element, 'img') ?? findDesc(cc.element, 'imgRect');
               if (imgEl) {
@@ -716,18 +826,19 @@ export async function generatePdf(
 
     /** Render cell content (text + nested tables) */
     function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
-      const pad = 4; // cell padding
+      const cm = getCellPadding(cell);
+      const innerW = cellW - cm.left - cm.right;
       // Vertical alignment: estimate content height first
       const vAlign = cell.vertAlign ?? 'TOP';
       let contentHeight = 0;
       if (vAlign === 'CENTER' || vAlign === 'BOTTOM') {
-        contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - pad;
+        contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - cm.top - cm.bottom;
       }
       let yOffset = 0;
-      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - pad / 2);
-      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - pad);
+      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - cm.top);
+      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - cm.top - cm.bottom);
 
-      let ty = cellTop - pad / 2 - yOffset;
+      let ty = cellTop - cm.top - yOffset;
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         ty -= cps.marginTop;
@@ -739,12 +850,12 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { ty -= lh; continue; }
-              const cls = wrapText(text, cf, cts.fontSize, cellW - 4);
+              const cls = wrapText(text, cf, cts.fontSize, Math.max(innerW, 1));
               for (const cl of cls) {
                 ty -= cts.fontSize;
-                let tx = cellX + 2;
+                let tx = cellX + cm.left;
                 if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
-                else if (cps.align === 'right') tx = cellX + cellW - 2 - cl.width;
+                else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 if (ty > cellTop - cellH) {
                   drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
                 }
@@ -753,7 +864,7 @@ export async function generatePdf(
             } else if (cc.type === 'table') {
               const savedCurY = curY;
               curY = ty;
-              renderTable(doc, cc.element, cellX + 2, cellW - 4, getFont);
+              renderTable(doc, cc.element, cellX + cm.left, Math.max(innerW, 1), getFont);
               ty = curY;
               curY = savedCurY;
             } else if (cc.type === 'inlineObject') {
