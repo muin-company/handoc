@@ -40,11 +40,54 @@ export function writeSection(section: Section): string {
   let xml = '<?xml version="1.0" encoding="UTF-8" ?>\n';
   xml += open('hs:sec', SECTION_NS);
 
-  for (const p of section.paragraphs) {
+  for (let i = 0; i < section.paragraphs.length; i++) {
+    const p = section.paragraphs[i];
     xml += writeParagraph(p);
+
+    // Inject secPr after first paragraph if sectionProps is present
+    // but no existing secPr element exists in the paragraphs
+    if (i === 0 && section.sectionProps && !hasSectionProps(section)) {
+      xml += writeSecPrFromProps(section.sectionProps);
+    }
   }
 
   xml += close('hs:sec');
+  return xml;
+}
+
+function hasSectionProps(section: Section): boolean {
+  for (const p of section.paragraphs) {
+    for (const r of p.runs) {
+      for (const c of r.children) {
+        if (c.type === 'secPr') return true;
+      }
+    }
+  }
+  return false;
+}
+
+function writeSecPrFromProps(sp: NonNullable<Section['sectionProps']>): string {
+  // Emit secPr as a paragraph with secPr run child, matching HWPX format
+  let xml = open('hp:p', { paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' });
+  xml += open('hp:run', { charPrIDRef: '0' });
+  xml += `<hp:secPr>`;
+  xml += open('hp:pagePr', {
+    width: String(sp.pageWidth),
+    height: String(sp.pageHeight),
+    landscape: sp.landscape ? 'WIDELY' : 'NARROWLY',
+  });
+  xml += selfClose('hp:margin', {
+    left: String(sp.margins.left),
+    right: String(sp.margins.right),
+    top: String(sp.margins.top),
+    bottom: String(sp.margins.bottom),
+    header: String(sp.margins.header),
+    footer: String(sp.margins.footer),
+  });
+  xml += close('hp:pagePr');
+  xml += `</hp:secPr>`;
+  xml += close('hp:run');
+  xml += close('hp:p');
   return xml;
 }
 

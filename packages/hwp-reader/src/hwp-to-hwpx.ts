@@ -262,6 +262,36 @@ function extractStyle(
 }
 
 /**
+ * Extract page width/height from a section's "secd" (section definition) control.
+ * In HWP 5.x, the section definition control (CTRL_HEADER "dces") is followed by
+ * a TABLE record (tag 73) containing: pageWidth(U32LE), pageHeight(U32LE), margins...
+ */
+function extractPageDimensions(sectionData: Uint8Array): { width: number; height: number } | null {
+  const records = parseRecords(sectionData);
+  for (let i = 0; i < records.length - 1; i++) {
+    const rec = records[i];
+    // Look for CTRL_HEADER with "dces" (= "secd" reversed = section definition)
+    if (rec.tagId === HWPTAG.CTRL_HEADER && rec.data.length >= 4) {
+      const ctrlId = String.fromCharCode(rec.data[0], rec.data[1], rec.data[2], rec.data[3]);
+      if (ctrlId === 'dces') {
+        // Next record should be TABLE (tag 73) with page dimensions
+        const next = records[i + 1];
+        if (next && next.tagId === HWPTAG.TABLE && next.data.length >= 8) {
+          const d = next.data instanceof Buffer ? next.data : Buffer.from(next.data);
+          const w = d.readUInt32LE(0);
+          const h = d.readUInt32LE(4);
+          if (w > 0 && h > 0) {
+            return { width: w, height: h };
+          }
+        }
+        break;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Convert an HWP 5.x binary buffer to HWPX format.
  * Converts text content with font and formatting information (v2).
  * Tables and images are still skipped with console warnings.
@@ -281,7 +311,9 @@ export function convertHwpToHwpx(hwpBuffer: Uint8Array): Uint8Array {
   const docInfoRecords = parseRecords(doc.docInfo);
   const docInfo = parseDocInfo(docInfoRecords);
 
-  const builder = HwpxBuilder.create();
+  // Extract page dimensions from first section's "secd" control
+  const pageDims = extractPageDimensions(doc.bodyText[0]);
+  const builder = HwpxBuilder.create(pageDims ? { pageWidth: pageDims.width, pageHeight: pageDims.height } : undefined);
   let isFirstSection = true;
 
   for (const sectionData of doc.bodyText) {

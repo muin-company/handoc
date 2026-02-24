@@ -451,7 +451,23 @@ export class HwpxBuilder {
         }
       }
 
-      return { paragraphs };
+      return {
+        paragraphs,
+        sectionProps: {
+          pageWidth: this.pageWidth,
+          pageHeight: this.pageHeight,
+          margins: {
+            left: 8504,    // ~30mm default
+            right: 8504,
+            top: 5668,     // ~20mm default
+            bottom: 4252,  // ~15mm default
+            header: 4252,
+            footer: 4252,
+            gutter: 0,
+          },
+          landscape: false,
+        },
+      };
     });
   }
 }
