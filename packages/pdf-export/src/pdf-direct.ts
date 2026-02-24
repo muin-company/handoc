@@ -863,7 +863,7 @@ export async function generatePdf(
             const content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
-              const emptyH = lineH * 0.5;
+              const emptyH = lineH * 0.9;
               checkBreak(emptyH);
               curY -= emptyH;
               hasContent = true;
@@ -974,7 +974,7 @@ export async function generatePdf(
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
         const defaultLineH = calcLineHeight(ps, 10);
-        const emptyLineH = defaultLineH * 0.5;
+        const emptyLineH = defaultLineH * 0.9;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
       }
