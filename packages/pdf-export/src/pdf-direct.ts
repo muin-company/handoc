@@ -1095,6 +1095,10 @@ export async function generatePdf(
         }
       }
 
+      if (tableScale > 1) {
+        for (let i = 0; i < rowHeights.length; i++) rowHeights[i] *= tableScale;
+      }
+
       // ── Pass 2: Render ──
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         let rowH = Math.min(rowHeights[ri], contentH);
