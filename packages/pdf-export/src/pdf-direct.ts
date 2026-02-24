@@ -616,12 +616,14 @@ export async function generatePdf(
     let page = pdfDoc.addPage([pageW, pageH]);
     let curY = pageH - mT;
     let curCol = 0;
+    const sectionPages: PDFPage[] = [page];
 
     function newColumn() {
       curCol++;
       if (curCol >= colLayouts.length) {
         // All columns full — new page
         page = pdfDoc.addPage([pageW, pageH]);
+        sectionPages.push(page);
         curCol = 0;
       }
       curY = pageH - mT;
@@ -629,6 +631,7 @@ export async function generatePdf(
 
     function newPage() {
       page = pdfDoc.addPage([pageW, pageH]);
+      sectionPages.push(page);
       curY = pageH - mT;
       curCol = 0;
     }
@@ -1145,7 +1148,7 @@ export async function generatePdf(
     const sectionHeaders = doc.headers;
     const sectionFooters = doc.footers;
     const pageStartNum = sp?.pageStartNumber ?? 1;
-    const defaultFont = fonts.sans;
+    const hfFont = fonts.sans;
     const hfFontSize = 10;
 
     for (let pi = 0; pi < sectionPages.length; pi++) {
@@ -1160,10 +1163,10 @@ export async function generatePdf(
         if (!text.trim()) continue;
         text = text.replace(/\{\{page\}\}/g, String(pageNum));
         // Position: top margin area, centered
-        const textW = defaultFont.widthOfTextAtSize(text, hfFontSize);
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const hdrY = pageH - headerMarginPt - hfFontSize;
         const hdrX = mL + (cW - textW) / 2;
-        drawText(pg, text, hdrX, hdrY, defaultFont, hfFontSize, [0, 0, 0]);
+        drawText(pg, text, hdrX, hdrY, hfFont, hfFontSize, [0, 0, 0]);
       }
 
       // Render footers
@@ -1174,10 +1177,10 @@ export async function generatePdf(
         if (!text.trim()) continue;
         text = text.replace(/\{\{page\}\}/g, String(pageNum));
         // Position: bottom margin area, centered
-        const textW = defaultFont.widthOfTextAtSize(text, hfFontSize);
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const ftrY = footerMarginPt;
         const ftrX = mL + (cW - textW) / 2;
-        drawText(pg, text, ftrX, ftrY, defaultFont, hfFontSize, [0, 0, 0]);
+        drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
       }
     }
   }
