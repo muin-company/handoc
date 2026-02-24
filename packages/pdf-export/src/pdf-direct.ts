@@ -184,14 +184,14 @@ function getCellPadding(cell: any): { left: number; right: number; top: number; 
     const l = validHwp(m.left), r = validHwp(m.right), t = validHwp(m.top), b = validHwp(m.bottom);
     if (l != null || r != null || t != null || b != null) {
       return {
-        left: l != null ? hwpToPt(l) : 2,
-        right: r != null ? hwpToPt(r) : 2,
-        top: t != null ? hwpToPt(t) : 2,
-        bottom: b != null ? hwpToPt(b) : 2,
+        left: l != null ? hwpToPt(l) : 1.2,
+        right: r != null ? hwpToPt(r) : 1.2,
+        top: t != null ? hwpToPt(t) : 1.2,
+        bottom: b != null ? hwpToPt(b) : 1.2,
       };
     }
   }
-  return { left: 2, right: 2, top: 2, bottom: 2 };
+  return { left: 1.2, right: 1.2, top: 1.2, bottom: 1.2 };
 }
 
 // ── Font resolution ──
@@ -863,7 +863,7 @@ export async function generatePdf(
             const content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
-              const emptyH = lineH * 0.9;
+              const emptyH = lineH * 0.75;
               checkBreak(emptyH);
               curY -= emptyH;
               hasContent = true;
@@ -974,7 +974,7 @@ export async function generatePdf(
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
         const defaultLineH = calcLineHeight(ps, 10);
-        const emptyLineH = defaultLineH * 0.9;
+        const emptyLineH = defaultLineH * 0.75;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
       }
