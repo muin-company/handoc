@@ -633,5 +633,28 @@ function renderShape(doc: HanDoc, element: GenericElement): string {
   
   if (!content.replace(/<[^>]*>/g, '').trim()) return '';
   
-  return `<div class="shape-wrapper" style="padding:4px; margin:4px; overflow:hidden;">${content}</div>`;
+  // Check positioning for floating shapes
+  const posEl = findDescendant(element, 'pos');
+  const treatAsChar = posEl?.attrs['treatAsChar'] ?? '1';
+  const szEl = element.children.find(c => c.tag === 'sz' || c.tag.endsWith(':sz'));
+  
+  const wrapperStyles: string[] = ['padding:4px', 'margin:4px', 'overflow:hidden'];
+  
+  if (szEl) {
+    const w = Number(szEl.attrs['width'] ?? 0);
+    const h = Number(szEl.attrs['height'] ?? 0);
+    if (w > 0) wrapperStyles.push(`width:${(w / 7200).toFixed(3)}in`);
+    if (h > 0) wrapperStyles.push(`height:${(h / 7200).toFixed(3)}in`);
+  }
+  
+  if (treatAsChar === '0') {
+    const horzOffset = Number(posEl?.attrs['horzOffset'] ?? 0);
+    const vertOffset = Number(posEl?.attrs['vertOffset'] ?? 0);
+    wrapperStyles.push('position:absolute');
+    wrapperStyles.push(`left:${(horzOffset / 7200).toFixed(3)}in`);
+    wrapperStyles.push(`top:${(vertOffset / 7200).toFixed(3)}in`);
+    return `<div style="position:relative;height:0;overflow:visible;"><div class="shape-wrapper" style="${wrapperStyles.join(';')}">${content}</div></div>`;
+  }
+  
+  return `<div class="shape-wrapper" style="${wrapperStyles.join(';')}">${content}</div>`;
 }
