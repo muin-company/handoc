@@ -6,7 +6,7 @@ import { HanDoc } from '@handoc/hwpx-parser';
 import { convertHwpToHwpx } from '@handoc/hwp-reader';
 import { hwpxToDocx } from '@handoc/docx-writer';
 import { docxToHwpx } from '@handoc/docx-reader';
-import { hwpxToPdf, renderToHtml } from '@handoc/pdf-export';
+import { hwpxToPdf, renderToHtml, generatePdf } from '@handoc/pdf-export';
 import { parseHTML } from '@handoc/html-reader';
 import { sectionsToHwpx } from '@handoc/hwpx-writer';
 import type { Section } from '@handoc/document-model';
@@ -138,12 +138,15 @@ program
 // ── to-pdf ──
 program
   .command('to-pdf')
-  .description('Convert HWPX to PDF (requires Playwright)')
+  .description('Convert HWPX to PDF')
   .argument('<file>', 'HWPX file path')
   .option('-o, --output <path>', 'Output PDF file path')
-  .action(async (file: string, opts: { output?: string }) => {
+  .option('--direct', 'Use direct pdf-lib export (no Playwright needed, faster but lower fidelity)')
+  .action(async (file: string, opts: { output?: string; direct?: boolean }) => {
     const buf = await readFile(file);
-    const pdf = await hwpxToPdf(new Uint8Array(buf));
+    const pdf = opts.direct
+      ? await generatePdf(new Uint8Array(buf))
+      : await hwpxToPdf(new Uint8Array(buf));
     const outPath = opts.output || file.replace(/\.hwpx$/i, '.pdf');
     await writeFile(outPath, pdf);
     console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
