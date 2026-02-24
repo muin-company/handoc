@@ -23,6 +23,12 @@ export interface SectionProperties {
     sizes?: Array<{ width: number; gap: number }>;
   };
   pageStartNumber?: number;
+  /** Automatic page numbering config from <hp:pageNum> */
+  pageNumbering?: {
+    pos: string;        // e.g. 'BOTTOM_CENTER', 'BOTTOM_RIGHT', 'TOP_CENTER'
+    formatType: string; // e.g. 'DIGIT'
+    sideChar: string;   // e.g. '-' → renders as "- 1 -"
+  };
 }
 
 // ── Section ──

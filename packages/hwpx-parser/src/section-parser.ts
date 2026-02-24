@@ -47,6 +47,26 @@ export function parseSection(xml: string, warnings?: WarningCollector): Section 
   const secPrEl = findSecPr(paragraphs);
   const sectionProps = secPrEl ? parseSectionProps(secPrEl) : undefined;
 
+  // Extract pageNum config from ctrl elements in paragraphs
+  if (sectionProps) {
+    for (const p of paragraphs) {
+      for (const r of p.runs) {
+        for (const c of r.children) {
+          if (c.type === 'ctrl') {
+            const pageNumEl = c.element.children.find(ch => ch.tag === 'pageNum');
+            if (pageNumEl && pageNumEl.attrs['pos']) {
+              sectionProps.pageNumbering = {
+                pos: pageNumEl.attrs['pos'],
+                formatType: pageNumEl.attrs['formatType'] ?? 'DIGIT',
+                sideChar: pageNumEl.attrs['sideChar'] ?? '',
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
   return { paragraphs, sectionProps };
 }
 

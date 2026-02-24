@@ -740,8 +740,29 @@ export async function generatePdf(
             const curColLayout = colLayouts[curCol];
             const curPW = curColLayout.width - ps.marginLeft - ps.marginRight;
 
+            // Wrap text with proper first-line indent handling:
+            // First line uses curPW - indent (narrower for positive indent, wider for negative/hanging indent)
+            // Subsequent lines always use curPW
             const indent = firstLine ? ps.textIndent : 0;
-            const lines = wrapText(content, font, ts.fontSize, curPW - indent);
+            let lines: WLine[];
+            if (indent !== 0) {
+              // Split wrapping: first line at indented width, rest at full width
+              const firstLineWidth = curPW - indent;
+              const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth);
+              if (firstLines.length <= 1) {
+                lines = firstLines;
+              } else {
+                // Take only the first line, re-wrap the rest at full paragraph width
+                lines = [firstLines[0]];
+                const usedText = firstLines[0].text;
+                const remaining = content.substring(usedText.length).trimStart();
+                if (remaining) {
+                  lines.push(...wrapText(remaining, font, ts.fontSize, curPW));
+                }
+              }
+            } else {
+              lines = wrapText(content, font, ts.fontSize, curPW);
+            }
 
             for (const line of lines) {
               checkBreak(lineH);
@@ -1187,9 +1208,17 @@ export async function generatePdf(
     const hfFont = fonts.sans;
     const hfFontSize = 10;
 
+    // Total page count for {{pages}} placeholder
+    const totalPages = sectionPages.length;
+
     for (let pi = 0; pi < sectionPages.length; pi++) {
       const pg = sectionPages[pi];
       const pageNum = pageStartNum + pi;
+
+      // Helper to replace field placeholders
+      const replacePlaceholders = (text: string): string =>
+        text.replace(/\{\{page\}\}/g, String(pageNum))
+            .replace(/\{\{pages\}\}/g, String(totalPages));
 
       // Render headers
       for (const hdr of sectionHeaders) {
@@ -1197,7 +1226,7 @@ export async function generatePdf(
         if (hdr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
         let text = extractAnnotationText(hdr);
         if (!text.trim()) continue;
-        text = text.replace(/\{\{page\}\}/g, String(pageNum));
+        text = replacePlaceholders(text);
         // Position: top margin area, centered
         const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const hdrY = pageH - headerMarginPt - hfFontSize;
@@ -1211,12 +1240,43 @@ export async function generatePdf(
         if (ftr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
         let text = extractAnnotationText(ftr);
         if (!text.trim()) continue;
-        text = text.replace(/\{\{page\}\}/g, String(pageNum));
+        text = replacePlaceholders(text);
         // Position: bottom margin area, centered
         const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const ftrY = footerMarginPt;
         const ftrX = mL + (cW - textW) / 2;
         drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
+      }
+
+      // Render automatic page numbering from <hp:pageNum> section config
+      if (sp?.pageNumbering) {
+        const pn = sp.pageNumbering;
+        const sideChar = pn.sideChar || '';
+        const numStr = sideChar
+          ? `${sideChar} ${pageNum} ${sideChar}`
+          : String(pageNum);
+        const numW = hfFont.widthOfTextAtSize(numStr, hfFontSize);
+        const pos = pn.pos.toUpperCase();
+
+        let pnX: number;
+        if (pos.includes('LEFT')) {
+          pnX = mL;
+        } else if (pos.includes('RIGHT')) {
+          pnX = mL + cW - numW;
+        } else {
+          // CENTER (default)
+          pnX = mL + (cW - numW) / 2;
+        }
+
+        let pnY: number;
+        if (pos.includes('TOP')) {
+          pnY = pageH - headerMarginPt - hfFontSize;
+        } else {
+          // BOTTOM (default)
+          pnY = footerMarginPt;
+        }
+
+        drawText(pg, numStr, pnX, pnY, hfFont, hfFontSize, [0, 0, 0]);
       }
     }
   }

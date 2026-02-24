@@ -181,14 +181,34 @@ export function collectFootnotes(sections: { paragraphs: Paragraph[] }[]): Footn
 
 /**
  * Extract plain text from a HeaderFooter or Footnote.
+ * Handles FORMULA field codes:
+ *   Prop=8 → {{page}} (current page number)
+ *   Prop=9 → {{pages}} (total page count)
  */
 export function extractAnnotationText(item: HeaderFooter | Footnote): string {
   return item.paragraphs
     .flatMap(p =>
       p.runs.flatMap(r =>
-        r.children
-          .filter((c): c is { type: 'text'; content: string } => c.type === 'text')
-          .map(c => c.content),
+        r.children.flatMap(c => {
+          if (c.type === 'text') return [c.content];
+          if (c.type === 'ctrl') {
+            // Check for FORMULA field with page number props
+            const fieldBegin = c.element.children.find(ch => ch.tag === 'fieldBegin');
+            if (fieldBegin?.attrs['type'] === 'FORMULA') {
+              const params = fieldBegin.children.find(ch => ch.tag === 'parameters');
+              const propParam = params?.children.find(
+                ch => ch.attrs['name'] === 'Prop'
+              );
+              const prop = propParam?.text ?? propParam?.attrs['value'];
+              if (prop === '8') return ['{{page}}'];
+              if (prop === '9') return ['{{pages}}'];
+            }
+            // Check for direct pageNum ctrl
+            const pageNumEl = c.element.children.find(ch => ch.tag === 'pageNum');
+            if (pageNumEl) return ['{{page}}'];
+          }
+          return [];
+        }),
       ),
     )
     .join('');
