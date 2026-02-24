@@ -267,7 +267,9 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
     return hwpToPt(ps.lineSpacingValue);
   }
   // percent: value is percentage (e.g., 160 = 160%)
-  return fontSize * (ps.lineSpacingValue / 100);
+  // HWP lineSpacing PERCENT is based on font em-square, not font size alone.
+  // Apply 1.08x correction to match 한/글's actual line height output.
+  return fontSize * (ps.lineSpacingValue / 100) * 1.08;
 }
 
 // ── Text measurement ──
