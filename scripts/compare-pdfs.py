@@ -130,10 +130,18 @@ def compare_pdfs(ref_path: Path, test_path: Path, diff_dir: Path = None) -> dict
                 "note": "missing_in_" + ("test" if i >= len(test_images) else "reference")
             })
 
-        # 평균/최소 SSIM
-        ssim_scores = [p["ssim"] for p in result["pages"]]
-        result["avg_ssim"] = round(sum(ssim_scores) / len(ssim_scores), 4) if ssim_scores else 0
-        result["min_ssim"] = round(min(ssim_scores), 4) if ssim_scores else 0
+        # 평균/최소 SSIM (누락 페이지 제외하고 계산, 페이지 수 차이 페널티 별도 적용)
+        matched_scores = [p["ssim"] for p in result["pages"] if p.get("note") is None]
+        all_scores = [p["ssim"] for p in result["pages"]]
+        if matched_scores:
+            matched_avg = sum(matched_scores) / len(matched_scores)
+            # 페이지 매칭률 페널티: 누락 비율만큼 감점 (최대 30% 감점)
+            page_match_ratio = len(matched_scores) / len(all_scores) if all_scores else 1
+            penalty = min(0.30, (1 - page_match_ratio) * 0.3)
+            result["avg_ssim"] = round(matched_avg - penalty, 4)
+        else:
+            result["avg_ssim"] = 0
+        result["min_ssim"] = round(min(all_scores), 4) if all_scores else 0
 
         # 등급
         avg = result["avg_ssim"]

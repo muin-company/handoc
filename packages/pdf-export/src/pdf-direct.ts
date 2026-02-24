@@ -358,18 +358,6 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
 
 // ── Numbering / Bullet prefix helpers ──
 
-// Map Wingdings/Symbol PUA chars to Unicode equivalents
-const PUA_TO_UNICODE: Record<number, string> = {
-  0xf06c: '●', 0xf06e: '■', 0xf0a7: '◆', 0xf0b7: '•',
-  0xf0fc: '✓', 0xf0d8: '▲', 0xf076: '★', 0xf0a8: '○',
-};
-function mapBulletChar(ch: string): string {
-  if (!ch) return '';
-  const code = ch.codePointAt(0) ?? 0;
-  if (code >= 0xf000 && code <= 0xf0ff) return PUA_TO_UNICODE[code] ?? '•';
-  return ch;
-}
-
 const HANGUL_SYLLABLES = '가나다라마바사아자차카타파하';
 const HANGUL_JAMO = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ';
 const CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
@@ -433,10 +421,10 @@ function getParaPrefix(
       const paraHead = bullet.levels.find(l => l.level === level);
       const ai = paraHead?.autoIndent ?? false;
       if (paraHead?.text) {
-        return { prefix: mapBulletChar(paraHead.text) + ' ', autoIndent: ai, level };
+        return { prefix: paraHead.text + ' ', autoIndent: ai, level };
       }
       if (bullet.char) {
-        return { prefix: mapBulletChar(bullet.char) + ' ', autoIndent: ai, level };
+        return { prefix: bullet.char + ' ', autoIndent: ai, level };
       }
     }
     return { prefix: '', autoIndent: false, level };
@@ -444,26 +432,19 @@ function getParaPrefix(
 
   // NUMBER or OUTLINE type
   if (type === 'NUMBER' || type === 'OUTLINE') {
-    let numbering = doc.header.refList.numberings?.find(n => n.id === idRef);
-    if (!numbering && type === 'OUTLINE') {
-      numbering = doc.header.refList.numberings?.find(n => n.id === idRef + 1);
-    }
-    if (!numbering) numbering = doc.header.refList.numberings?.[0];
+    const numbering = doc.header.refList.numberings?.find(n => n.id === idRef);
     if (!numbering) return { prefix: '', autoIndent: false, level };
 
-    // Use unique key for counter tracking (separate OUTLINE from NUMBER)
-    const counterKey = type === 'OUTLINE' ? 10000 + idRef : idRef;
-    if (!state.counters.has(counterKey)) {
-      state.counters.set(counterKey, new Array(10).fill(0));
+    // Initialize counters for this numbering id
+    if (!state.counters.has(idRef)) {
+      state.counters.set(idRef, new Array(10).fill(0));
     }
-    const counters = state.counters.get(counterKey)!;
+    const counters = state.counters.get(idRef)!;
 
     // Increment this level's counter
     counters[level]++;
     // Reset all deeper levels
     for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
-    // Ensure parent levels have at least 1 (for when levels are skipped)
-    for (let i = 0; i < level; i++) { if (counters[i] === 0) counters[i] = 1; }
 
     const paraHead = numbering.levels.find(l => l.level === level + 1); // levels use 1-based
     const ai = paraHead?.autoIndent ?? false;
@@ -473,7 +454,7 @@ function getParaPrefix(
       let prefix = paraHead.text;
       prefix = prefix.replace(/\^(\d+)/g, (_m, idxStr) => {
         const idx = parseInt(idxStr, 10) - 1; // ^1 = level 0, ^2 = level 1, etc.
-        const lvDef = numbering!.levels.find(l => l.level === idx + 1);
+        const lvDef = numbering.levels.find(l => l.level === idx + 1);
         const fmt = lvDef?.numFormat ?? 'DIGIT';
         const count = counters[idx] || 1;
         return formatNumber(count, fmt);
@@ -862,15 +843,6 @@ export async function generatePdf(
         }
       }
 
-      // Apply autoIndent for numbering/bullet: hanging indent so text wraps past prefix
-      if (paraPrefix && prefixAutoIndent) {
-        const firstTs = para.runs.length > 0 ? resolveTextStyle(doc, para.runs[0].charPrIDRef) : resolveTextStyle(doc, null);
-        const firstFont = getFont(firstTs);
-        const prefixW = measureText(paraPrefix, firstFont, firstTs.fontSize);
-        ps.marginLeft += prefixW;
-        ps.textIndent = -prefixW;
-      }
-
       const col = colLayouts[curCol];
       const pL = col.x + ps.marginLeft;
       const pW = col.width - ps.marginLeft - ps.marginRight;
@@ -880,7 +852,6 @@ export async function generatePdf(
       // Track if paragraph has any content
       let hasContent = false;
       let firstLine = true;
-      let prefixPending = paraPrefix; // prefix to prepend to first text line
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
@@ -889,11 +860,7 @@ export async function generatePdf(
 
         for (const child of run.children) {
           if (child.type === 'text') {
-            let content = child.content;
-            if (prefixPending) {
-              content = prefixPending + (content ?? '');
-              prefixPending = '';
-            }
+            const content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
               const emptyH = lineH * 0.5;
@@ -1003,19 +970,6 @@ export async function generatePdf(
         }
       }
 
-      // If prefix wasn't consumed (no text children), render it standalone
-      if (prefixPending && !hasContent) {
-        const ts = para.runs.length > 0 ? resolveTextStyle(doc, para.runs[0].charPrIDRef) : resolveTextStyle(doc, null);
-        const font = getFont(ts);
-        const lineH = calcLineHeight(ps, ts.fontSize);
-        checkBreak(lineH);
-        const activeCol = colLayouts[curCol];
-        const x = activeCol.x + ps.marginLeft + ps.textIndent;
-        drawText(page, prefixPending, x, curY - ts.fontSize, font, ts.fontSize, ts.color, ts.charSpacing, ts.bold, ts.italic);
-        curY -= lineH;
-        hasContent = true;
-      }
-
       // If paragraph had no content at all, advance by reduced height
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
@@ -1071,27 +1025,13 @@ export async function generatePdf(
       }
 
       // ── Pass 1: Calculate row heights ──
-      // Use the maximum of declared cell heights as a baseline. Our font metrics differ from
-      // the original Korean fonts, so estimated heights from text wrapping often overshoot.
-      // Cap estimated height: when it exceeds the row's declared height by too much,
-      // use a blend that trusts the declared height more.
       const rowHeights: number[] = [];
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         let rh = 12;
-        let declaredRowH = 0;
         for (const cell of tbl.rows[ri].cells) {
           if (cell.cellSpan.rowSpan > 1) continue;
           const h = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
-          const declH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
-          declaredRowH = Math.max(declaredRowH, declH);
           rh = Math.max(rh, h);
-        }
-        // Cap overestimation: if estimated exceeds declared by >15%, blend towards declared.
-        // Our embedded fonts are wider than the original Korean fonts, causing excessive
-        // text wrapping in narrow table cells. The declared height from HWP is calculated
-        // with the correct fonts and is more accurate.
-        if (declaredRowH > 0 && rh > declaredRowH) {
-          rh = declaredRowH;
         }
         rowHeights.push(rh);
       }
