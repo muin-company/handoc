@@ -67,10 +67,15 @@ function getBorderFillBgColor(doc: HanDoc, id: number | null): string | undefine
   return bgColor.replace('#', '');
 }
 
+// HWP standard border widths (more precise defaults)
+const HWP_BORDER_THIN = 0.4;      // 가는선 (thin)
+const HWP_BORDER_NORMAL = 0.5;    // 보통선 (normal)
+const HWP_BORDER_THICK = 1.0;     // 굵은선 (thick)
+
 function getBorderStyles(doc: HanDoc, id: number | null): string {
-  if (id == null) return 'border:0.5px solid #000';
+  if (id == null) return `border:${HWP_BORDER_NORMAL}px solid #000`;
   const borderFill = doc.header.refList.borderFills.find(bf => Number(bf.attrs['id']) === id);
-  if (!borderFill) return 'border:0.5px solid #000';
+  if (!borderFill) return `border:${HWP_BORDER_NORMAL}px solid #000`;
   
   // Parse border elements (left, right, top, bottom)
   const borders: Record<string, string> = {};
@@ -81,7 +86,7 @@ function getBorderStyles(doc: HanDoc, id: number | null): string {
       const width = Number(borderEl.attrs['width'] || 12); // HWPUNIT (1/7200 inch)
       const color = borderEl.attrs['color'] || '000000';
       
-      const widthPx = Math.max(0.5, width / 7200 * 96); // Convert to pixels
+      const widthPx = Math.max(HWP_BORDER_THIN, width / 7200 * 96); // Convert to pixels
       const style = type === 'None' ? 'none' : 
                     type === 'Dash' ? 'dashed' :
                     type === 'Dot' ? 'dotted' : 'solid';
@@ -90,7 +95,7 @@ function getBorderStyles(doc: HanDoc, id: number | null): string {
     }
   }
   
-  if (Object.keys(borders).length === 0) return 'border:0.5px solid #000';
+  if (Object.keys(borders).length === 0) return `border:${HWP_BORDER_NORMAL}px solid #000`;
   
   // Check if all sides are the same
   const values = Object.values(borders);
@@ -478,7 +483,7 @@ const BASE_CSS = `
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: 0.5px solid #000; padding: 0.5px 1px; vertical-align: top; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
+  td, th { border: ${HWP_BORDER_NORMAL}px solid #000; padding: 0.5px 1px; vertical-align: top; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: inherit !important; page-break-inside: auto !important; }
   th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
