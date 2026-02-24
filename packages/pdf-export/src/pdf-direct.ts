@@ -7,7 +7,7 @@
 
 import { HanDoc, extractAnnotationText } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
-import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth, PDFOperator } from 'pdf-lib';
+import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -436,10 +436,27 @@ function drawText(
   font: PDFFont, fontSize: number,
   color: [number, number, number],
   charSpacing = 0,
+  bold = false,
+  italic = false,
 ): number {
+  // Faux bold: FillThenStroke rendering mode with thin stroke width
+  // Faux italic: skew via cm (concat matrix) operator
+  const needsWrap = bold || italic;
+
+  if (needsWrap) {
+    page.pushOperators(pushGraphicsState());
+    if (bold) {
+      page.pushOperators(
+        setTextRenderingMode(TextRenderingMode.FillAndOutline),
+        setLineWidth(fontSize * 0.03),
+      );
+    }
+  }
+
   let drawX = x;
   try {
     page.drawText(text, { x, y, size: fontSize, font, color: rgb(...color), ...(charSpacing ? { characterSpacing: charSpacing } : {}) });
+    if (needsWrap) page.pushOperators(popGraphicsState());
     return measureText(text, font, fontSize) + (charSpacing ? charSpacing * Math.max(0, text.length - 1) : 0);
   } catch {
     for (const ch of text) {
@@ -456,6 +473,7 @@ function drawText(
         drawX += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5) + charSpacing;
       }
     }
+    if (needsWrap) page.pushOperators(popGraphicsState());
     return drawX - x;
   }
 }
@@ -737,7 +755,7 @@ export async function generatePdf(
               else if (ps.align === 'right') x = activePL + activePW - line.width;
 
               const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, ts.charSpacing);
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, ts.charSpacing, ts.bold, ts.italic);
 
               if (ts.underline) {
                 page.drawLine({
@@ -991,7 +1009,25 @@ export async function generatePdf(
                 if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cts.charSpacing);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cts.charSpacing, cts.bold, cts.italic);
+
+                  // Underline / strikethrough in table cells
+                  if (cts.underline) {
+                    page.drawLine({
+                      start: { x: tx, y: ty - 2 },
+                      end: { x: tx + cl.width, y: ty - 2 },
+                      thickness: 0.5,
+                      color: rgb(...cts.color),
+                    });
+                  }
+                  if (cts.strikeout) {
+                    page.drawLine({
+                      start: { x: tx, y: ty + cts.fontSize * 0.35 },
+                      end: { x: tx + cl.width, y: ty + cts.fontSize * 0.35 },
+                      thickness: 0.5,
+                      color: rgb(...cts.color),
+                    });
+                  }
                 }
                 ty -= (lh - cts.fontSize);
               }
