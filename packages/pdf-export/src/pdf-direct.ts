@@ -1128,24 +1128,39 @@ export async function generatePdf(
             });
           }
 
-          // Cell borders (draw each side individually for proper width/type)
+          // Cell borders (draw each side individually with proper width/style)
           const bx = cellX, by = curY - cellH;
-          if (bf.left.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
-              thickness: bf.left.width, color: rgb(bf.left.color.red, bf.left.color.green, bf.left.color.blue) });
+          function drawCellBorder(side: BorderSide, x1: number, y1: number, x2: number, y2: number) {
+            if (side.type === 'NONE') return;
+            const c = rgb(side.color.red, side.color.green, side.color.blue);
+            if (side.type === 'DOUBLE_SLIM' || side.type === 'DOUBLE' || side.type === 'SLIM_THICK' || side.type === 'THICK_SLIM') {
+              // Double border: two thin lines with a gap
+              const gap = Math.max(side.width * 0.35, 0.4);
+              const lineW = Math.max(side.width * 0.2, 0.15);
+              const isV = Math.abs(x1 - x2) < 0.01;
+              const d = gap / 2;
+              if (isV) {
+                page.drawLine({ start: { x: x1 - d, y: y1 }, end: { x: x2 - d, y: y2 }, thickness: lineW, color: c });
+                page.drawLine({ start: { x: x1 + d, y: y1 }, end: { x: x2 + d, y: y2 }, thickness: lineW, color: c });
+              } else {
+                page.drawLine({ start: { x: x1, y: y1 - d }, end: { x: x2, y: y2 - d }, thickness: lineW, color: c });
+                page.drawLine({ start: { x: x1, y: y1 + d }, end: { x: x2, y: y2 + d }, thickness: lineW, color: c });
+              }
+            } else if (side.type === 'DASHED' || side.type === 'DASH') {
+              page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
+                thickness: side.width, color: c, dashArray: [side.width * 4, side.width * 2] });
+            } else if (side.type === 'DOTTED' || side.type === 'DOT') {
+              page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
+                thickness: side.width, color: c, dashArray: [side.width, side.width * 2] });
+            } else {
+              // SOLID and other types
+              page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: side.width, color: c });
+            }
           }
-          if (bf.right.type !== 'NONE') {
-            page.drawLine({ start: { x: bx + cellW, y: by }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.right.width, color: rgb(bf.right.color.red, bf.right.color.green, bf.right.color.blue) });
-          }
-          if (bf.top.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by + cellH }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.top.width, color: rgb(bf.top.color.red, bf.top.color.green, bf.top.color.blue) });
-          }
-          if (bf.bottom.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
-              thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
-          }
+          drawCellBorder(bf.left, bx, by, bx, by + cellH);
+          drawCellBorder(bf.right, bx + cellW, by, bx + cellW, by + cellH);
+          drawCellBorder(bf.top, bx, by + cellH, bx + cellW, by + cellH);
+          drawCellBorder(bf.bottom, bx, by, bx + cellW, by);
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
