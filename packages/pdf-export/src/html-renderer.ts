@@ -197,9 +197,12 @@ function renderImage(doc: HanDoc, element: GenericElement): string {
   // Try to find image path from element attributes
   const imgChild = findDescendant(element, 'img') ?? findDescendant(element, 'imgRect');
   const fileRef = findDescendant(element, 'fileRef');
-  if (!fileRef) return '';
 
-  const binItemRef = fileRef.attrs['binItemIDRef'] ?? '';
+  // Get binary item reference — try fileRef first, then img element's binaryItemIDRef
+  let binItemRef = fileRef?.attrs['binItemIDRef'] ?? '';
+  if (!binItemRef && imgChild) {
+    binItemRef = imgChild.attrs['binaryItemIDRef'] ?? '';
+  }
   if (!binItemRef) return '';
 
   // Find matching image in doc.images
@@ -225,13 +228,29 @@ function renderImage(doc: HanDoc, element: GenericElement): string {
   }
   b64 = btoa(b64);
 
-  // Try to get dimensions from img element
+  // Try to get dimensions from curSz, sz, or img element
   let style = 'max-width:100%';
-  if (imgChild) {
-    const w = imgChild.attrs['width'];
-    const h = imgChild.attrs['height'];
+  const curSzEl = findDescendant(element, 'curSz');
+  const szEl = findDescendant(element, 'sz');
+  const dimSource = curSzEl ?? szEl ?? imgChild;
+  if (dimSource) {
+    const w = dimSource.attrs['width'];
+    const h = dimSource.attrs['height'];
     if (w) style += `;width:${Number(w) / 7200}in`;
     if (h) style += `;height:${Number(h) / 7200}in`;
+  }
+
+  // Check positioning: non-inline images (treatAsChar=0) should be positioned
+  const posEl = findDescendant(element, 'pos');
+  const treatAsChar = posEl?.attrs['treatAsChar'] ?? '1';
+  if (treatAsChar === '0') {
+    // Floating/positioned image — use absolute positioning relative to nearest positioned ancestor
+    const horzOffset = Number(posEl?.attrs['horzOffset'] ?? 0);
+    const vertOffset = Number(posEl?.attrs['vertOffset'] ?? 0);
+    const horzIn = (horzOffset / 7200).toFixed(3);
+    const vertIn = (vertOffset / 7200).toFixed(3);
+    style += `;position:absolute;left:${horzIn}in;top:${vertIn}in`;
+    return `<div style="position:relative;height:0;overflow:visible;"><img src="data:${mime};base64,${b64}" style="${style}" /></div>`;
   }
 
   return `<img src="data:${mime};base64,${b64}" style="${style}" />`;
