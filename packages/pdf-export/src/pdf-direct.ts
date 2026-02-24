@@ -846,7 +846,8 @@ export async function generatePdf(
     function renderTable(doc: HanDoc, element: GenericElement, tableX: number, maxWidth: number, getFont: (s: TextStyle) => PDFFont) {
       const tbl = parseTable(element);
       const szEl = element.children.find(c => c.tag === 'sz');
-      const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
+      const rawTblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
+      const tblW = Math.min(rawTblW, maxWidth);
 
       // ── Build grid column widths from colSpan=1 cells ──
       const colWidths: number[] = new Array(tbl.colCnt).fill(0);
@@ -869,6 +870,15 @@ export async function generatePdf(
           if (colWidths[i] === 0) colWidths[i] = eachW;
         }
       }
+      // Scale column widths to fit within tblW if they exceed it
+      const totalColW = colWidths.reduce((a, b) => a + b, 0);
+      if (totalColW > tblW && totalColW > 0) {
+        const scale = tblW / totalColW;
+        for (let i = 0; i < colWidths.length; i++) {
+          colWidths[i] *= scale;
+        }
+      }
+
       // Column X offsets
       const colX: number[] = [0];
       for (let i = 0; i < colWidths.length; i++) {
@@ -910,10 +920,32 @@ export async function generatePdf(
         }
       }
 
+      // Debug table grid
+      if (process.env.HANDOC_DEBUG_TABLE) {
+        console.log(`TABLE: ${tbl.colCnt}x${tbl.rows.length} tblW=${tblW.toFixed(1)}`);
+        console.log(`  colWidths: [${colWidths.map(w => w.toFixed(1)).join(', ')}]`);
+        console.log(`  colX: [${colX.map(w => w.toFixed(1)).join(', ')}]`);
+        console.log(`  rowHeights: [${rowHeights.map(h => h.toFixed(1)).join(', ')}]`);
+        console.log(`  tableX=${tableX.toFixed(1)} curY=${curY.toFixed(1)} maxW=${maxWidth.toFixed(1)}`);
+      }
+
       // Resolve table-level border fill for outer frame
       const tableBf = tbl.borderFillIDRef ? resolveBorderFill(doc, tbl.borderFillIDRef) : null;
 
-      // ── Pass 2: Render ──
+      // ── Pass 2: Render (backgrounds + text, collect deduplicated borders) ──
+      // Border dedup: collect all segments, keep thicker border when two cells share an edge.
+      type BorderSeg = { x1: number; y1: number; x2: number; y2: number; border: BorderSide };
+      const borderSegs = new Map<string, BorderSeg>();
+      const r = (v: number) => Math.round(v * 100) / 100;
+      const addBorder = (x1: number, y1: number, x2: number, y2: number, b: BorderSide) => {
+        if (b.type === 'NONE') return;
+        const key = `${r(x1)}:${r(y1)}:${r(x2)}:${r(y2)}`;
+        const existing = borderSegs.get(key);
+        if (!existing || b.width > existing.border.width) {
+          borderSegs.set(key, { x1, y1, x2, y2, border: b });
+        }
+      };
+
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         const rowH = Math.min(rowHeights[ri], contentH);
 
@@ -922,18 +954,15 @@ export async function generatePdf(
 
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
-          // Use grid-based X and width for accuracy
           const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
           const cellW = gridCellW(cell);
 
-          // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
           for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
 
-          // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
 
           // Cell background fill
@@ -945,24 +974,25 @@ export async function generatePdf(
             });
           }
 
-          // Cell borders (draw each side individually for proper width/type)
+          // Collect borders — merge with table-level borderFill for edge cells
           const bx = cellX, by = curY - cellH;
-          if (bf.left.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
-              thickness: bf.left.width, color: rgb(bf.left.color.red, bf.left.color.green, bf.left.color.blue) });
-          }
-          if (bf.right.type !== 'NONE') {
-            page.drawLine({ start: { x: bx + cellW, y: by }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.right.width, color: rgb(bf.right.color.red, bf.right.color.green, bf.right.color.blue) });
-          }
-          if (bf.top.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by + cellH }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.top.width, color: rgb(bf.top.color.red, bf.top.color.green, bf.top.color.blue) });
-          }
-          if (bf.bottom.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
-              thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
-          }
+          const colSpan = cell.cellSpan.colSpan ?? 1;
+          const rowSpan = cell.cellSpan.rowSpan ?? 1;
+          const isLeftEdge = ci === 0;
+          const isTopEdge = ri === 0;
+          const isRightEdge = (ci + colSpan) >= tbl.colCnt;
+          const isBottomEdge = (ri + rowSpan) >= tbl.rows.length;
+
+          // For each side: use cell border if non-NONE, else fall back to table border for edges
+          const effectiveLeft = bf.left.type !== 'NONE' ? bf.left : (isLeftEdge && tableBf ? tableBf.left : bf.left);
+          const effectiveRight = bf.right.type !== 'NONE' ? bf.right : (isRightEdge && tableBf ? tableBf.right : bf.right);
+          const effectiveTop = bf.top.type !== 'NONE' ? bf.top : (isTopEdge && tableBf ? tableBf.top : bf.top);
+          const effectiveBottom = bf.bottom.type !== 'NONE' ? bf.bottom : (isBottomEdge && tableBf ? tableBf.bottom : bf.bottom);
+
+          addBorder(bx, by, bx, by + cellH, effectiveLeft);
+          addBorder(bx + cellW, by, bx + cellW, by + cellH, effectiveRight);
+          addBorder(bx, by + cellH, bx + cellW, by + cellH, effectiveTop);
+          addBorder(bx, by, bx + cellW, by, effectiveBottom);
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
@@ -970,23 +1000,17 @@ export async function generatePdf(
         curY -= rowH;
       }
 
-      // ── Draw table outer frame border (from table-level borderFillIDRef) ──
-      if (tableBf) {
-        const fx = tableX;
-        const fy = tableStartY - totalTableH;
-        const fw = colX[colX.length - 1] || tblW;
-        const fh = totalTableH;
-        const drawBorderLine = (side: typeof tableBf.left, sx: number, sy: number, ex: number, ey: number) => {
-          if (side.type !== 'NONE') {
-            page.drawLine({ start: { x: sx, y: sy }, end: { x: ex, y: ey },
-              thickness: side.width, color: rgb(side.color.red, side.color.green, side.color.blue) });
-          }
-        };
-        drawBorderLine(tableBf.left, fx, fy, fx, fy + fh);                 // left
-        drawBorderLine(tableBf.right, fx + fw, fy, fx + fw, fy + fh);      // right
-        drawBorderLine(tableBf.top, fx, fy + fh, fx + fw, fy + fh);        // top
-        drawBorderLine(tableBf.bottom, fx, fy, fx + fw, fy);               // bottom
+      // ── Draw deduplicated borders ──
+      for (const seg of borderSegs.values()) {
+        const b = seg.border;
+        page.drawLine({
+          start: { x: seg.x1, y: seg.y1 },
+          end: { x: seg.x2, y: seg.y2 },
+          thickness: b.width,
+          color: rgb(b.color.red, b.color.green, b.color.blue),
+        });
       }
+
     }
 
     /** Estimate cell height from content */
