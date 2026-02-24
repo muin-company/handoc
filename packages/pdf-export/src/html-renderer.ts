@@ -72,10 +72,14 @@ const HWP_BORDER_THIN = 0.4;      // 가는선 (thin)
 const HWP_BORDER_NORMAL = 0.5;    // 보통선 (normal)
 const HWP_BORDER_THICK = 1.0;     // 굵은선 (thick)
 
+// HWP color palette (more precise than pure black/gray)
+const HWP_COLOR_BORDER = '#1a1a1a';        // Slightly softer than pure black
+const HWP_COLOR_TABLE_HEADER = '#efefef';  // Standard table header gray
+
 function getBorderStyles(doc: HanDoc, id: number | null): string {
-  if (id == null) return `border:${HWP_BORDER_NORMAL}px solid #000`;
+  if (id == null) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
   const borderFill = doc.header.refList.borderFills.find(bf => Number(bf.attrs['id']) === id);
-  if (!borderFill) return `border:${HWP_BORDER_NORMAL}px solid #000`;
+  if (!borderFill) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
   
   // Parse border elements (left, right, top, bottom)
   const borders: Record<string, string> = {};
@@ -95,7 +99,7 @@ function getBorderStyles(doc: HanDoc, id: number | null): string {
     }
   }
   
-  if (Object.keys(borders).length === 0) return `border:${HWP_BORDER_NORMAL}px solid #000`;
+  if (Object.keys(borders).length === 0) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
   
   // Check if all sides are the same
   const values = Object.values(borders);
@@ -483,9 +487,9 @@ const BASE_CSS = `
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: ${HWP_BORDER_NORMAL}px solid #000; padding: 0.5px 1px; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
+  td, th { border: ${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}; padding: 0.5px 1px; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
   td { vertical-align: top; }
-  th { vertical-align: middle; background-color: #f0f0f0; font-weight: bold; }
+  th { vertical-align: middle; background-color: ${HWP_COLOR_TABLE_HEADER}; font-weight: bold; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: inherit !important; page-break-inside: auto !important; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
