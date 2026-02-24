@@ -241,16 +241,12 @@ function renderImage(doc: HanDoc, element: GenericElement): string {
   }
 
   // Check positioning: non-inline images (treatAsChar=0) should be positioned
+  // Render floating image as block with margins (absolute positioning breaks Playwright PDF printing)
   const posEl = findDescendant(element, 'pos');
   const treatAsChar = posEl?.attrs['treatAsChar'] ?? '1';
   if (treatAsChar === '0') {
-    // Floating/positioned image — use absolute positioning relative to nearest positioned ancestor
     const horzOffset = Number(posEl?.attrs['horzOffset'] ?? 0);
-    const vertOffset = Number(posEl?.attrs['vertOffset'] ?? 0);
-    const horzIn = (horzOffset / 7200).toFixed(3);
-    const vertIn = (vertOffset / 7200).toFixed(3);
-    style += `;position:absolute;left:${horzIn}in;top:${vertIn}in`;
-    return `<div style="position:relative;height:0;overflow:visible;"><img src="data:${mime};base64,${b64}" style="${style}" /></div>`;
+    if (horzOffset > 0) style += `;display:block;margin-left:${(horzOffset / 7200).toFixed(3)}in`;
   }
 
   return `<img src="data:${mime};base64,${b64}" style="${style}" />`;
@@ -648,12 +644,9 @@ function renderShape(doc: HanDoc, element: GenericElement): string {
   }
   
   if (treatAsChar === '0') {
+    // Floating shape — render as block with margins (absolute positioning breaks PDF printing)
     const horzOffset = Number(posEl?.attrs['horzOffset'] ?? 0);
-    const vertOffset = Number(posEl?.attrs['vertOffset'] ?? 0);
-    wrapperStyles.push('position:absolute');
-    wrapperStyles.push(`left:${(horzOffset / 7200).toFixed(3)}in`);
-    wrapperStyles.push(`top:${(vertOffset / 7200).toFixed(3)}in`);
-    return `<div style="position:relative;height:0;overflow:visible;"><div class="shape-wrapper" style="${wrapperStyles.join(';')}">${content}</div></div>`;
+    if (horzOffset > 0) wrapperStyles.push(`margin-left:${(horzOffset / 7200).toFixed(3)}in`);
   }
   
   return `<div class="shape-wrapper" style="${wrapperStyles.join(';')}">${content}</div>`;
