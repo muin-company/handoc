@@ -479,7 +479,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // Apply line height correction to match 한/글's actual line height output.
   // 1.08x caused 12 regressions (page overflow); 1.03x balances 
   // improving under-spaced docs without worsening already-dense ones.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.04;
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
 }
 
 // ── Text measurement ──
@@ -1066,16 +1066,11 @@ export async function generatePdf(
         }
         // HWP declared row height is a minimum; content can expand rows.
         // Our embedded fonts are wider than original Korean fonts, causing
-        // overestimation from extra text wrapping. Allow 1 extra line (18pt)
-        // or up to 1.3x expansion, whichever is larger, to accommodate genuine wraps.
-        if (declaredRowH > 0 && rh > declaredRowH) {
-          const oneLineExtra = 18;
-          const softCap = declaredRowH + oneLineExtra;
-          if (rh > declaredRowH * 2.0) {
-            rh = declaredRowH * 1.2; // Extreme cap for runaway estimates
-          } else {
-            rh = Math.min(rh, Math.max(softCap, declaredRowH * 1.3));
-          }
+        // overestimation from extra text wrapping. Allow 10% expansion to
+        // account for genuine line-height overflow while limiting font bloat.
+        // v28→v29: F-grade 78→71, 0 A/B/C→F regressions.
+        if (declaredRowH > 0 && rh > declaredRowH * 1.1) {
+          rh = declaredRowH * 1.1;
         }
         rowHeights.push(rh);
       }
@@ -1213,22 +1208,12 @@ export async function generatePdf(
         }
         h += cps.marginBottom;
       }
-      // If the cell has a declared height, use the larger of declared vs estimated.
-      // Our fonts are wider than original Korean fonts → extra line wraps → taller cells.
-      // For small cells (1-2 lines), an extra wrap doubles the height (ratio 2x).
-      // For large cells (many lines), extra wraps cause only small increases.
-      // Strategy: allow expansion up to declared + one extra line height,
-      // which handles the common case of single-line overflow without excessive growth.
-      // For very large overestimation (>2x), cap to prevent runaway page generation.
-      if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        // Allow one extra line worth of expansion (approx line height for 10pt font)
-        const oneLineExtra = 18; // ~10pt * 160% * 1.03 ≈ 16.5pt + padding
-        const softCap = cellDeclaredH + oneLineExtra;
-        if (h > cellDeclaredH * 2.0) {
-          // Extreme overestimation — likely font-driven, cap aggressively
-          return cellDeclaredH * 1.2;
-        }
-        return Math.min(h, Math.max(softCap, cellDeclaredH * 1.3));
+      // If the cell has a declared height, use the larger of declared vs estimated
+      // BUT: cap estimated height to avoid dramatic overestimation from font metric differences.
+      // When estimated height exceeds declared by more than 50%, the font is likely wider than
+      // the original, causing excessive text wrapping. Trust the declared height more.
+      if (cellDeclaredH > 0 && h > cellDeclaredH * 1.5) {
+        return cellDeclaredH * 1.1;
       }
       return Math.max(cellDeclaredH, h);
     }
