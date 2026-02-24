@@ -61,7 +61,32 @@ interface ParagraphData {
   style: ParagraphStyle;
 }
 
-type SectionItem = ParagraphData | { type: 'table'; rows: string[][] };
+/** Rich cell data extracted from HWP binary */
+export interface HwpCellData {
+  rowAddr: number;
+  colAddr: number;
+  rowSpan: number;
+  colSpan: number;
+  width: number;   // HWP units
+  height: number;  // HWP units
+  marginLeft: number;
+  marginRight: number;
+  marginTop: number;
+  marginBottom: number;
+  borderFillId: number;
+  text: string;
+  charShapeId: number;
+  paraShapeId: number;
+}
+
+export interface HwpRichTable {
+  type: 'richTable';
+  rows: number;
+  cols: number;
+  cells: HwpCellData[];
+}
+
+type SectionItem = ParagraphData | { type: 'table'; rows: string[][] } | HwpRichTable;
 
 function readUint16LE(data: Uint8Array, offset: number): number {
   return data[offset] | (data[offset + 1] << 8);
@@ -91,9 +116,13 @@ function extractSectionItems(
   let tableRows = 0;
   let tableCols = 0;
   let tableBaseLevel = 0;
-  let cellTexts: string[] = [];     // text per cell
   let currentCellText = '';
   let cellCount = 0;
+  // Rich cell data
+  let richCells: HwpCellData[] = [];
+  let currentCellData: Partial<HwpCellData> = {};
+  let currentCellCharShapeId = 0;
+  let currentCellParaShapeId = 0;
 
   for (let i = 0; i < records.length; i++) {
     const rec = records[i];
@@ -109,7 +138,7 @@ function extractSectionItems(
         if (ctrlId === 'tbl ') {
           inTable = true;
           tableBaseLevel = rec.level;
-          cellTexts = [];
+          richCells = [];
           cellCount = 0;
           continue;
         }
@@ -125,16 +154,69 @@ function extractSectionItems(
       continue;
     }
 
-    // When inside a table, collect cell text
+    // When inside a table, collect cell data with structure
     if (inTable) {
-      // LIST_HEADER marks start of a new cell
+      // LIST_HEADER marks start of a new cell — extract cell properties
       if (rec.tagId === HWPTAG.LIST_HEADER && rec.level === tableBaseLevel + 1) {
         // Save previous cell if any
         if (cellCount > 0) {
-          cellTexts.push(currentCellText.trim());
+          richCells.push({
+            ...currentCellData as HwpCellData,
+            text: currentCellText.trim(),
+            charShapeId: currentCellCharShapeId,
+            paraShapeId: currentCellParaShapeId,
+          });
         }
         currentCellText = '';
+        currentCellCharShapeId = 0;
+        currentCellParaShapeId = 0;
+
+        // Parse cell properties from LIST_HEADER data
+        const d = rec.data;
+        if (d.byteLength >= 34) {
+          currentCellData = {
+            colAddr: readUint16LE(d, 8),
+            rowAddr: readUint16LE(d, 10),
+            colSpan: readUint16LE(d, 12),
+            rowSpan: readUint16LE(d, 14),
+            width: readUint32LE(d, 16),
+            height: readUint32LE(d, 20),
+            marginLeft: readUint16LE(d, 24),
+            marginRight: readUint16LE(d, 26),
+            marginTop: readUint16LE(d, 28),
+            marginBottom: readUint16LE(d, 30),
+            borderFillId: readUint16LE(d, 32),
+          };
+        } else {
+          currentCellData = {
+            colAddr: cellCount % tableCols,
+            rowAddr: Math.floor(cellCount / tableCols),
+            colSpan: 1, rowSpan: 1,
+            width: 0, height: 0,
+            marginLeft: 283, marginRight: 283,
+            marginTop: 283, marginBottom: 283,
+            borderFillId: 0,
+          };
+        }
         cellCount++;
+        continue;
+      }
+
+      // Collect para shape ID
+      if (rec.tagId === HWPTAG.PARA_HEADER && rec.level > tableBaseLevel) {
+        if (rec.data.byteLength >= 10) {
+          const view = new DataView(rec.data.buffer, rec.data.byteOffset, rec.data.byteLength);
+          currentCellParaShapeId = view.getUint16(8, true);
+        }
+        continue;
+      }
+
+      // Collect char shape ID
+      if (rec.tagId === HWPTAG_PARA_CHAR_SHAPE && rec.level > tableBaseLevel) {
+        if (rec.data.byteLength >= 8) {
+          const view = new DataView(rec.data.buffer, rec.data.byteOffset, rec.data.byteLength);
+          currentCellCharShapeId = view.getUint32(4, true);
+        }
         continue;
       }
 
@@ -150,20 +232,26 @@ function extractSectionItems(
       if (rec.level <= tableBaseLevel && rec.tagId !== HWPTAG.TABLE) {
         // Flush last cell
         if (cellCount > 0) {
-          cellTexts.push(currentCellText.trim());
+          richCells.push({
+            ...currentCellData as HwpCellData,
+            text: currentCellText.trim(),
+            charShapeId: currentCellCharShapeId,
+            paraShapeId: currentCellParaShapeId,
+          });
         }
 
-        // Build table rows
-        if (tableCols > 0 && cellTexts.length > 0) {
-          const rows: string[][] = [];
-          for (let c = 0; c < cellTexts.length; c += tableCols) {
-            rows.push(cellTexts.slice(c, c + tableCols));
-          }
-          items.push({ type: 'table', rows });
+        // Emit rich table
+        if (richCells.length > 0) {
+          items.push({
+            type: 'richTable',
+            rows: tableRows,
+            cols: tableCols,
+            cells: richCells,
+          });
         }
 
         inTable = false;
-        cellTexts = [];
+        richCells = [];
         cellCount = 0;
         // Fall through to process current record normally
       } else {
@@ -197,13 +285,19 @@ function extractSectionItems(
 
   // Flush any remaining table
   if (inTable && cellCount > 0) {
-    cellTexts.push(currentCellText.trim());
-    if (tableCols > 0 && cellTexts.length > 0) {
-      const rows: string[][] = [];
-      for (let c = 0; c < cellTexts.length; c += tableCols) {
-        rows.push(cellTexts.slice(c, c + tableCols));
-      }
-      items.push({ type: 'table', rows });
+    richCells.push({
+      ...currentCellData as HwpCellData,
+      text: currentCellText.trim(),
+      charShapeId: currentCellCharShapeId,
+      paraShapeId: currentCellParaShapeId,
+    });
+    if (richCells.length > 0) {
+      items.push({
+        type: 'richTable',
+        rows: tableRows,
+        cols: tableCols,
+        cells: richCells,
+      });
     }
   }
 
@@ -266,7 +360,21 @@ function extractStyle(
  * In HWP 5.x, the section definition control (CTRL_HEADER "dces") is followed by
  * a TABLE record (tag 73) containing: pageWidth(U32LE), pageHeight(U32LE), margins...
  */
-function extractPageDimensions(sectionData: Uint8Array): { width: number; height: number } | null {
+interface PageDimensions {
+  width: number;
+  height: number;
+  margins?: {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    header: number;
+    footer: number;
+    gutter: number;
+  };
+}
+
+function extractPageDimensions(sectionData: Uint8Array): PageDimensions | null {
   const records = parseRecords(sectionData);
   for (let i = 0; i < records.length - 1; i++) {
     const rec = records[i];
@@ -281,7 +389,20 @@ function extractPageDimensions(sectionData: Uint8Array): { width: number; height
           const w = d.readUInt32LE(0);
           const h = d.readUInt32LE(4);
           if (w > 0 && h > 0) {
-            return { width: w, height: h };
+            const result: PageDimensions = { width: w, height: h };
+            // Extract margins if available (offsets 8-36)
+            if (d.length >= 36) {
+              result.margins = {
+                left: d.readUInt32LE(8),
+                right: d.readUInt32LE(12),
+                top: d.readUInt32LE(16),
+                bottom: d.readUInt32LE(20),
+                header: d.readUInt32LE(24),
+                footer: d.readUInt32LE(28),
+                gutter: d.readUInt32LE(32),
+              };
+            }
+            return result;
           }
         }
         break;
@@ -313,7 +434,15 @@ export function convertHwpToHwpx(hwpBuffer: Uint8Array): Uint8Array {
 
   // Extract page dimensions from first section's "secd" control
   const pageDims = extractPageDimensions(doc.bodyText[0]);
-  const builder = HwpxBuilder.create(pageDims ? { pageWidth: pageDims.width, pageHeight: pageDims.height } : undefined);
+  const builderOpts: Record<string, unknown> = {};
+  if (pageDims) {
+    builderOpts.pageWidth = pageDims.width;
+    builderOpts.pageHeight = pageDims.height;
+    if (pageDims.margins) {
+      builderOpts.margins = pageDims.margins;
+    }
+  }
+  const builder = HwpxBuilder.create(Object.keys(builderOpts).length > 0 ? builderOpts as any : undefined);
   let isFirstSection = true;
 
   for (const sectionData of doc.bodyText) {
@@ -328,7 +457,9 @@ export function convertHwpToHwpx(hwpBuffer: Uint8Array): Uint8Array {
       builder.addParagraph('');
     } else {
       for (const item of sectionItems) {
-        if ('type' in item && item.type === 'table') {
+        if ('type' in item && item.type === 'richTable') {
+          builder.addRichTable(item as HwpRichTable);
+        } else if ('type' in item && item.type === 'table') {
           builder.addTable(item.rows);
         } else {
           const para = item as ParagraphData;

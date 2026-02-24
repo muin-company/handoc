@@ -59,10 +59,37 @@ interface EquationOptions {
   height?: number; // HWP units
 }
 
+/** Rich cell data for table cells with full HWP structure */
+export interface RichCellData {
+  rowAddr: number;
+  colAddr: number;
+  rowSpan: number;
+  colSpan: number;
+  width: number;   // HWP units
+  height: number;  // HWP units
+  marginLeft: number;
+  marginRight: number;
+  marginTop: number;
+  marginBottom: number;
+  borderFillId: number;
+  text: string;
+  charShapeId: number;
+  paraShapeId: number;
+}
+
+/** Rich table with preserved cell structure from HWP */
+export interface RichTableData {
+  type: 'richTable';
+  rows: number;
+  cols: number;
+  cells: RichCellData[];
+}
+
 /** Items that go into the current section */
 type SectionItem =
   | { kind: 'paragraph'; text: string; style?: ParagraphStyle }
   | { kind: 'table'; rows: string[][] }
+  | { kind: 'richTable'; data: RichTableData }
   | { kind: 'image'; image: BuilderImage }
   | { kind: 'footnote'; text: string; noteText: string }
   | { kind: 'shape'; options: ShapeOptions }
@@ -77,20 +104,23 @@ interface SectionMeta {
 export class HwpxBuilder {
   private pageWidth: number;
   private pageHeight: number;
+  private margins: { left: number; right: number; top: number; bottom: number; header: number; footer: number; gutter: number } | null;
   private sectionItems: SectionItem[][] = [[]]; // array of sections, each an array of items
   private sectionMetas: SectionMeta[] = [{}];
   private images: { data: Uint8Array; path: string }[] = [];
   private extraFontFamilies: Set<string> = new Set();
 
-  private constructor(pageWidth: number, pageHeight: number) {
+  private constructor(pageWidth: number, pageHeight: number, margins?: { left: number; right: number; top: number; bottom: number; header: number; footer: number; gutter: number } | null) {
     this.pageWidth = pageWidth;
     this.pageHeight = pageHeight;
+    this.margins = margins ?? null;
   }
 
-  static create(options?: { pageWidth?: number; pageHeight?: number }): HwpxBuilder {
+  static create(options?: { pageWidth?: number; pageHeight?: number; margins?: { left: number; right: number; top: number; bottom: number; header: number; footer: number; gutter: number } }): HwpxBuilder {
     return new HwpxBuilder(
       options?.pageWidth ?? A4_WIDTH,
       options?.pageHeight ?? A4_HEIGHT,
+      options?.margins,
     );
   }
 
@@ -101,6 +131,11 @@ export class HwpxBuilder {
 
   addTable(rows: string[][]): this {
     this.currentSection().push({ kind: 'table', rows });
+    return this;
+  }
+
+  addRichTable(data: RichTableData): this {
+    this.currentSection().push({ kind: 'richTable', data });
     return this;
   }
 
@@ -429,6 +464,10 @@ export class HwpxBuilder {
             paragraphs.push(makeTableParagraph(item.rows));
             break;
           }
+          case 'richTable': {
+            paragraphs.push(makeRichTableParagraph(item.data));
+            break;
+          }
           case 'image': {
             const imgPath = `BinData/image${imageCounter}.${item.image.ext}`;
             this.images.push({ data: item.image.data, path: imgPath });
@@ -456,7 +495,7 @@ export class HwpxBuilder {
         sectionProps: {
           pageWidth: this.pageWidth,
           pageHeight: this.pageHeight,
-          margins: {
+          margins: this.margins ?? {
             left: 8504,    // ~30mm default
             right: 8504,
             top: 5668,     // ~20mm default
@@ -569,10 +608,18 @@ function buildTableElement(rows: string[][], rowCount: number, colCount: number)
         text: null,
       };
 
+      // Wrap paragraph in subList (required by parser)
+      const subList: GenericElement = {
+        tag: 'hp:subList',
+        attrs: { id: '0', textDirection: 'HORIZONTAL', lineWrap: 'BREAK', vertAlign: 'CENTER', linkListIDRef: '0', linkListNextIDRef: '0', textWidth: '0', textHeight: '0' },
+        children: [cellPara],
+        text: null,
+      };
+
       return {
         tag: 'hp:tc',
         attrs: { name: '', header: '0', hasMargin: '0' },
-        children: [cellAddr, cellSpan, cellSz, cellPara],
+        children: [cellAddr, cellSpan, cellSz, subList],
         text: null,
       };
     });
@@ -594,6 +641,150 @@ function buildTableElement(rows: string[][], rowCount: number, colCount: number)
       borderFillIDRef: '0',
     },
     children: trElements,
+    text: null,
+  };
+}
+
+function makeRichTableParagraph(data: RichTableData): Paragraph {
+  const tableEl = buildRichTableElement(data);
+  return {
+    id: null,
+    paraPrIDRef: 0,
+    styleIDRef: 0,
+    pageBreak: false,
+    columnBreak: false,
+    merged: false,
+    runs: [{
+      charPrIDRef: 0,
+      children: [{ type: 'table', element: tableEl }],
+    }],
+    lineSegArray: [],
+  };
+}
+
+function buildRichTableElement(data: RichTableData): GenericElement {
+  // Group cells by row
+  const rowMap = new Map<number, RichCellData[]>();
+  for (const cell of data.cells) {
+    const arr = rowMap.get(cell.rowAddr) ?? [];
+    arr.push(cell);
+    rowMap.set(cell.rowAddr, arr);
+  }
+
+  // Sort rows and cells within rows
+  const sortedRows = [...rowMap.entries()].sort((a, b) => a[0] - b[0]);
+
+  const trElements: GenericElement[] = sortedRows.map(([, cells]) => {
+    const sortedCells = cells.sort((a, b) => a.colAddr - b.colAddr);
+
+    const tcElements: GenericElement[] = sortedCells.map(cell => {
+      // Cell paragraph — use default styles (charPrIDRef=0, paraPrIDRef=0)
+      // since HWP style IDs aren't mapped to HWPX header entries
+      const cellPara: GenericElement = {
+        tag: 'hp:p',
+        attrs: { paraPrIDRef: '0', styleIDRef: '0', pageBreak: '0', columnBreak: '0', merged: '0' },
+        children: [{
+          tag: 'hp:run',
+          attrs: { charPrIDRef: '0' },
+          children: [{
+            tag: 'hp:t',
+            attrs: {},
+            children: [],
+            text: cell.text,
+          }],
+          text: null,
+        }],
+        text: null,
+      };
+
+      const cellAddr: GenericElement = {
+        tag: 'hp:cellAddr',
+        attrs: { colAddr: String(cell.colAddr), rowAddr: String(cell.rowAddr) },
+        children: [],
+        text: null,
+      };
+
+      const cellSpan: GenericElement = {
+        tag: 'hp:cellSpan',
+        attrs: { colSpan: String(cell.colSpan), rowSpan: String(cell.rowSpan) },
+        children: [],
+        text: null,
+      };
+
+      const cellSz: GenericElement = {
+        tag: 'hp:cellSz',
+        attrs: { width: String(cell.width), height: String(cell.height) },
+        children: [],
+        text: null,
+      };
+
+      // Cell margin
+      const cellMargin: GenericElement = {
+        tag: 'hp:cellMargin',
+        attrs: {
+          left: String(cell.marginLeft),
+          right: String(cell.marginRight),
+          top: String(cell.marginTop),
+          bottom: String(cell.marginBottom),
+        },
+        children: [],
+        text: null,
+      };
+
+      // Wrap paragraph in subList (required by parser)
+      const subList: GenericElement = {
+        tag: 'hp:subList',
+        attrs: { id: '0', textDirection: 'HORIZONTAL', lineWrap: 'BREAK', vertAlign: 'CENTER', linkListIDRef: '0', linkListNextIDRef: '0', textWidth: '0', textHeight: '0' },
+        children: [cellPara],
+        text: null,
+      };
+
+      return {
+        tag: 'hp:tc',
+        attrs: {
+          name: '',
+          header: '0',
+          hasMargin: cell.marginLeft > 0 || cell.marginRight > 0 ? '1' : '0',
+          borderFillIDRef: String(cell.borderFillId),
+        },
+        children: [cellAddr, cellSpan, cellSz, cellMargin, subList],
+        text: null,
+      };
+    });
+
+    return {
+      tag: 'hp:tr',
+      attrs: {},
+      children: tcElements,
+      text: null,
+    };
+  });
+
+  // Calculate table total width from first row's cells
+  let totalWidth = 0;
+  if (data.cells.length > 0) {
+    // Sum widths of cells in the row that has the most cells (usually the non-merged row)
+    const row1Cells = rowMap.get(sortedRows.length > 1 ? sortedRows[1][0] : sortedRows[0][0]) ?? [];
+    totalWidth = row1Cells.reduce((sum, c) => sum + c.width, 0);
+  }
+
+  // Build sz element
+  const szEl: GenericElement = {
+    tag: 'hp:sz',
+    attrs: { width: String(totalWidth), height: '0' },
+    children: [],
+    text: null,
+  };
+
+  return {
+    tag: 'hp:tbl',
+    attrs: {
+      rowCnt: String(data.rows),
+      colCnt: String(data.cols),
+      cellSpacing: '0',
+      borderFillIDRef: '0',
+    },
+    children: [szEl, ...trElements],
     text: null,
   };
 }

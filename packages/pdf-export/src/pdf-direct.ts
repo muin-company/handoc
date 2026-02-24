@@ -1066,26 +1066,32 @@ export async function generatePdf(
         }
         // HWP declared row height is a minimum; content can expand rows.
         // Our embedded fonts are wider than original Korean fonts, causing
-        // overestimation from extra text wrapping. Allow 10% expansion to
-        // account for genuine line-height overflow while limiting font bloat.
-        // v28→v29: F-grade 78→71, 0 A/B/C→F regressions.
-        if (declaredRowH > 0 && rh > declaredRowH * 1.1) {
-          rh = declaredRowH * 1.1;
+        // overestimation from extra text wrapping.
+        // For dense tables (>20 rows), strictly trust declared heights to
+        // preserve compact layout. For normal tables, allow 10% expansion.
+        if (declaredRowH > 0 && rh > declaredRowH) {
+          if (tbl.rows.length > 20) {
+            rh = declaredRowH;
+          } else if (rh > declaredRowH * 1.1) {
+            rh = declaredRowH * 1.1;
+          }
         }
         rowHeights.push(rh);
       }
 
-      // Adjust for rowSpan>1 cells
-      for (let ri = 0; ri < tbl.rows.length; ri++) {
-        for (const cell of tbl.rows[ri].cells) {
-          const rs = cell.cellSpan.rowSpan;
-          if (rs <= 1) continue;
-          const neededH = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
-          let spanH = 0;
-          for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) spanH += rowHeights[j];
-          if (neededH > spanH) {
-            const extra = (neededH - spanH) / rs;
-            for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) rowHeights[j] += extra;
+      // Adjust for rowSpan>1 cells (skip for dense tables to preserve layout)
+      if (tbl.rows.length <= 20) {
+        for (let ri = 0; ri < tbl.rows.length; ri++) {
+          for (const cell of tbl.rows[ri].cells) {
+            const rs = cell.cellSpan.rowSpan;
+            if (rs <= 1) continue;
+            const neededH = estimateCellHeight(doc, cell, gridCellW(cell), getFont);
+            let spanH = 0;
+            for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) spanH += rowHeights[j];
+            if (neededH > spanH) {
+              const extra = (neededH - spanH) / rs;
+              for (let j = ri; j < Math.min(ri + rs, tbl.rows.length); j++) rowHeights[j] += extra;
+            }
           }
         }
       }

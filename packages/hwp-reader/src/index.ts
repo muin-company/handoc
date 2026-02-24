@@ -12,4 +12,4 @@ export {
   type ParaCharShapeRange,
 } from './body-parser.js';
 export { extractTextFromHwp, extractRichContent, type HwpExtractedDocument } from './text-extractor.js';
-export { convertHwpToHwpx } from './hwp-to-hwpx.js';
+export { convertHwpToHwpx, type HwpCellData, type HwpRichTable } from './hwp-to-hwpx.js';
