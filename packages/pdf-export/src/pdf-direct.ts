@@ -1078,10 +1078,21 @@ export async function generatePdf(
 
       // ── Pass 2: Render ──
       for (let ri = 0; ri < tbl.rows.length; ri++) {
-        const rowH = Math.min(rowHeights[ri], contentH);
+        let rowH = Math.min(rowHeights[ri], contentH);
 
-        // Page break
-        if (curY - rowH < mB) newPage();
+        // Page break with row-splitting for very tall rows: when a row
+        // doesn't fit and is taller than 40% of a page, render it partially
+        // at the current position if there's enough remaining space (>= 15%
+        // of page). This prevents excessive page waste from tall rows.
+        const remaining = curY - mB;
+        if (remaining < rowH) {
+          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
+            // Very tall row with significant remaining space: render partial
+            rowH = remaining;
+          } else {
+            newPage();
+          }
+        }
 
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
@@ -1095,6 +1106,8 @@ export async function generatePdf(
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
+          // When row was split (rowH < rowHeights[ri]), cap cell height
+          if (cell.cellSpan.rowSpan === 1 && rowH < rowHeights[ri]) cellH = rowH;
 
           // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
