@@ -402,22 +402,27 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
 
 interface WLine { text: string; width: number; }
 
-function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number): WLine[] {
+function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number, charSpacing = 0): WLine[] {
   if (!text || maxWidth <= 0) return [];
   const lines: WLine[] = [];
+  /** measureText + charSpacing adjustment */
+  const measure = (t: string) => {
+    const w = measureText(t, font, fontSize);
+    return charSpacing && t.length > 1 ? w + charSpacing * (t.length - 1) : w;
+  };
 
   for (const para of text.split('\n')) {
     if (!para) { lines.push({ text: '', width: 0 }); continue; }
     let remaining = para;
     while (remaining.length > 0) {
-      const fullW = measureText(remaining, font, fontSize);
+      const fullW = measure(remaining);
       if (fullW <= maxWidth) { lines.push({ text: remaining, width: fullW }); break; }
 
       // Binary search for fit
       let lo = 1, hi = remaining.length;
       while (lo < hi) {
         const mid = (lo + hi + 1) >> 1;
-        if (measureText(remaining.substring(0, mid), font, fontSize) <= maxWidth) lo = mid;
+        if (measure(remaining.substring(0, mid)) <= maxWidth) lo = mid;
         else hi = mid - 1;
       }
       // CJK can break at any character; for spaces, break after space
@@ -428,7 +433,7 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
       }
       if (brk <= 0) brk = lo;
       const lineText = remaining.substring(0, brk);
-      lines.push({ text: lineText, width: measureText(lineText, font, fontSize) });
+      lines.push({ text: lineText, width: measure(lineText) });
       remaining = remaining.substring(brk).trimStart();
     }
   }
@@ -549,7 +554,7 @@ function estimateTableHeight(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1)).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             }
@@ -755,7 +760,7 @@ export async function generatePdf(
             if (indent !== 0) {
               // Split wrapping: first line at indented width, rest at full width
               const firstLineWidth = curPW - indent;
-              const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth);
+              const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing);
               if (firstLines.length <= 1) {
                 lines = firstLines;
               } else {
@@ -764,11 +769,11 @@ export async function generatePdf(
                 const usedText = firstLines[0].text;
                 const remaining = content.substring(usedText.length).trimStart();
                 if (remaining) {
-                  lines.push(...wrapText(remaining, font, ts.fontSize, curPW));
+                  lines.push(...wrapText(remaining, font, ts.fontSize, curPW, ts.charSpacing));
                 }
               }
             } else {
-              lines = wrapText(content, font, ts.fontSize, curPW);
+              lines = wrapText(content, font, ts.fontSize, curPW, ts.charSpacing);
             }
 
             for (const line of lines) {
@@ -905,6 +910,9 @@ export async function generatePdf(
         }
       }
 
+      // Resolve table-level border fill for outer frame
+      const tableBf = tbl.borderFillIDRef ? resolveBorderFill(doc, tbl.borderFillIDRef) : null;
+
       // ── Pass 2: Render ──
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         const rowH = Math.min(rowHeights[ri], contentH);
@@ -961,6 +969,24 @@ export async function generatePdf(
         }
         curY -= rowH;
       }
+
+      // ── Draw table outer frame border (from table-level borderFillIDRef) ──
+      if (tableBf) {
+        const fx = tableX;
+        const fy = tableStartY - totalTableH;
+        const fw = colX[colX.length - 1] || tblW;
+        const fh = totalTableH;
+        const drawBorderLine = (side: typeof tableBf.left, sx: number, sy: number, ex: number, ey: number) => {
+          if (side.type !== 'NONE') {
+            page.drawLine({ start: { x: sx, y: sy }, end: { x: ex, y: ey },
+              thickness: side.width, color: rgb(side.color.red, side.color.green, side.color.blue) });
+          }
+        };
+        drawBorderLine(tableBf.left, fx, fy, fx, fy + fh);                 // left
+        drawBorderLine(tableBf.right, fx + fw, fy, fx + fw, fy + fh);      // right
+        drawBorderLine(tableBf.top, fx, fy + fh, fx + fw, fy + fh);        // top
+        drawBorderLine(tableBf.bottom, fx, fy, fx + fw, fy);               // bottom
+      }
     }
 
     /** Estimate cell height from content */
@@ -981,7 +1007,7 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1)).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             } else if (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) {
@@ -1030,7 +1056,7 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { ty -= lh; continue; }
-              const cls = wrapText(text, cf, cts.fontSize, Math.max(innerW, 1));
+              const cls = wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing);
               for (const cl of cls) {
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
@@ -1165,7 +1191,7 @@ export async function generatePdf(
             if (texts.length > 0) {
               const text = texts.join('');
               const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
-              const lines = wrapText(text, defaultFont, defaultTs.fontSize, shapeW);
+              const lines = wrapText(text, defaultFont, defaultTs.fontSize, shapeW, defaultTs.charSpacing);
               for (const line of lines) {
                 checkBreak(lineH);
                 drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
@@ -1195,7 +1221,7 @@ export async function generatePdf(
           const shapeText = extractShapeText(element);
           if (shapeText.trim()) {
             const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
-            const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW);
+            const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW, defaultTs.charSpacing);
             for (const line of lines) {
               checkBreak(lineH);
               drawText(page, line.text, shapeX, curY - defaultTs.fontSize, defaultFont, defaultTs.fontSize, defaultTs.color);
