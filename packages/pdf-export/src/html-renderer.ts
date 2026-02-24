@@ -487,7 +487,7 @@ const BASE_CSS = `
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: ${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}; padding: 0.5px 1px; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
+  td, th { border: ${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}; padding: 1px 2px; font-size: inherit; line-height: 1.08; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
   td { vertical-align: top; }
   th { vertical-align: middle; background-color: ${HWP_COLOR_TABLE_HEADER}; font-weight: bold; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: inherit !important; page-break-inside: auto !important; }
