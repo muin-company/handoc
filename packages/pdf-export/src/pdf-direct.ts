@@ -7,7 +7,7 @@
 
 import { HanDoc, extractAnnotationText } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
-import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage } from 'pdf-lib';
+import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth, PDFOperator } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
 import * as path from 'path';
