@@ -173,16 +173,23 @@ function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorder
   };
 }
 
-/** Get cell padding from cellMargin (HWP units) or default */
+/** Get cell padding from cellMargin (HWP units) or default.
+ *  Values of 0xFFFFFFFF (4294967295) mean "not set" — use default. */
 function getCellPadding(cell: any): { left: number; right: number; top: number; bottom: number } {
   const m = cell.cellMargin;
-  if (m && (m.left || m.right || m.top || m.bottom)) {
-    return {
-      left: hwpToPt(m.left ?? 0),
-      right: hwpToPt(m.right ?? 0),
-      top: hwpToPt(m.top ?? 0),
-      bottom: hwpToPt(m.bottom ?? 0),
-    };
+  const UNSET = 4294967295; // 0xFFFFFFFF sentinel
+  const validHwp = (v: number | undefined): number | undefined =>
+    (v != null && v !== UNSET && v >= 0 && v < 100000) ? v : undefined;
+  if (m) {
+    const l = validHwp(m.left), r = validHwp(m.right), t = validHwp(m.top), b = validHwp(m.bottom);
+    if (l != null || r != null || t != null || b != null) {
+      return {
+        left: l != null ? hwpToPt(l) : 2,
+        right: r != null ? hwpToPt(r) : 2,
+        top: t != null ? hwpToPt(t) : 2,
+        bottom: b != null ? hwpToPt(b) : 2,
+      };
+    }
   }
   return { left: 2, right: 2, top: 2, bottom: 2 };
 }
