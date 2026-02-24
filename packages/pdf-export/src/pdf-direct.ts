@@ -5,7 +5,7 @@
  * Key principle: Use HWPX values exactly as specified. No heuristic adjustments.
  */
 
-import { HanDoc } from '@handoc/hwpx-parser';
+import { HanDoc, extractAnnotationText } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
 import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
@@ -264,6 +264,7 @@ interface TextStyle {
   strikeout: boolean;
   color: [number, number, number];
   isSerif: boolean;
+  charSpacing: number; // pt (character spacing)
 }
 
 interface ParaStyle {
@@ -280,7 +281,7 @@ interface ParaStyle {
 // ── Style resolution ──
 
 function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
-  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, color: [0, 0, 0], isSerif: true };
+  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, color: [0, 0, 0], isSerif: true, charSpacing: 0 };
   if (charPrIDRef == null) return d;
   const cp = doc.header.refList.charProperties.find(c => c.id === charPrIDRef);
   if (!cp) return d;
@@ -304,6 +305,13 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
       const fontName = langFaces?.fonts.find(f => f.id === hangulId)?.face;
       if (fontName) s.isSerif = SERIF_NAMES.has(fontName);
     }
+  }
+
+  // Character spacing (자간): percentage of font size → pt
+  const spacing = (cp as any).spacing;
+  if (spacing) {
+    const sv = spacing.hangul ?? spacing.HANGUL ?? spacing.latin ?? spacing.LATIN ?? 0;
+    if (sv !== 0) s.charSpacing = s.fontSize * sv / 100;
   }
 
   return s;
@@ -358,11 +366,25 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
 
 function measureText(text: string, font: PDFFont, fontSize: number): number {
   try {
-    return font.widthOfTextAtSize(text, fontSize);
+    let w = font.widthOfTextAtSize(text, fontSize);
+    // Space width correction: Apple fonts have oversized spaces (0.32~0.40em)
+    // vs HWP's HCR Batang (~0.25em). Use 0.30em as compromise target.
+    const spaceCount = text.split(' ').length - 1;
+    if (spaceCount > 0) {
+      const actualSpaceW = font.widthOfTextAtSize(' ', fontSize);
+      const targetSpaceW = fontSize * 0.30;
+      if (actualSpaceW > targetSpaceW) {
+        w -= spaceCount * (actualSpaceW - targetSpaceW);
+      }
+    }
+    return w;
   } catch {
     let w = 0;
     for (const ch of text) {
-      try { w += font.widthOfTextAtSize(ch, fontSize); }
+      try {
+        if (ch === ' ') { w += fontSize * 0.30; }
+        else { w += font.widthOfTextAtSize(ch, fontSize); }
+      }
       catch { w += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
     }
     return w;
@@ -413,18 +435,25 @@ function drawText(
   x: number, y: number,
   font: PDFFont, fontSize: number,
   color: [number, number, number],
+  charSpacing = 0,
 ): number {
   let drawX = x;
   try {
-    page.drawText(text, { x, y, size: fontSize, font, color: rgb(...color) });
-    return measureText(text, font, fontSize);
+    page.drawText(text, { x, y, size: fontSize, font, color: rgb(...color), ...(charSpacing ? { characterSpacing: charSpacing } : {}) });
+    return measureText(text, font, fontSize) + (charSpacing ? charSpacing * Math.max(0, text.length - 1) : 0);
   } catch {
     for (const ch of text) {
       try {
         page.drawText(ch, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
-        drawX += font.widthOfTextAtSize(ch, fontSize);
+        if (ch === ' ') {
+          const actualW = font.widthOfTextAtSize(' ', fontSize);
+          const targetW = fontSize * 0.30;
+          drawX += (actualW > targetW ? targetW : actualW) + charSpacing;
+        } else {
+          drawX += font.widthOfTextAtSize(ch, fontSize) + charSpacing;
+        }
       } catch {
-        drawX += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5);
+        drawX += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5) + charSpacing;
       }
     }
     return drawX - x;
@@ -557,22 +586,111 @@ export async function generatePdf(
     const cW = pageW - mL - mR;
     const contentH = pageH - mT - mB;
 
+    // ── Multi-column layout setup ──
+    const colCount = sp?.columns?.count ?? 1;
+    interface ColLayout { x: number; width: number; }
+    const colLayouts: ColLayout[] = [];
+    if (colCount > 1 && sp?.columns) {
+      const cols = sp.columns;
+      if (cols.sizes && cols.sizes.length === colCount) {
+        // Per-column widths from colSz
+        let xOff = mL;
+        for (let i = 0; i < colCount; i++) {
+          colLayouts.push({ x: xOff, width: hwpToPt(cols.sizes[i].width) });
+          xOff += hwpToPt(cols.sizes[i].width) + hwpToPt(cols.sizes[i].gap);
+        }
+      } else {
+        // Equal columns with same gap
+        const gap = cols.gap > 0 ? hwpToPt(cols.gap) : hwpToPt(colCount > 1 ? 1134 : 0);
+        const colW = (cW - gap * (colCount - 1)) / colCount;
+        let xOff = mL;
+        for (let i = 0; i < colCount; i++) {
+          colLayouts.push({ x: xOff, width: colW });
+          xOff += colW + gap;
+        }
+      }
+    } else {
+      colLayouts.push({ x: mL, width: cW });
+    }
+
     let page = pdfDoc.addPage([pageW, pageH]);
     let curY = pageH - mT;
+    let curCol = 0;
+
+    function newColumn() {
+      curCol++;
+      if (curCol >= colLayouts.length) {
+        // All columns full — new page
+        page = pdfDoc.addPage([pageW, pageH]);
+        curCol = 0;
+      }
+      curY = pageH - mT;
+    }
 
     function newPage() {
       page = pdfDoc.addPage([pageW, pageH]);
       curY = pageH - mT;
+      curCol = 0;
     }
 
     function checkBreak(h: number) {
-      if (curY - h < mB) newPage();
+      if (curY - h < mB) {
+        if (colLayouts.length > 1) newColumn();
+        else newPage();
+      }
     }
 
     for (const para of section.paragraphs) {
+      // Handle column break
+      if (para.columnBreak && colLayouts.length > 1) {
+        newColumn();
+      }
+
       const ps = resolveParaStyle(doc, para.paraPrIDRef);
-      const pL = mL + ps.marginLeft;
-      const pW = cW - ps.marginLeft - ps.marginRight;
+
+      // Check for inline column definition changes (ctrl > colPr)
+      for (const run of para.runs) {
+        for (const child of run.children) {
+          if (child.type === 'ctrl') {
+            const colPrEl = child.element.children.find((c: GenericElement) => c.tag === 'colPr');
+            if (colPrEl) {
+              const newColCount = Number(colPrEl.attrs['colCount'] ?? 1);
+              if (newColCount > 1) {
+                const colSizes = colPrEl.children.filter((c: GenericElement) => c.tag === 'colSz');
+                colLayouts.length = 0;
+                if (colSizes.length === newColCount) {
+                  let xOff = mL;
+                  for (let i = 0; i < newColCount; i++) {
+                    const w = hwpToPt(Number(colSizes[i].attrs['width'] ?? 0));
+                    const g = hwpToPt(Number(colSizes[i].attrs['gap'] ?? 0));
+                    colLayouts.push({ x: xOff, width: w });
+                    xOff += w + g;
+                  }
+                } else {
+                  const gap = hwpToPt(Number(colPrEl.attrs['sameGap'] ?? 1134));
+                  const colW = (cW - gap * (newColCount - 1)) / newColCount;
+                  let xOff = mL;
+                  for (let i = 0; i < newColCount; i++) {
+                    colLayouts.push({ x: xOff, width: colW });
+                    xOff += colW + gap;
+                  }
+                }
+                curCol = 0;
+                curY = pageH - mT;
+              } else {
+                // Back to single column
+                colLayouts.length = 0;
+                colLayouts.push({ x: mL, width: cW });
+                curCol = 0;
+              }
+            }
+          }
+        }
+      }
+
+      const col = colLayouts[curCol];
+      const pL = col.x + ps.marginLeft;
+      const pW = col.width - ps.marginLeft - ps.marginRight;
 
       curY -= ps.marginTop;
 
@@ -597,18 +715,26 @@ export async function generatePdf(
             }
             if (!content) continue;
 
+            // Use current column dimensions
+            const curColLayout = colLayouts[curCol];
+            const curPW = curColLayout.width - ps.marginLeft - ps.marginRight;
+
             const indent = firstLine ? ps.textIndent : 0;
-            const lines = wrapText(content, font, ts.fontSize, pW - indent);
+            const lines = wrapText(content, font, ts.fontSize, curPW - indent);
 
             for (const line of lines) {
               checkBreak(lineH);
+              // Re-fetch column after potential column/page break
+              const activeCol = colLayouts[curCol];
+              const activePL = activeCol.x + ps.marginLeft;
+              const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
 
-              let x = pL + (firstLine ? ps.textIndent : 0);
-              if (ps.align === 'center') x = pL + (pW - line.width) / 2;
-              else if (ps.align === 'right') x = pL + pW - line.width;
+              let x = activePL + (firstLine ? ps.textIndent : 0);
+              if (ps.align === 'center') x = activePL + (activePW - line.width) / 2;
+              else if (ps.align === 'right') x = activePL + activePW - line.width;
 
               const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color);
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, ts.charSpacing);
 
               if (ts.underline) {
                 page.drawLine({
@@ -634,14 +760,18 @@ export async function generatePdf(
             }
           } else if (child.type === 'table') {
             hasContent = true;
-            renderTable(doc, child.element, pL, pW, getFont);
+            const activeCol = colLayouts[curCol];
+            renderTable(doc, child.element, activeCol.x + ps.marginLeft, activeCol.width - ps.marginLeft - ps.marginRight, getFont);
           } else if (child.type === 'inlineObject') {
             hasContent = true;
+            const activeCol = colLayouts[curCol];
+            const activePL = activeCol.x + ps.marginLeft;
+            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
             if (child.name === 'picture' || child.name === 'pic') {
-              renderImage(doc, child.element, pL, pW);
+              renderImage(doc, child.element, activePL, activePW);
             } else {
               // Shape/drawing: render internal content (tables, images, text)
-              renderShapeContent(doc, child.element, pL, pW, font, ts, ps, getFont);
+              renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
             }
           }
         }
@@ -656,6 +786,7 @@ export async function generatePdf(
 
       curY -= ps.marginBottom;
     }
+
 
     // ── Table rendering with proper rowSpan/colSpan support ──
     function renderTable(doc: HanDoc, element: GenericElement, tableX: number, maxWidth: number, getFont: (s: TextStyle) => PDFFont) {
@@ -857,7 +988,7 @@ export async function generatePdf(
                 if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cts.charSpacing);
                 }
                 ty -= (lh - cts.fontSize);
               }
@@ -1005,6 +1136,48 @@ export async function generatePdf(
             }
           }
         }
+      }
+    }
+
+    // ── Header/Footer rendering ──
+    const headerMarginPt = sp ? hwpToPt(sp.margins.header) : 0;
+    const footerMarginPt = sp ? hwpToPt(sp.margins.footer) : 0;
+    const sectionHeaders = doc.headers;
+    const sectionFooters = doc.footers;
+    const pageStartNum = sp?.pageStartNumber ?? 1;
+    const defaultFont = fonts.sans;
+    const hfFontSize = 10;
+
+    for (let pi = 0; pi < sectionPages.length; pi++) {
+      const pg = sectionPages[pi];
+      const pageNum = pageStartNum + pi;
+
+      // Render headers
+      for (const hdr of sectionHeaders) {
+        if (hdr.applyPageType === 'EVEN' && pageNum % 2 !== 0) continue;
+        if (hdr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
+        let text = extractAnnotationText(hdr);
+        if (!text.trim()) continue;
+        text = text.replace(/\{\{page\}\}/g, String(pageNum));
+        // Position: top margin area, centered
+        const textW = defaultFont.widthOfTextAtSize(text, hfFontSize);
+        const hdrY = pageH - headerMarginPt - hfFontSize;
+        const hdrX = mL + (cW - textW) / 2;
+        drawText(pg, text, hdrX, hdrY, defaultFont, hfFontSize, [0, 0, 0]);
+      }
+
+      // Render footers
+      for (const ftr of sectionFooters) {
+        if (ftr.applyPageType === 'EVEN' && pageNum % 2 !== 0) continue;
+        if (ftr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
+        let text = extractAnnotationText(ftr);
+        if (!text.trim()) continue;
+        text = text.replace(/\{\{page\}\}/g, String(pageNum));
+        // Position: bottom margin area, centered
+        const textW = defaultFont.widthOfTextAtSize(text, hfFontSize);
+        const ftrY = footerMarginPt;
+        const ftrX = mL + (cW - textW) / 2;
+        drawText(pg, text, ftrX, ftrY, defaultFont, hfFontSize, [0, 0, 0]);
       }
     }
   }
