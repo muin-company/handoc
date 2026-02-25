@@ -117,19 +117,10 @@ function mmToPt(mmStr: string | undefined): number {
 /** Parse hex color string like "#000000" to rgb() */
 function parseColor(colorStr: string | undefined): { red: number; green: number; blue: number } | undefined {
   if (!colorStr || colorStr === 'none') return undefined;
-  // Handle both #RRGGBB and #AARRGGBB (ARGB) formats
-  const m6 = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
-  if (m6) {
-    const n = parseInt(m6[1], 16);
-    return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
-  }
-  const m8 = colorStr.match(/^#([0-9A-Fa-f]{8})$/);
-  if (m8) {
-    const n = parseInt(m8[1], 16);
-    // ARGB: skip alpha byte, extract RGB
-    return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
-  }
-  return undefined;
+  const m = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 16);
+  return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
 }
 
 interface BorderSide {
@@ -279,8 +270,6 @@ interface TextStyle {
   underline: boolean;
   strikeout: boolean;
   color: [number, number, number];
-  highlightColor?: [number, number, number];
-  shadeColor?: [number, number, number];
   isSerif: boolean;
   charSpacing: number; // pt (character spacing)
 }
@@ -294,12 +283,6 @@ interface ParaStyle {
   marginTop: number;    // pt
   marginBottom: number; // pt
   textIndent: number;   // pt
-  borderFillIDRef?: number;   // paragraph border/background fill reference
-  borderOffsetLeft?: number;  // pt
-  borderOffsetRight?: number; // pt
-  borderOffsetTop?: number;   // pt
-  borderOffsetBottom?: number; // pt
-  tabStops?: { pos: number; type?: string }[];  // tab stop positions in pt
 }
 
 // ── Style resolution ──
@@ -319,16 +302,6 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
   if (cp.textColor && cp.textColor !== '0' && cp.textColor !== '#000000' && cp.textColor !== '000000') {
     const c = cp.textColor.replace('#', '').padStart(6, '0');
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
-  }
-
-  // Highlight / shade background colors
-  if (cp.highlightColor && cp.highlightColor !== 'none' && cp.highlightColor !== 'NONE') {
-    const hc = cp.highlightColor.replace('#', '').padStart(6, '0');
-    s.highlightColor = [parseInt(hc.slice(0, 2), 16) / 255, parseInt(hc.slice(2, 4), 16) / 255, parseInt(hc.slice(4, 6), 16) / 255];
-  }
-  if (cp.shadeColor && cp.shadeColor !== 'none' && cp.shadeColor !== 'NONE' && cp.shadeColor !== '#000000' && cp.shadeColor !== '000000') {
-    const sc = cp.shadeColor.replace('#', '').padStart(6, '0');
-    s.shadeColor = [parseInt(sc.slice(0, 2), 16) / 255, parseInt(sc.slice(2, 4), 16) / 255, parseInt(sc.slice(4, 6), 16) / 255];
   }
 
   const fontRef = (cp as any).fontRef;
@@ -380,22 +353,6 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
     if (pp.margin.prev) s.marginTop = hwpToPt(pp.margin.prev);
     if (pp.margin.next) s.marginBottom = hwpToPt(pp.margin.next);
   }
-  if (pp.border) {
-    s.borderFillIDRef = pp.border.borderFillIDRef;
-    s.borderOffsetLeft = hwpToPt(pp.border.offsetLeft || 0);
-    s.borderOffsetRight = hwpToPt(pp.border.offsetRight || 0);
-    s.borderOffsetTop = hwpToPt(pp.border.offsetTop || 0);
-    s.borderOffsetBottom = hwpToPt(pp.border.offsetBottom || 0);
-  }
-  // Resolve tab stops
-  if (pp.tabPrIDRef != null) {
-    const tp = doc.header.refList.tabProperties?.find(t => t.id === pp.tabPrIDRef);
-    if (tp && tp.tabStops.length > 0) {
-      s.tabStops = tp.tabStops
-        .map(ts => ({ pos: hwpToPt(ts.pos), type: ts.type }))
-        .sort((a, b) => a.pos - b.pos);
-    }
-  }
   return s;
 }
 
@@ -405,27 +362,6 @@ const HANGUL_SYLLABLES = '가나다라마바사아자차카타파하';
 const HANGUL_JAMO = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ';
 const CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 const CIRCLED_HANGUL = '㉮㉯㉰㉱㉲㉳㉴㉵㉶㉷㉸㉹㉺㉻';
-
-/**
- * Map Private Use Area (PUA) bullet characters to visible Unicode equivalents.
- * HWP uses Wingdings-mapped PUA codepoints for common bullet symbols.
- */
-const PUA_BULLET_MAP: Record<string, string> = {
-  '\uF09F': '●',  // Wingdings filled circle
-  '\uF0A1': '○',  // Wingdings open circle
-  '\uF09E': '◆',  // Wingdings filled diamond
-  '\uF0A7': '■',  // Wingdings filled square
-  '\uF0D8': '▶',  // Wingdings right arrow
-  '\uF0FC': '✓',  // Wingdings checkmark
-  '\uF0B7': '●',  // Symbol bullet (common in Word)
-  '\uF076': '◆',  // Wingdings diamond variant
-  '\uF0A8': '□',  // Wingdings open square
-};
-
-function mapBulletChar(char: string): string {
-  if (!char) return '';
-  return PUA_BULLET_MAP[char] ?? char;
-}
 
 function formatNumber(n: number, fmt: string): string {
   switch (fmt) {
@@ -487,9 +423,8 @@ function getParaPrefix(
       if (paraHead?.text) {
         return { prefix: paraHead.text + ' ', autoIndent: ai, level };
       }
-      const mappedChar = mapBulletChar(bullet.char);
-      if (mappedChar) {
-        return { prefix: mappedChar + ' ', autoIndent: ai, level };
+      if (bullet.char) {
+        return { prefix: bullet.char + ' ', autoIndent: ai, level };
       }
     }
     return { prefix: '', autoIndent: false, level };
@@ -502,25 +437,14 @@ function getParaPrefix(
 
     // Initialize counters for this numbering id
     if (!state.counters.has(idRef)) {
-      // Pre-fill counters with (start - 1) so first increment yields `start`
-      const init = new Array(10).fill(0);
-      for (const lv of numbering.levels) {
-        const lvIdx = lv.level - 1; // levels are 1-based
-        if (lvIdx >= 0 && lvIdx < init.length && lv.start !== undefined) {
-          init[lvIdx] = lv.start - 1;
-        }
-      }
-      state.counters.set(idRef, init);
+      state.counters.set(idRef, new Array(10).fill(0));
     }
     const counters = state.counters.get(idRef)!;
 
     // Increment this level's counter
     counters[level]++;
-    // Reset all deeper levels to their start values
-    for (let i = level + 1; i < counters.length; i++) {
-      const lvDef = numbering.levels.find(l => l.level === i + 1);
-      counters[i] = (lvDef?.start ?? 1) - 1;
-    }
+    // Reset all deeper levels
+    for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
 
     const paraHead = numbering.levels.find(l => l.level === level + 1); // levels use 1-based
     const ai = paraHead?.autoIndent ?? false;
@@ -558,7 +482,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.03; // DO NOT REMOVE 1.03 - see MEMORY.md
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
 }
 
 // ── Text measurement ──
@@ -729,7 +653,6 @@ interface FloatingPos {
   horzOffset: number;  // HWP units
   width: number;       // HWP units (from hp:sz)
   height: number;      // HWP units (from hp:sz)
-  textWrap: string;    // TOP_AND_BOTTOM, SQUARE, etc.
 }
 
 /** Extract floating position info from a shape/image element */
@@ -766,7 +689,6 @@ function getFloatingPos(element: GenericElement): FloatingPos | null {
     horzOffset,
     width,
     height,
-    textWrap: element.attrs['textWrap'] ?? '',
   };
 }
 
@@ -850,8 +772,7 @@ export async function generatePdf(
     } catch { /* skip */ }
   }
 
-  for (let _sectionIdx = 0; _sectionIdx < doc.sections.length; _sectionIdx++) {
-    const section = doc.sections[_sectionIdx];
+  for (const section of doc.sections) {
     const sp = section.sectionProps;
     // Handle landscape (NARROWLY): swap width/height since HWPX stores portrait dimensions
     const isLandscape = sp?.landscape ?? false;
@@ -986,17 +907,11 @@ export async function generatePdf(
 
       curY -= ps.marginTop;
 
-      // Track paragraph start position for border/background rendering
-      const paraStartY = curY;
-      const paraStartPage = page;
-
       // Track if paragraph has any content
       let hasContent = false;
       let firstLine = true;
       let prefixApplied = false;
       let prefixWidth = 0; // measured width of prefix for autoIndent hanging indent
-      let pendingTab = false; // track if a tab was encountered before current text
-      let tabIndex = 0; // which tab stop we're on (increments per tab in a line)
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
@@ -1004,13 +919,6 @@ export async function generatePdf(
         const lineH = calcLineHeight(ps, ts.fontSize);
 
         for (const child of run.children) {
-          // Handle tab characters: mark pending tab for next text segment
-          if (child.type === 'inlineObject' && child.name === 'tab') {
-            pendingTab = true;
-            tabIndex++;
-            continue;
-          }
-
           if (child.type === 'text') {
             let content = child.content;
             if (!content && !hasContent) {
@@ -1030,25 +938,9 @@ export async function generatePdf(
               prefixApplied = true;
             }
 
-            // Handle tab: if a tab was pending, render text at the tab stop position
-            let tabXOffset = 0;
-            if (pendingTab && ps.tabStops && ps.tabStops.length > 0) {
-              // Use tab stop position relative to paragraph left edge
-              const stopIdx = Math.min(tabIndex - 1, ps.tabStops.length - 1);
-              tabXOffset = ps.tabStops[stopIdx].pos;
-              pendingTab = false;
-            } else if (pendingTab) {
-              // No defined tab stops: use default 40pt tab interval
-              tabXOffset = tabIndex * 40;
-              pendingTab = false;
-            }
-
             // Use current column dimensions
             const curColLayout = colLayouts[curCol];
             const curPW = curColLayout.width - ps.marginLeft - ps.marginRight;
-
-            // When tab offset is active, reduce available width and shift x
-            const tabAdjustedPW = tabXOffset > 0 ? Math.max(curPW - tabXOffset, 20) : curPW;
 
             // Wrap text with proper first-line indent handling:
             // First line uses curPW - indent (narrower for positive indent, wider for negative/hanging indent)
@@ -1056,11 +948,11 @@ export async function generatePdf(
             // When autoIndent is active, continuation lines get a hanging indent equal to the prefix width
             const autoIndentOffset = (prefixAutoIndent && prefixWidth > 0) ? prefixWidth : 0;
             const indent = firstLine ? ps.textIndent : autoIndentOffset;
-            const contWidth = tabAdjustedPW - autoIndentOffset; // continuation line width
+            const contWidth = curPW - autoIndentOffset; // continuation line width
             let lines: WLine[];
             if (indent !== 0 || autoIndentOffset !== 0) {
               // Split wrapping: first line at indented width, rest at continuation width
-              const firstLineWidth = tabAdjustedPW - indent;
+              const firstLineWidth = curPW - indent;
               const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing);
               if (firstLines.length <= 1) {
                 lines = firstLines;
@@ -1074,10 +966,9 @@ export async function generatePdf(
                 }
               }
             } else {
-              lines = wrapText(content, font, ts.fontSize, tabAdjustedPW, ts.charSpacing);
+              lines = wrapText(content, font, ts.fontSize, curPW, ts.charSpacing);
             }
 
-            let lineIdx = 0;
             for (const line of lines) {
               checkBreak(lineH);
               // Re-fetch column after potential column/page break
@@ -1086,30 +977,17 @@ export async function generatePdf(
               const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
 
               const lineIndent = firstLine ? ps.textIndent : autoIndentOffset;
-              // Apply tab offset only to the first line of this text segment
-              const lineTabOffset = (lineIdx === 0 && tabXOffset > 0) ? tabXOffset : 0;
-              const effectiveW = activePW - lineIndent - lineTabOffset;
-              let x = activePL + lineIndent + lineTabOffset;
+              const effectiveW = activePW - lineIndent;
+              let x = activePL + lineIndent;
               let justifyCs = ts.charSpacing;
-              if (ps.align === 'center') x = activePL + lineIndent + lineTabOffset + (effectiveW - line.width) / 2;
-              else if (ps.align === 'right') x = activePL + lineIndent + lineTabOffset + effectiveW - line.width;
+              if (ps.align === 'center') x = activePL + lineIndent + (effectiveW - line.width) / 2;
+              else if (ps.align === 'right') x = activePL + lineIndent + effectiveW - line.width;
               else if (ps.align === 'justify' && line.isWrapped && line.text.length > 1) {
                 const extra = effectiveW - line.width;
                 justifyCs = ts.charSpacing + extra / (line.text.length - 1);
               }
 
               const textY = curY - ts.fontSize;
-
-              // Draw highlight/shade background behind text
-              const bgColor = ts.highlightColor ?? ts.shadeColor;
-              if (bgColor) {
-                page.drawRectangle({
-                  x, y: textY - 1,
-                  width: line.width, height: ts.fontSize + 2,
-                  color: rgb(...bgColor),
-                });
-              }
-
               drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
 
               if (ts.underline) {
@@ -1133,7 +1011,6 @@ export async function generatePdf(
               curY -= lineH;
               firstLine = false;
               hasContent = true;
-              lineIdx++;
             }
           } else if (child.type === 'table') {
             hasContent = true;
@@ -1147,78 +1024,18 @@ export async function generatePdf(
             // Check for floating positioning (treatAsChar="0")
             const floatPos = getFloatingPos(child.element);
             if (floatPos) {
-              // TOP_AND_BOTTOM wrap with PARA-relative: treat as block flow
-              // so page breaks work correctly (images/shapes get proper page space)
-              if (floatPos.textWrap === 'TOP_AND_BOTTOM' && floatPos.vertRelTo === 'PARA') {
-                if (child.name === 'picture' || child.name === 'pic') {
-                  renderImage(doc, child.element, activePL, activePW);
-                } else {
-                  // Container/shape with TOP_AND_BOTTOM — render as block element
-                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
-                  if (fh > 0) checkBreak(fh);
-                  renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
-                }
-              } else {
-                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
-                // PARA-relative floating elements — advance curY so content doesn't overlap.
-                if (floatPos.vertRelTo === 'PARA') {
-                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
-                  if (fh > 0) { checkBreak(fh); curY -= fh; }
-                }
+              renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+              // PARA-relative floating elements (vertRelTo=PARA, vertOffset=0) act like
+              // anchored-in-place images — advance curY so content doesn't overlap.
+              if (floatPos.vertRelTo === 'PARA') {
+                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                if (fh > 0) { checkBreak(fh); curY -= fh; }
               }
             } else if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, activePL, activePW);
             } else {
               // Shape/drawing: render internal content (tables, images, text)
               renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
-            }
-          } else if (child.type === 'shape') {
-            // Shape objects (container, polygon, rect, etc.)
-            hasContent = true;
-            const activeCol = colLayouts[curCol];
-            const activePL = activeCol.x + ps.marginLeft;
-            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
-            const floatPos = getFloatingPos(child.element);
-            if (child.name === 'container') {
-              // Container: render children at their offsets within reserved block space
-              if (floatPos && floatPos.textWrap !== 'TOP_AND_BOTTOM' && floatPos.vertRelTo !== 'PARA') {
-                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
-              } else {
-                renderContainer(doc, child.element, activePL, activePW);
-              }
-            } else if (floatPos) {
-              if (floatPos.textWrap === 'TOP_AND_BOTTOM' && floatPos.vertRelTo === 'PARA') {
-                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
-                if (fh > 0) checkBreak(fh);
-                renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
-              } else {
-                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
-                if (floatPos.vertRelTo === 'PARA') {
-                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
-                  if (fh > 0) { checkBreak(fh); curY -= fh; }
-                }
-              }
-            } else {
-              renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
-            }
-          } else if (child.type === 'equation') {
-            // Equation fallback: render the raw script text as inline content
-            const scriptEl = child.element.children.find((c: GenericElement) => c.tag === 'script');
-            const eqText = scriptEl?.text ?? '';
-            if (eqText) {
-              hasContent = true;
-              const activeCol = colLayouts[curCol];
-              const curPW = activeCol.width - ps.marginLeft - ps.marginRight;
-              const eqContent = `[${eqText}]`;
-              const lines = wrapText(eqContent, font, ts.fontSize, curPW, ts.charSpacing);
-              for (const line of lines) {
-                checkBreak(lineH);
-                const activeCol2 = colLayouts[curCol];
-                const drawX = activeCol2.x + ps.marginLeft;
-                drawText(page, line.text, drawX, curY - ts.fontSize, font, ts.fontSize, ts.color);
-                curY -= lineH;
-                firstLine = false;
-              }
             }
           } else if (child.type === 'ctrl') {
             // Check for footnote/endnote
@@ -1245,52 +1062,6 @@ export async function generatePdf(
       }
 
       curY -= ps.marginBottom;
-
-      // ── Paragraph border/background rendering ──
-      // Only draw if paragraph stayed on the same page (no mid-paragraph page break)
-      if (ps.borderFillIDRef != null && ps.borderFillIDRef > 0 && page === paraStartPage) {
-        const bf = resolveBorderFill(doc, ps.borderFillIDRef);
-        const hasBg = bf.bgColor && !(bf.bgColor.red === 1 && bf.bgColor.green === 1 && bf.bgColor.blue === 1);
-        const hasBorders = [bf.top, bf.bottom, bf.left, bf.right].some(s => s.type !== 'NONE' && s.width > 0);
-
-        if (hasBg || hasBorders) {
-          const activeCol = colLayouts[curCol];
-          const bx = activeCol.x - (ps.borderOffsetLeft ?? 0);
-          const bw = activeCol.width + (ps.borderOffsetLeft ?? 0) + (ps.borderOffsetRight ?? 0);
-          const by = curY + ps.marginBottom; // bottom of content area
-          const bTop = paraStartY + (ps.borderOffsetTop ?? 0);
-          const bh = bTop - by;
-
-          if (bh > 0) {
-            // Draw background (drawn after text — may overlap in rare cases;
-            // paragraph backgrounds are uncommon in practice)
-            if (hasBg) {
-              page.drawRectangle({
-                x: bx, y: by, width: bw, height: bh,
-                color: rgb(bf.bgColor!.red, bf.bgColor!.green, bf.bgColor!.blue),
-                borderWidth: 0,
-                opacity: 0.85, // slight transparency so text remains readable
-              });
-            }
-
-            // Draw borders
-            if (hasBorders) {
-              const drawBorderSide = (side: typeof bf.top, x1: number, y1: number, x2: number, y2: number) => {
-                if (side.type === 'NONE' || side.width <= 0) return;
-                page.drawLine({
-                  start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
-                  thickness: side.width,
-                  color: rgb(side.color.red, side.color.green, side.color.blue),
-                });
-              };
-              drawBorderSide(bf.top, bx, bTop, bx + bw, bTop);
-              drawBorderSide(bf.bottom, bx, by, bx + bw, by);
-              drawBorderSide(bf.left, bx, by, bx, bTop);
-              drawBorderSide(bf.right, bx + bw, by, bx + bw, bTop);
-            }
-          }
-        }
-      }
     }
 
 
@@ -1403,7 +1174,7 @@ export async function generatePdf(
         // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
         // for normal tables, cap at 50% expansion.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 40 ? 0.2 : 0.5;
+          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
           const excess = rh - declaredRowH;
           rh = declaredRowH + excess * maxExpansion;
         }
@@ -1411,7 +1182,7 @@ export async function generatePdf(
       }
 
       // Adjust for rowSpan>1 cells (skip for dense tables to preserve layout)
-      if (tbl.rows.length <= 40) {
+      if (tbl.rows.length <= 20) {
         for (let ri = 0; ri < tbl.rows.length; ri++) {
           for (const cell of tbl.rows[ri].cells) {
             const rs = cell.cellSpan.rowSpan;
@@ -1431,22 +1202,45 @@ export async function generatePdf(
         for (let i = 0; i < rowHeights.length; i++) rowHeights[i] *= tableScale;
       }
 
-      // Helper: render a single row of cells at curY
-      function renderTableRow(ri: number, rowH: number) {
+      // ── Pass 2: Render ──
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        let rowH = Math.min(rowHeights[ri], contentH);
+
+        // Page break with row-splitting for very tall rows: when a row
+        // doesn't fit and is taller than 40% of a page, render it partially
+        // at the current position if there's enough remaining space (>= 15%
+        // of page). This prevents excessive page waste from tall rows.
+        const remaining = curY - mB;
+        if (remaining < rowH) {
+          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
+            // Very tall row with significant remaining space: render partial
+            rowH = remaining;
+          } else {
+            newPage();
+          }
+        }
+
+        // Compute cell X positions per-row by accumulating declared cell widths.
+        // This is more accurate than the grid for complex merged tables.
         let rowCellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
           const cellW = gridCellW(cell);
           const cellX = rowCellX;
 
+          // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
           for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
+          // When row was split (rowH < rowHeights[ri]), cap cell height
           if (cell.cellSpan.rowSpan === 1 && rowH < rowHeights[ri]) cellH = rowH;
 
+          // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
+
+          // Cell background fill
           if (bf.bgColor) {
             page.drawRectangle({
               x: cellX, y: curY - cellH,
@@ -1454,6 +1248,8 @@ export async function generatePdf(
               color: rgb(bf.bgColor.red, bf.bgColor.green, bf.bgColor.blue),
             });
           }
+
+          // Cell borders (draw each side individually for proper width/type)
           const bx = cellX, by = curY - cellH;
           if (bf.left.type !== 'NONE') {
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
@@ -1472,39 +1268,11 @@ export async function generatePdf(
               thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
           }
 
+          // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
           rowCellX += cellW;
         }
         curY -= rowH;
-      }
-
-      // ── Pass 2: Render ──
-      const headerRowH = rowHeights[0] ?? 0;
-      for (let ri = 0; ri < tbl.rows.length; ri++) {
-        let rowH = Math.min(rowHeights[ri], contentH);
-
-        // Page break with row-splitting for very tall rows: when a row
-        // doesn't fit and is taller than 40% of a page, render it partially
-        // at the current position if there's enough remaining space (>= 15%
-        // of page). This prevents excessive page waste from tall rows.
-        const remaining = curY - mB;
-        // For repeatHeader tables, account for header row height in space check
-        const needsHeader = tbl.repeatHeader && ri > 0;
-        const spaceNeeded = needsHeader ? rowH + headerRowH : rowH;
-        if (remaining < spaceNeeded) {
-          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15 && !needsHeader) {
-            // Very tall row with significant remaining space: render partial
-            rowH = remaining;
-          } else {
-            newPage();
-            // Repeat header row after page break if repeatHeader is set
-            if (needsHeader && headerRowH > 0) {
-              renderTableRow(0, headerRowH);
-            }
-          }
-        }
-
-        renderTableRow(ri, rowH);
       }
 
     }
@@ -1546,12 +1314,6 @@ export async function generatePdf(
                 const shH = Number(curSzEl.attrs['height'] ?? 0);
                 h += shH > 0 ? hwpToPt(shH) : lh;
               } else { h += lh; }
-            } else if (cc.type === 'equation') {
-              const scriptEl = cc.element.children.find((c: GenericElement) => c.tag === 'script');
-              const eqText = scriptEl?.text ?? '';
-              if (eqText) {
-                h += wrapText(`[${eqText}]`, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
-              }
             }
           }
         }
@@ -1609,16 +1371,6 @@ export async function generatePdf(
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
-                  // Draw highlight/shade background behind text in table cells
-                  const cellBgColor = cts.highlightColor ?? cts.shadeColor;
-                  if (cellBgColor) {
-                    page.drawRectangle({
-                      x: tx, y: ty - 1,
-                      width: cl.width, height: cts.fontSize + 2,
-                      color: rgb(...cellBgColor),
-                    });
-                  }
-
                   drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
 
                   // Underline / strikethrough in table cells
@@ -1663,21 +1415,6 @@ export async function generatePdf(
               renderShapeContent(doc, cc.element, cellX + 2, cellW - 4, cf, cts, cps, getFont);
               ty = curY;
               curY = savedCurY;
-            } else if (cc.type === 'equation') {
-              // Equation fallback: render raw script text in table cell
-              const scriptEl = cc.element.children.find((c: GenericElement) => c.tag === 'script');
-              const eqText = scriptEl?.text ?? '';
-              if (eqText) {
-                const eqContent = `[${eqText}]`;
-                const cls = wrapText(eqContent, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing);
-                for (const cl of cls) {
-                  ty -= cts.fontSize;
-                  if (ty > cellTop - cellH) {
-                    drawText(page, cl.text, cellX + cm.left, ty, cf, cts.fontSize, cts.color);
-                  }
-                  ty -= (lh - cts.fontSize);
-                }
-              }
             }
           }
         }
@@ -1799,103 +1536,6 @@ export async function generatePdf(
     }
 
     // ── Shape/drawing content rendering ──
-    /** Render imgBrush fill on a shape element (polygon, rect, etc.) as an image */
-    function renderShapeFillImage(doc: HanDoc, element: GenericElement, imgX: number, maxWidth: number): boolean {
-      // Look for fillBrush > imgBrush > img with binaryItemIDRef
-      const fillBrush = findDesc(element, 'fillBrush');
-      if (!fillBrush) return false;
-      const imgBrush = findDesc(fillBrush, 'imgBrush');
-      if (!imgBrush) return false;
-      const imgEl = findDesc(imgBrush, 'img');
-      if (!imgEl) return false;
-      const binRef = imgEl.attrs['binaryItemIDRef'] ?? '';
-      if (!binRef) return false;
-
-      const img = doc.images.find(i => i.path.includes(binRef));
-      if (!img) return false;
-      const pdfImg = imageCache.get(img.path);
-      if (!pdfImg) return false;
-
-      // Get shape dimensions from orgSz or parent sz
-      const orgSzEl = findDesc(element, 'orgSz');
-      const curSzEl = findDesc(element, 'curSz');
-      let w = maxWidth, h = maxWidth * 0.75;
-      const szSource = curSzEl ?? orgSzEl;
-      if (szSource) {
-        const wH = Number(szSource.attrs['width'] ?? 0);
-        const hH = Number(szSource.attrs['height'] ?? 0);
-        if (wH > 0) w = hwpToPt(wH);
-        if (hH > 0) h = hwpToPt(hH);
-      }
-      // Clamp to page
-      if (w > maxWidth) { const sc = maxWidth / w; w = maxWidth; h *= sc; }
-      if (h > contentH) { const sc = contentH / h; h = contentH; w *= sc; }
-
-      checkBreak(h);
-      page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
-      curY -= h;
-      return true;
-    }
-
-    /** Render a container element: reserve block space and draw children at their offsets */
-    function renderContainer(doc: HanDoc, element: GenericElement, containerX: number, maxWidth: number) {
-      // Get container dimensions from sz or orgSz
-      const szEl = findDesc(element, 'sz');
-      const orgSzEl = findDesc(element, 'orgSz');
-      const src = szEl ?? orgSzEl;
-      let containerW = maxWidth, containerH = maxWidth * 0.5;
-      if (src) {
-        const wH = Number(src.attrs['width'] ?? 0);
-        const hH = Number(src.attrs['height'] ?? 0);
-        if (wH > 0) containerW = hwpToPt(wH);
-        if (hH > 0) containerH = hwpToPt(hH);
-      }
-      // Scale to fit
-      const scale = containerW > maxWidth ? maxWidth / containerW : 1;
-      containerW *= scale;
-      containerH *= scale;
-      if (containerH > contentH) containerH = contentH;
-
-      checkBreak(containerH);
-      const baseY = curY; // top of reserved space
-
-      // Draw each child shape at its offset within the container
-      for (const child of element.children) {
-        const tag = child.tag.includes(':') ? child.tag.split(':').pop()! : child.tag;
-        if (tag === 'polygon' || tag === 'rect' || tag === 'ellipse') {
-          const fillBrush = findDesc(child, 'fillBrush');
-          if (!fillBrush) continue;
-          const imgBrush = findDesc(fillBrush, 'imgBrush');
-          if (!imgBrush) continue;
-          const imgEl = findDesc(imgBrush, 'img');
-          if (!imgEl) continue;
-          const binRef = imgEl.attrs['binaryItemIDRef'] ?? '';
-          if (!binRef) continue;
-          const img = doc.images.find(i => i.path.includes(binRef));
-          if (!img) continue;
-          const pdfImg = imageCache.get(img.path);
-          if (!pdfImg) continue;
-
-          // Get child offset and size
-          const offEl = findDesc(child, 'offset');
-          const childOrgSz = findDesc(child, 'orgSz');
-          const ox = offEl ? hwpToPt(Number(offEl.attrs['x'] ?? 0)) * scale : 0;
-          const oy = offEl ? hwpToPt(Number(offEl.attrs['y'] ?? 0)) * scale : 0;
-          let cw = childOrgSz ? hwpToPt(Number(childOrgSz.attrs['width'] ?? 0)) * scale : containerW;
-          let ch = childOrgSz ? hwpToPt(Number(childOrgSz.attrs['height'] ?? 0)) * scale : containerH;
-          // Clamp child to container bounds
-          if (ox + cw > containerW) cw = containerW - ox;
-          if (oy + ch > containerH) ch = containerH - oy;
-
-          const drawX = containerX + ox;
-          const drawY = baseY - oy - ch; // PDF Y is bottom-up
-          page.drawImage(pdfImg, { x: drawX, y: drawY, width: cw, height: ch });
-        }
-      }
-
-      curY -= containerH;
-    }
-
     function renderShapeContent(
       doc: HanDoc, element: GenericElement,
       shapeX: number, shapeW: number,
@@ -1913,12 +1553,6 @@ export async function generatePdf(
         } else if (tag === 'pic' || tag === 'picture') {
           renderImage(doc, child, shapeX, shapeW);
           hasContent = true;
-        } else if (tag === 'polygon' || tag === 'rect' || tag === 'ellipse' || tag === 'arc' || tag === 'curve') {
-          // Shape elements may have imgBrush fills — render as image
-          const rendered = renderShapeFillImage(doc, child, shapeX, shapeW);
-          if (rendered) hasContent = true;
-          // Also recurse into shape children (subList, drawText, nested pics/tables)
-          renderShapeContent(doc, child, shapeX, shapeW, defaultFont, defaultTs, defaultPs, getFont);
         } else if (tag === 'drawText' || tag === 'subList') {
           // drawText contains paragraphs — render text from them
           const paras = findAllDesc(child, 'p');
@@ -1975,105 +1609,48 @@ export async function generatePdf(
     }
 
     // ── Footnote rendering at page bottom ──
-    // Footnote rendering settings from footNotePr or defaults
-    const fnPr = sp?.footNotePr;
     const fnFont = fonts.sans;
-    // Footnote font size: ~80% of default body size (10pt)
     const fnFontSize = 8;
     const fnLineH = fnFontSize * 1.4;
-    const fnSuffix = fnPr?.suffixChar ?? ')';
-    const fnSuperscript = fnPr?.supscript ?? false;
-    // Separator line: length=-1 means 30% of column width (HWP convention)
-    const fnSepLength = (fnPr?.noteLineLength ?? -1) < 0 ? cW * 0.3 : hwpToPt(fnPr!.noteLineLength);
-    const fnSepWidth = fnPr?.noteLineWidth ?? 0.34; // ~0.12mm default
-    // Spacing (HWP units → pt)
-    const fnAboveLine = fnPr ? hwpToPt(fnPr.aboveLine) : 6;
-    const fnBelowLine = fnPr ? hwpToPt(fnPr.belowLine) : 4;
-    const fnBetweenNotes = fnPr ? hwpToPt(fnPr.betweenNotes) : 2;
-
     for (const [pg, footnotes] of pageFootnotes) {
       if (footnotes.length === 0) continue;
       // Calculate total footnote area height
-      const totalFnH = fnAboveLine + fnSepWidth + fnBelowLine
-        + fnLineH * footnotes.length
-        + fnBetweenNotes * (footnotes.length - 1);
-      // Start from bottom margin, going up
+      const totalFnH = fnLineH * footnotes.length + 6; // 6pt for separator line + spacing
+      // Start from bottom margin + footer space, going up
       let fnY = mB + totalFnH;
 
-      // Draw separator line (above footnotes)
-      const sepY = fnY - fnAboveLine + fnSepWidth / 2;
-      fnY -= fnAboveLine + fnSepWidth + fnBelowLine;
+      // Draw separator line
+      const sepY = fnY + 4;
       pg.drawLine({
         start: { x: mL, y: sepY },
-        end: { x: mL + fnSepLength, y: sepY },
-        thickness: fnSepWidth,
+        end: { x: mL + cW * 0.3, y: sepY },
+        thickness: 0.5,
         color: rgb(0, 0, 0),
       });
 
       // Draw each footnote
-      for (let fi = 0; fi < footnotes.length; fi++) {
-        const fn = footnotes[fi];
-        const numStr = `${fn.num}${fnSuffix} `;
-
-        if (fnSuperscript) {
-          // Superscript: smaller font, raised baseline
-          const supSize = fnFontSize * 0.7;
-          const supRaise = fnFontSize * 0.3;
-          const numW = fnFont.widthOfTextAtSize(numStr, supSize);
-          drawText(pg, numStr, mL, fnY - fnFontSize + supRaise, fnFont, supSize, [0, 0, 0]);
-          drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        } else {
-          const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
-          drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-          drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        }
-        fnY -= fnLineH + (fi < footnotes.length - 1 ? fnBetweenNotes : 0);
+      for (const fn of footnotes) {
+        const numStr = `${fn.num}) `;
+        const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
+        // Draw number
+        drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        // Draw text
+        drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        fnY -= fnLineH;
       }
     }
 
     // ── Header/Footer rendering ──
     const headerMarginPt = sp ? hwpToPt(sp.margins.header) : 0;
     const footerMarginPt = sp ? hwpToPt(sp.margins.footer) : 0;
-    const sectionHeaders = doc.headers.filter(h => h.sectionIndex === undefined || h.sectionIndex === _sectionIdx);
-    const sectionFooters = doc.footers.filter(f => f.sectionIndex === undefined || f.sectionIndex === _sectionIdx);
+    const sectionHeaders = doc.headers;
+    const sectionFooters = doc.footers;
     const pageStartNum = sp?.pageStartNumber ?? 1;
+    const hfFont = fonts.sans;
+    const hfFontSize = 10;
 
     // Total page count for {{pages}} placeholder
     const totalPages = sectionPages.length;
-
-    // Helper: resolve font/size/alignment for a header/footer annotation
-    const resolveHfStyle = (hf: { paragraphs: any[] }) => {
-      let fontSize = 10;
-      let align: 'left' | 'center' | 'right' = 'center';
-      let isSerif = false;
-      let color: [number, number, number] = [0, 0, 0];
-      // Use first paragraph with content for style
-      for (const p of hf.paragraphs) {
-        const pp = doc.header.refList.paraProperties.find((x: any) => x.id === p.paraPrIDRef);
-        if (pp?.align) {
-          const a = (typeof pp.align === 'string' ? pp.align : '').toLowerCase();
-          if (a === 'left' || a === 'justify') align = 'left';
-          else if (a === 'right') align = 'right';
-          else align = 'center';
-        }
-        if (p.runs && p.runs.length > 0) {
-          const ts = resolveTextStyle(doc, p.runs[0].charPrIDRef ?? null);
-          fontSize = ts.fontSize;
-          isSerif = ts.isSerif;
-          color = ts.color;
-          break;
-        }
-      }
-      const font = isSerif ? fonts.serif : fonts.sans;
-      return { fontSize, align, font, color };
-    };
-
-    // Helper: compute X position based on alignment
-    const alignX = (align: 'left' | 'center' | 'right', textW: number) => {
-      if (align === 'left') return mL;
-      if (align === 'right') return mL + cW - textW;
-      return mL + (cW - textW) / 2;
-    };
 
     for (let pi = 0; pi < sectionPages.length; pi++) {
       const pg = sectionPages[pi];
@@ -2091,11 +1668,11 @@ export async function generatePdf(
         let text = extractAnnotationText(hdr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        const { fontSize: hfSize, align, font: hfFont, color: hfColor } = resolveHfStyle(hdr);
-        const textW = measureText(text, hfFont, hfSize);
-        const hdrY = pageH - headerMarginPt - hfSize;
-        const hdrX = alignX(align, textW);
-        drawText(pg, text, hdrX, hdrY, hfFont, hfSize, hfColor);
+        // Position: top margin area, centered
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
+        const hdrY = pageH - headerMarginPt - hfFontSize;
+        const hdrX = mL + (cW - textW) / 2;
+        drawText(pg, text, hdrX, hdrY, hfFont, hfFontSize, [0, 0, 0]);
       }
 
       // Render footers
@@ -2105,23 +1682,21 @@ export async function generatePdf(
         let text = extractAnnotationText(ftr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        const { fontSize: hfSize, align, font: hfFont, color: hfColor } = resolveHfStyle(ftr);
-        const textW = measureText(text, hfFont, hfSize);
+        // Position: bottom margin area, centered
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const ftrY = footerMarginPt;
-        const ftrX = alignX(align, textW);
-        drawText(pg, text, ftrX, ftrY, hfFont, hfSize, hfColor);
+        const ftrX = mL + (cW - textW) / 2;
+        drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
       }
 
       // Render automatic page numbering from <hp:pageNum> section config
       if (sp?.pageNumbering) {
         const pn = sp.pageNumbering;
         const sideChar = pn.sideChar || '';
-        const pnFont = fonts.sans;
-        const pnFontSize = 10;
         const numStr = sideChar
           ? `${sideChar} ${pageNum} ${sideChar}`
           : String(pageNum);
-        const numW = pnFont.widthOfTextAtSize(numStr, pnFontSize);
+        const numW = hfFont.widthOfTextAtSize(numStr, hfFontSize);
         const pos = pn.pos.toUpperCase();
 
         let pnX: number;
@@ -2136,13 +1711,13 @@ export async function generatePdf(
 
         let pnY: number;
         if (pos.includes('TOP')) {
-          pnY = pageH - headerMarginPt - pnFontSize;
+          pnY = pageH - headerMarginPt - hfFontSize;
         } else {
           // BOTTOM (default)
           pnY = footerMarginPt;
         }
 
-        drawText(pg, numStr, pnX, pnY, pnFont, pnFontSize, [0, 0, 0]);
+        drawText(pg, numStr, pnX, pnY, hfFont, hfFontSize, [0, 0, 0]);
       }
     }
   }

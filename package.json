@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.18",
+    "pdf-lib": "^1.17.1",
     "tsup": "^8.0.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",

@@ -11,6 +11,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18(@types/node@25.3.0)(jsdom@28.1.0))
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(postcss@8.5.6)(typescript@5.9.3)
@@ -2662,14 +2665,6 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@4.0.18(vite@6.4.1(@types/node@22.19.11))':
-    dependencies:
-      '@vitest/spy': 4.0.18
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 6.4.1(@types/node@22.19.11)
-
   '@vitest/mocker@4.0.18(vite@6.4.1(@types/node@25.3.0))':
     dependencies:
       '@vitest/spy': 4.0.18
@@ -3549,7 +3544,7 @@ snapshots:
   vitest@4.0.18(@types/node@22.19.11)(jsdom@28.1.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@6.4.1(@types/node@22.19.11))
+      '@vitest/mocker': 4.0.18(vite@6.4.1(@types/node@25.3.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18
