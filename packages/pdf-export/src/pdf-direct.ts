@@ -477,9 +477,9 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // percent: value is percentage (e.g., 160 = 160%)
   // HWP lineSpacing PERCENT is based on font em-square, not font size alone.
   // Apply line height correction to match 한/글's actual line height output.
-  // 1.08x caused 12 regressions (page overflow); 1.03x balances 
-  // improving under-spaced docs without worsening already-dense ones.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
+  // HWP percent line-spacing is relative to the font's em-square.
+  // No correction factor — trust the HWPX value directly.
+  return fontSize * (ps.lineSpacingValue / 100);
 }
 
 // ── Text measurement ──
@@ -488,11 +488,11 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
   try {
     let w = font.widthOfTextAtSize(text, fontSize);
     // Space width correction: Apple fonts have oversized spaces (0.32~0.40em)
-    // vs HWP's HCR Batang (~0.25em). Use 0.30em as compromise target.
+    // vs HWP's HCR Batang (~0.25em). Use 0.27em to reduce text wrapping overflow.
     const spaceCount = text.split(' ').length - 1;
     if (spaceCount > 0) {
       const actualSpaceW = font.widthOfTextAtSize(' ', fontSize);
-      const targetSpaceW = fontSize * 0.30;
+      const targetSpaceW = fontSize * 0.27;
       if (actualSpaceW > targetSpaceW) {
         w -= spaceCount * (actualSpaceW - targetSpaceW);
       }
@@ -502,7 +502,7 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
     let w = 0;
     for (const ch of text) {
       try {
-        if (ch === ' ') { w += fontSize * 0.30; }
+        if (ch === ' ') { w += fontSize * 0.27; }
         else { w += font.widthOfTextAtSize(ch, fontSize); }
       }
       catch { w += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
@@ -589,7 +589,7 @@ function drawText(
         page.drawText(ch, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
         if (ch === ' ') {
           const actualW = font.widthOfTextAtSize(' ', fontSize);
-          const targetW = fontSize * 0.30;
+          const targetW = fontSize * 0.27;
           drawX += (actualW > targetW ? targetW : actualW) + charSpacing;
         } else {
           drawX += font.widthOfTextAtSize(ch, fontSize) + charSpacing;
@@ -636,6 +636,57 @@ function extractShapeText(el: GenericElement): string {
     text += extractShapeText(child);
   }
   return text;
+}
+
+// ── Floating position detection ──
+
+interface FloatingPos {
+  treatAsChar: boolean;
+  vertRelTo: string;   // PAPER, PAGE, PARA, etc.
+  horzRelTo: string;   // PAPER, PAGE, COLUMN, PARA, etc.
+  vertAlign: string;
+  horzAlign: string;
+  vertOffset: number;  // HWP units
+  horzOffset: number;  // HWP units
+  width: number;       // HWP units (from hp:sz)
+  height: number;      // HWP units (from hp:sz)
+}
+
+/** Extract floating position info from a shape/image element */
+function getFloatingPos(element: GenericElement): FloatingPos | null {
+  const posEl = element.children.find(c => {
+    const t = c.tag.includes(':') ? c.tag.split(':').pop()! : c.tag;
+    return t === 'pos';
+  });
+  if (!posEl) return null;
+
+  const treatAsChar = posEl.attrs['treatAsChar'] !== '0';
+  if (treatAsChar) return null; // inline, not floating
+
+  const szEl = element.children.find(c => {
+    const t = c.tag.includes(':') ? c.tag.split(':').pop()! : c.tag;
+    return t === 'sz';
+  });
+  const width = Number(szEl?.attrs['width'] ?? 0);
+  const height = Number(szEl?.attrs['height'] ?? 0);
+
+  // Handle unsigned 32-bit overflow for negative offsets (e.g. 4294898560 → -68736)
+  let vertOffset = Number(posEl.attrs['vertOffset'] ?? 0);
+  let horzOffset = Number(posEl.attrs['horzOffset'] ?? 0);
+  if (vertOffset > 2147483647) vertOffset = vertOffset - 4294967296;
+  if (horzOffset > 2147483647) horzOffset = horzOffset - 4294967296;
+
+  return {
+    treatAsChar: false,
+    vertRelTo: posEl.attrs['vertRelTo'] ?? 'PARA',
+    horzRelTo: posEl.attrs['horzRelTo'] ?? 'COLUMN',
+    vertAlign: posEl.attrs['vertAlign'] ?? 'TOP',
+    horzAlign: posEl.attrs['horzAlign'] ?? 'LEFT',
+    vertOffset,
+    horzOffset,
+    width,
+    height,
+  };
 }
 
 // ── Table height estimation (for nested tables) ──
@@ -865,7 +916,7 @@ export async function generatePdf(
             let content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
-              const emptyH = lineH * 0.75;
+              const emptyH = lineH * 0.6;
               checkBreak(emptyH);
               curY -= emptyH;
               hasContent = true;
@@ -963,7 +1014,12 @@ export async function generatePdf(
             const activeCol = colLayouts[curCol];
             const activePL = activeCol.x + ps.marginLeft;
             const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
-            if (child.name === 'picture' || child.name === 'pic') {
+            // Check for floating positioning (treatAsChar="0")
+            const floatPos = getFloatingPos(child.element);
+            if (floatPos) {
+              // Render at absolute position, don't advance curY
+              renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+            } else if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, activePL, activePW);
             } else {
               // Shape/drawing: render internal content (tables, images, text)
@@ -988,7 +1044,7 @@ export async function generatePdf(
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
         const defaultLineH = calcLineHeight(ps, 10);
-        const emptyLineH = defaultLineH * 0.75;
+        const emptyLineH = defaultLineH * 0.6;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
       }
@@ -1356,6 +1412,74 @@ export async function generatePdf(
       checkBreak(h);
       page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
       curY -= h;
+    }
+
+    // ── Floating element rendering (absolute positioning) ──
+    function renderFloatingElement(
+      doc: HanDoc,
+      child: { type: string; name: string; element: GenericElement },
+      fp: FloatingPos,
+      getFont: (s: TextStyle) => PDFFont,
+      defaultFont: PDFFont, defaultTs: TextStyle, defaultPs: ParaStyle,
+    ) {
+      const w = fp.width > 0 ? hwpToPt(fp.width) : 100;
+      const h = fp.height > 0 ? hwpToPt(fp.height) : 50;
+
+      // Compute absolute X position
+      let x: number;
+      if (fp.horzRelTo === 'PAPER' || fp.horzRelTo === 'PAGE') {
+        x = hwpToPt(fp.horzOffset);
+      } else if (fp.horzRelTo === 'COLUMN') {
+        const activeCol = colLayouts[curCol];
+        x = activeCol.x + hwpToPt(fp.horzOffset);
+      } else {
+        // PARA or other — relative to current paragraph position
+        const activeCol = colLayouts[curCol];
+        x = activeCol.x + hwpToPt(fp.horzOffset);
+      }
+
+      // Compute absolute Y position (PDF Y is bottom-up)
+      let y: number;
+      if (fp.vertRelTo === 'PAPER' || fp.vertRelTo === 'PAGE') {
+        // From top of page
+        y = pageH - hwpToPt(fp.vertOffset) - h;
+      } else {
+        // PARA or other — relative to current Y position
+        y = curY - hwpToPt(fp.vertOffset) - h;
+      }
+
+      // Clamp to page bounds
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+      if (x + w > pageW) x = pageW - w;
+
+      // Render the element at absolute position
+      if (child.name === 'picture' || child.name === 'pic') {
+        // Direct image draw at absolute position
+        const fileRef = findDesc(child.element, 'fileRef');
+        const imgTag = findDesc(child.element, 'img');
+        const binRef = fileRef?.attrs['binItemIDRef']
+          ?? imgTag?.attrs['binaryItemIDRef']
+          ?? imgTag?.attrs['binItemIDRef']
+          ?? '';
+        if (binRef) {
+          const img = doc.images.find(i => i.path.includes(binRef));
+          if (img) {
+            const pdfImg = imageCache.get(img.path);
+            if (pdfImg) {
+              page.drawImage(pdfImg, { x, y, width: w, height: h });
+            }
+          }
+        }
+      } else {
+        // Shape: save/restore curY and render content at absolute position
+        const savedCurY = curY;
+        const savedPage = page;
+        curY = y + h; // Set curY to top of the floating box
+        renderShapeContent(doc, child.element, x, w, defaultFont, defaultTs, defaultPs, getFont);
+        curY = savedCurY; // Restore — floating doesn't affect text flow
+        page = savedPage;
+      }
     }
 
     // ── Shape/drawing content rendering ──
