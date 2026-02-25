@@ -8,8 +8,6 @@ export interface HeaderFooter {
   type: 'header' | 'footer';
   applyPageType: string;
   paragraphs: Paragraph[];
-  /** Index of the section this header/footer belongs to (set by collectHeadersFooters) */
-  sectionIndex?: number;
 }
 
 export interface Footnote {
@@ -146,17 +144,13 @@ function genericToRawNode(el: GenericElement): Record<string, unknown> {
  */
 export function collectHeadersFooters(sections: { paragraphs: Paragraph[] }[]): HeaderFooter[] {
   const results: HeaderFooter[] = [];
-  for (let si = 0; si < sections.length; si++) {
-    const section = sections[si];
+  for (const section of sections) {
     for (const para of section.paragraphs) {
       for (const run of para.runs) {
         for (const child of run.children) {
           if (child.type === 'ctrl') {
             const hf = parseHeaderFooter(child.element);
-            if (hf) {
-              hf.sectionIndex = si;
-              results.push(hf);
-            }
+            if (hf) results.push(hf);
           }
         }
       }

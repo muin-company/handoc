@@ -149,7 +149,7 @@ function parseCharProperties(containers: Record<string, unknown>[]): CharPropert
       const bold = boldEl !== undefined ? true : (attrs.bold !== undefined ? parseBool(attrs.bold) : undefined);
       const italicEl = findChild(item, 'italic');
       const italic = italicEl !== undefined ? true : (attrs.italic !== undefined ? parseBool(attrs.italic) : undefined);
-      const textColor = attrs.textColor || attrs.color || undefined;
+      const textColor = attrs.textColor || undefined;
       const shadeColor = attrs.shadeColor && attrs.shadeColor !== 'none' ? attrs.shadeColor : undefined;
       const highlightColor = attrs.highlightColor || undefined;
 

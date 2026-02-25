@@ -269,8 +269,6 @@ interface TextStyle {
   italic: boolean;
   underline: boolean;
   strikeout: boolean;
-  superscript: boolean;
-  subscript: boolean;
   color: [number, number, number];
   isSerif: boolean;
   charSpacing: number; // pt (character spacing)
@@ -290,7 +288,7 @@ interface ParaStyle {
 // ── Style resolution ──
 
 function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
-  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, superscript: false, subscript: false, color: [0, 0, 0], isSerif: true, charSpacing: 0 };
+  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, color: [0, 0, 0], isSerif: true, charSpacing: 0 };
   if (charPrIDRef == null) return d;
   const cp = doc.header.refList.charProperties.find(c => c.id === charPrIDRef);
   if (!cp) return d;
@@ -301,8 +299,6 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
   if (cp.italic) s.italic = true;
   if (cp.underline && cp.underline !== 'none' && cp.underline !== 'NONE') s.underline = true;
   if (cp.strikeout && cp.strikeout !== 'none' && cp.strikeout !== 'NONE') s.strikeout = true;
-  if (cp.superscript) s.superscript = true;
-  if (cp.subscript) s.subscript = true;
   if (cp.textColor && cp.textColor !== '0' && cp.textColor !== '#000000' && cp.textColor !== '000000') {
     const c = cp.textColor.replace('#', '').padStart(6, '0');
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
@@ -991,17 +987,8 @@ export async function generatePdf(
                 justifyCs = ts.charSpacing + extra / (line.text.length - 1);
               }
 
-              // Superscript/subscript: reduce font size and shift vertically
-              let renderFontSize = ts.fontSize;
-              let textY = curY - ts.fontSize;
-              if (ts.superscript) {
-                renderFontSize = ts.fontSize * 0.6;
-                textY = curY - ts.fontSize + ts.fontSize * 0.35;
-              } else if (ts.subscript) {
-                renderFontSize = ts.fontSize * 0.6;
-                textY = curY - ts.fontSize - ts.fontSize * 0.1;
-              }
-              drawText(page, line.text, x, textY, font, renderFontSize, ts.color, justifyCs, ts.bold, ts.italic);
+              const textY = curY - ts.fontSize;
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
 
               if (ts.underline) {
                 page.drawLine({
@@ -1151,14 +1138,6 @@ export async function generatePdf(
         }
       }
 
-      // Normalize column widths to match tblW when all columns are known
-      // but rounding/inference caused a small discrepancy.
-      const finalSum = colWidths.reduce((a, b) => a + b, 0);
-      if (finalSum > 0 && tblW > 0 && Math.abs(finalSum - tblW) > 0.01) {
-        const scale = tblW / finalSum;
-        for (let i = 0; i < colWidths.length; i++) colWidths[i] *= scale;
-      }
-
       // Column X offsets
       const colX: number[] = [0];
       for (let i = 0; i < colWidths.length; i++) {
@@ -1195,7 +1174,7 @@ export async function generatePdf(
         // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
         // for normal tables, cap at 50% expansion.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 40 ? 0.2 : 0.5;
+          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
           const excess = rh - declaredRowH;
           rh = declaredRowH + excess * maxExpansion;
         }
@@ -1203,7 +1182,7 @@ export async function generatePdf(
       }
 
       // Adjust for rowSpan>1 cells (skip for dense tables to preserve layout)
-      if (tbl.rows.length <= 40) {
+      if (tbl.rows.length <= 20) {
         for (let ri = 0; ri < tbl.rows.length; ri++) {
           for (const cell of tbl.rows[ri].cells) {
             const rs = cell.cellSpan.rowSpan;
@@ -1223,21 +1202,45 @@ export async function generatePdf(
         for (let i = 0; i < rowHeights.length; i++) rowHeights[i] *= tableScale;
       }
 
-      // Helper: render a single row of cells at curY
-      function renderTableRow(ri: number, rowH: number) {
+      // ── Pass 2: Render ──
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        let rowH = Math.min(rowHeights[ri], contentH);
+
+        // Page break with row-splitting for very tall rows: when a row
+        // doesn't fit and is taller than 40% of a page, render it partially
+        // at the current position if there's enough remaining space (>= 15%
+        // of page). This prevents excessive page waste from tall rows.
+        const remaining = curY - mB;
+        if (remaining < rowH) {
+          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
+            // Very tall row with significant remaining space: render partial
+            rowH = remaining;
+          } else {
+            newPage();
+          }
+        }
+
+        // Compute cell X positions per-row by accumulating declared cell widths.
+        // This is more accurate than the grid for complex merged tables.
+        let rowCellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
           const cellW = gridCellW(cell);
-          const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
+          const cellX = rowCellX;
 
+          // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
           for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
+          // When row was split (rowH < rowHeights[ri]), cap cell height
           if (cell.cellSpan.rowSpan === 1 && rowH < rowHeights[ri]) cellH = rowH;
 
+          // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
+
+          // Cell background fill
           if (bf.bgColor) {
             page.drawRectangle({
               x: cellX, y: curY - cellH,
@@ -1245,6 +1248,8 @@ export async function generatePdf(
               color: rgb(bf.bgColor.red, bf.bgColor.green, bf.bgColor.blue),
             });
           }
+
+          // Cell borders (draw each side individually for proper width/type)
           const bx = cellX, by = curY - cellH;
           if (bf.left.type !== 'NONE') {
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
@@ -1262,40 +1267,18 @@ export async function generatePdf(
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
               thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
           }
+
+          // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
+          rowCellX += cellW;
         }
         curY -= rowH;
-      }
-
-      // ── Pass 2: Render ──
-      const headerRowH = rowHeights[0] ?? 0;
-      for (let ri = 0; ri < tbl.rows.length; ri++) {
-        let rowH = Math.min(rowHeights[ri], contentH);
-
-        // Page break check
-        const remaining = curY - mB;
-        const needsHeader = tbl.repeatHeader && ri > 0;
-        const spaceNeeded = needsHeader ? rowH + headerRowH : rowH;
-        if (remaining < spaceNeeded) {
-          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15 && !needsHeader) {
-            // Very tall row with significant remaining space: render partial
-            rowH = remaining;
-          } else {
-            newPage();
-            // Repeat header row after page break
-            if (needsHeader && headerRowH > 0) {
-              renderTableRow(0, headerRowH);
-            }
-          }
-        }
-
-        renderTableRow(ri, rowH);
       }
 
     }
 
     /** Estimate cell height from content */
-    function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont, excessFactor = 0.2): number {
+    function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont): number {
       const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
       const cm = getCellPadding(cell);
       const padH = cm.top + cm.bottom;
@@ -1341,7 +1324,7 @@ export async function generatePdf(
       // wider than native Korean fonts, causing extra text wrapping that inflates
       // height estimates. Discount the excess by 35% to compensate.
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        return cellDeclaredH + (h - cellDeclaredH) * excessFactor;
+        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
       }
       return Math.max(cellDeclaredH, h);
     }
@@ -1350,19 +1333,15 @@ export async function generatePdf(
     function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
       const cm = getCellPadding(cell);
       const innerW = cellW - cm.left - cm.right;
-      // Vertical alignment: estimate raw content height (no discount factor)
+      // Vertical alignment: estimate content height first
       const vAlign = cell.vertAlign ?? 'TOP';
-      const innerH = cellH - cm.top - cm.bottom;
       let contentHeight = 0;
       if (vAlign === 'CENTER' || vAlign === 'BOTTOM') {
-        // Use raw content height calculation (not estimateCellHeight which applies
-        // a 0.2 excess discount). Accurate height is needed for positioning.
-        const rawH = estimateCellHeight(doc, cell, cellW, getFont);
-        contentHeight = rawH - cm.top - cm.bottom;
+        contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - cm.top - cm.bottom;
       }
       let yOffset = 0;
-      if (vAlign === 'CENTER') yOffset = Math.max(0, (innerH - contentHeight) / 2);
-      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, innerH - contentHeight);
+      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - cm.top);
+      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - cm.top - cm.bottom);
 
       let ty = cellTop - cm.top - yOffset;
       for (const cp of cell.paragraphs) {
@@ -1381,24 +1360,14 @@ export async function generatePdf(
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
                 let cellJustifyCs = cts.charSpacing;
-                if (cps.align === 'center') tx = cellX + cm.left + (innerW - cl.width) / 2;
+                if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 else if (cps.align === 'justify' && cl.isWrapped && cl.text.length > 1) {
                   const extra = innerW - cl.width;
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
-                  // Superscript/subscript in table cells
-                  let cellRenderFs = cts.fontSize;
-                  let cellRenderTy = ty;
-                  if (cts.superscript) {
-                    cellRenderFs = cts.fontSize * 0.6;
-                    cellRenderTy = ty + cts.fontSize * 0.35;
-                  } else if (cts.subscript) {
-                    cellRenderFs = cts.fontSize * 0.6;
-                    cellRenderTy = ty - cts.fontSize * 0.1;
-                  }
-                  drawText(page, cl.text, tx, cellRenderTy, cf, cellRenderFs, cts.color, cellJustifyCs, cts.bold, cts.italic);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
 
                   // Underline / strikethrough in table cells
                   if (cts.underline) {

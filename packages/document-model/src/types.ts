@@ -29,16 +29,6 @@ export interface SectionProperties {
     formatType: string; // e.g. 'DIGIT'
     sideChar: string;   // e.g. '-' → renders as "- 1 -"
   };
-  /** Footnote properties from <hp:footNotePr> */
-  footNotePr?: {
-    suffixChar: string;       // e.g. ')' — appended after footnote number
-    supscript: boolean;       // whether footnote number is superscript
-    noteLineLength: number;   // separator line length in HWP units (-1 = 30% of column width)
-    noteLineWidth: number;    // separator line thickness in pt
-    aboveLine: number;        // spacing above separator line in HWP units
-    belowLine: number;        // spacing below separator line in HWP units
-    betweenNotes: number;     // spacing between footnotes in HWP units
-  };
 }
 
 // ── Section ──

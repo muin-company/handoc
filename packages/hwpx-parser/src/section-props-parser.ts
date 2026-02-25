@@ -66,37 +66,5 @@ export function parseSectionProps(element: GenericElement): SectionProperties {
     }
   }
 
-  // Parse footnote properties from <hp:footNotePr>
-  const footNotePr = findChild(element, 'footNotePr');
-  if (footNotePr) {
-    const autoNumFormat = findChild(footNotePr, 'autoNumFormat');
-    const noteLine = findChild(footNotePr, 'noteLine');
-    const noteSpacing = findChild(footNotePr, 'noteSpacing');
-
-    const suffixChar = autoNumFormat?.attrs['suffixChar'] ?? ')';
-    const supscript = num(autoNumFormat?.attrs['supscript']) !== 0;
-
-    // noteLine length: -1 means 30% of column width (HWP convention)
-    const noteLineLength = num(noteLine?.attrs['length'], -1);
-    // noteLine width: parse "0.12 mm" → pt
-    const noteLineWidthStr = noteLine?.attrs['width'] ?? '0.12 mm';
-    const noteLineWidthMm = parseFloat(noteLineWidthStr) || 0.12;
-    const noteLineWidth = noteLineWidthMm * 2.8346; // mm → pt
-
-    const aboveLine = num(noteSpacing?.attrs['aboveLine'], 850);
-    const belowLine = num(noteSpacing?.attrs['belowLine'], 567);
-    const betweenNotes = num(noteSpacing?.attrs['betweenNotes'], 283);
-
-    result.footNotePr = {
-      suffixChar,
-      supscript,
-      noteLineLength,
-      noteLineWidth,
-      aboveLine,
-      belowLine,
-      betweenNotes,
-    };
-  }
-
   return result;
 }
