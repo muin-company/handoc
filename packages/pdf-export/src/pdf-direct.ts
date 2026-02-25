@@ -482,7 +482,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100);
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
 }
 
 // ── Text measurement ──
@@ -1536,6 +1536,44 @@ export async function generatePdf(
     }
 
     // ── Shape/drawing content rendering ──
+    /** Render imgBrush fill on a shape element (polygon, rect, etc.) as an image */
+    function renderShapeFillImage(doc: HanDoc, element: GenericElement, imgX: number, maxWidth: number): boolean {
+      // Look for fillBrush > imgBrush > img with binaryItemIDRef
+      const fillBrush = findDesc(element, 'fillBrush');
+      if (!fillBrush) return false;
+      const imgBrush = findDesc(fillBrush, 'imgBrush');
+      if (!imgBrush) return false;
+      const imgEl = findDesc(imgBrush, 'img');
+      if (!imgEl) return false;
+      const binRef = imgEl.attrs['binaryItemIDRef'] ?? '';
+      if (!binRef) return false;
+
+      const img = doc.images.find(i => i.path.includes(binRef));
+      if (!img) return false;
+      const pdfImg = imageCache.get(img.path);
+      if (!pdfImg) return false;
+
+      // Get shape dimensions from orgSz or parent sz
+      const orgSzEl = findDesc(element, 'orgSz');
+      const curSzEl = findDesc(element, 'curSz');
+      let w = maxWidth, h = maxWidth * 0.75;
+      const szSource = curSzEl ?? orgSzEl;
+      if (szSource) {
+        const wH = Number(szSource.attrs['width'] ?? 0);
+        const hH = Number(szSource.attrs['height'] ?? 0);
+        if (wH > 0) w = hwpToPt(wH);
+        if (hH > 0) h = hwpToPt(hH);
+      }
+      // Clamp to page
+      if (w > maxWidth) { const sc = maxWidth / w; w = maxWidth; h *= sc; }
+      if (h > contentH) { const sc = contentH / h; h = contentH; w *= sc; }
+
+      checkBreak(h);
+      page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
+      curY -= h;
+      return true;
+    }
+
     function renderShapeContent(
       doc: HanDoc, element: GenericElement,
       shapeX: number, shapeW: number,
@@ -1553,6 +1591,12 @@ export async function generatePdf(
         } else if (tag === 'pic' || tag === 'picture') {
           renderImage(doc, child, shapeX, shapeW);
           hasContent = true;
+        } else if (tag === 'polygon' || tag === 'rect' || tag === 'ellipse' || tag === 'arc' || tag === 'curve') {
+          // Shape elements may have imgBrush fills — render as image
+          const rendered = renderShapeFillImage(doc, child, shapeX, shapeW);
+          if (rendered) hasContent = true;
+          // Also recurse into shape children (subList, drawText, nested pics/tables)
+          renderShapeContent(doc, child, shapeX, shapeW, defaultFont, defaultTs, defaultPs, getFont);
         } else if (tag === 'drawText' || tag === 'subList') {
           // drawText contains paragraphs — render text from them
           const paras = findAllDesc(child, 'p');
