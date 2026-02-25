@@ -1168,15 +1168,18 @@ export async function generatePdf(
           rh = Math.max(rh, h);
         }
         // HWP declared row height is a minimum; content can expand rows.
-        // Our embedded fonts are wider than original Korean fonts, causing
-        // overestimation from extra text wrapping. estimateCellHeight already
-        // applies a 80% discount on excess, but apply an additional row-level
-        // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
-        // for normal tables, cap at 50% expansion.
+        // Our embedded fonts are wider → overestimation from extra wrapping.
+        // estimateCellHeight already discounts excess. Apply row-level cap:
+        // Dense tables (>20 rows): cap at 20%. Normal tables: cap at 50%.
+        // Exception: when ratio > 10x, content genuinely auto-expands →
+        // trust the (already-discounted) estimate from estimateCellHeight.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
-          const excess = rh - declaredRowH;
-          rh = declaredRowH + excess * maxExpansion;
+          const rowRatio = rh / declaredRowH;
+          if (rowRatio <= 10) {
+            const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
+            rh = declaredRowH + (rh - declaredRowH) * maxExpansion;
+          }
+          // rowRatio > 10: pass through without cap
         }
         rowHeights.push(rh);
       }
@@ -1319,11 +1322,17 @@ export async function generatePdf(
         }
         h += cps.marginBottom;
       }
-      // Declared height is a minimum — content can legitimately exceed it (e.g. long
-      // text in narrow cells that auto-expand in HWP). Our embedded fonts are ~30%
-      // wider than native Korean fonts, causing extra text wrapping that inflates
-      // height estimates. Discount the excess by 35% to compensate.
+      // Declared height is a minimum — content can legitimately exceed it.
+      // Our embedded fonts are wider than Korean fonts → overestimated wrapping.
+      // For moderate overflow (≤10x declared): cap at 20% of excess.
+      // For extreme overflow (>10x): content genuinely auto-expands in HWP
+      // (e.g. form template cells with tiny declared heights). Use pow(ratio, 0.8)
+      // to give progressive expansion that accounts for font-width inflation.
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
+        const ratio = h / cellDeclaredH;
+        if (ratio > 10) {
+          return cellDeclaredH * Math.pow(ratio, 0.8);
+        }
         return cellDeclaredH + (h - cellDeclaredH) * 0.2;
       }
       return Math.max(cellDeclaredH, h);
