@@ -138,16 +138,23 @@ program
 // ── to-pdf ──
 program
   .command('to-pdf')
-  .description('Convert HWPX to PDF')
-  .argument('<file>', 'HWPX file path')
+  .description('Convert HWPX (or HWP) to PDF')
+  .argument('<file>', 'HWPX or HWP file path')
   .option('-o, --output <path>', 'Output PDF file path')
   .option('--direct', 'Use direct pdf-lib export (no Playwright needed, faster but lower fidelity)')
   .action(async (file: string, opts: { output?: string; direct?: boolean }) => {
     const buf = await readFile(file);
+    let hwpxBytes: Uint8Array;
+    const isHwp = /\.hwp$/i.test(file) && !/\.hwpx$/i.test(file);
+    if (isHwp) {
+      hwpxBytes = convertHwpToHwpx(new Uint8Array(buf));
+    } else {
+      hwpxBytes = new Uint8Array(buf);
+    }
     const pdf = opts.direct
-      ? await generatePdf(new Uint8Array(buf))
-      : await hwpxToPdf(new Uint8Array(buf));
-    const outPath = opts.output || file.replace(/\.hwpx$/i, '.pdf');
+      ? await generatePdf(hwpxBytes)
+      : await hwpxToPdf(hwpxBytes);
+    const outPath = opts.output || file.replace(/\.hwpx?$/i, '.pdf');
     await writeFile(outPath, pdf);
     console.log(`Converted: ${basename(file)} → ${basename(outPath)}`);
   });
