@@ -455,8 +455,9 @@ function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorder
 
   function parseSide(tag: string): BorderSide {
     const el = bf!.children.find(c => c.tag === tag);
-    if (!el) return defaultBorder;
+    if (!el) return tag === 'diagonal' ? noneBorder : defaultBorder;
     const t = el.attrs['type'] ?? 'SOLID';
+    if (t === 'NONE' || t === 'none') return noneBorder;
     const w = mmToPt(el.attrs['width']);
     const c = parseColor(el.attrs['color']) ?? { red: 0, green: 0, blue: 0 };
     return { type: t, width: w, color: c };
