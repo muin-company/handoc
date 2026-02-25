@@ -1151,7 +1151,16 @@ export async function generatePdf(
     let curCol = 0;
     const sectionPages: PDFPage[] = [page];
 
-    // (Column separator rendering placeholder — requires parser support)
+    // Track column separator info per page for post-rendering
+    interface ColSepInfo { layouts: ColLayout[]; separator?: { type: string; width: string; color: string } }
+    const pageColSeps = new Map<PDFPage, ColSepInfo>();
+    function recordColSep() {
+      if (colLayouts.length > 1) {
+        const sep = sp?.columns?.separator;
+        pageColSeps.set(page, { layouts: [...colLayouts], separator: sep });
+      }
+    }
+    recordColSep();
 
     // ── Per-section header/footer collection ──
     const sectionHeaders: import('@handoc/hwpx-parser').HeaderFooter[] = [];
@@ -1183,6 +1192,7 @@ export async function generatePdf(
         page = pdfDoc.addPage([pageW, pageH]);
         sectionPages.push(page);
         curCol = 0;
+        recordColSep();
       }
       curY = pageH - mT;
     }
@@ -1192,6 +1202,7 @@ export async function generatePdf(
       sectionPages.push(page);
       curY = pageH - mT;
       curCol = 0;
+      recordColSep();
     }
 
     function checkBreak(h: number) {
@@ -1242,13 +1253,25 @@ export async function generatePdf(
                     xOff += colW + gap;
                   }
                 }
+                // Parse inline column separator line
+                const inlineColLine = colPrEl.children.find((c: GenericElement) => c.tag === 'colLine');
+                if (inlineColLine && sp) {
+                  if (!sp.columns) sp.columns = { count: newColCount, gap: 0, type: 'NEWSPAPER' };
+                  sp.columns.separator = {
+                    type: inlineColLine.attrs['type'] ?? 'SOLID',
+                    width: inlineColLine.attrs['width'] ?? '0.12 mm',
+                    color: inlineColLine.attrs['color'] ?? '#000000',
+                  };
+                }
                 curCol = 0;
                 curY = pageH - mT;
+                recordColSep();
               } else {
                 // Back to single column
                 colLayouts.length = 0;
                 colLayouts.push({ x: mL, width: cW });
                 curCol = 0;
+                recordColSep();
               }
             }
           }
@@ -2005,6 +2028,26 @@ export async function generatePdf(
           drawText(pg, fn.lines[li].text, lineX, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
           fnY -= fnLineH;
         }
+      }
+    }
+
+    // ── Column separator line rendering ──
+    for (const [pg, colSep] of pageColSeps) {
+      if (!colSep.separator || colSep.layouts.length < 2) continue;
+      const sepWidthMm = parseFloat(colSep.separator.width) || 0.12;
+      const sepThickness = sepWidthMm * 2.8346; // mm to pt
+      const sepColorParsed = parseColor(colSep.separator.color ?? '#000000');
+      const sepRgb = sepColorParsed ? rgb(sepColorParsed.red, sepColorParsed.green, sepColorParsed.blue) : rgb(0, 0, 0);
+      for (let ci = 0; ci < colSep.layouts.length - 1; ci++) {
+        const leftCol = colSep.layouts[ci];
+        const rightCol = colSep.layouts[ci + 1];
+        const gapCenter = leftCol.x + leftCol.width + (rightCol.x - leftCol.x - leftCol.width) / 2;
+        pg.drawLine({
+          start: { x: gapCenter, y: pageH - mT },
+          end: { x: gapCenter, y: mB },
+          thickness: sepThickness,
+          color: sepRgb,
+        });
       }
     }
 
