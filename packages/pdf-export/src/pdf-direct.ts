@@ -2067,7 +2067,7 @@ export async function generatePdf(
       // Draw each footnote with text wrapping
       for (const fn of footnotes) {
         const numStr = `${fn.num}) `;
-        const numW = measureText(numStr, fnFont, fnFontSize);
+        const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
         // Draw number on first line
         drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
         // Draw wrapped text lines
@@ -2138,7 +2138,7 @@ export async function generatePdf(
         let text = extractAnnotationText(hdr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        const textW = measureText(text, hfFont, hfFontSize);
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const hdrY = pageH - headerMarginPt - hfFontSize;
         const hdrX = mL + (cW - textW) / 2;
         drawText(pg, text, hdrX, hdrY, hfFont, hfFontSize, [0, 0, 0]);
@@ -2154,7 +2154,7 @@ export async function generatePdf(
         let text = extractAnnotationText(ftr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        const textW = measureText(text, hfFont, hfFontSize);
+        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
         const ftrY = footerMarginPt;
         const ftrX = mL + (cW - textW) / 2;
         drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
@@ -2167,7 +2167,7 @@ export async function generatePdf(
         const numStr = sideChar
           ? `${sideChar} ${pageNum} ${sideChar}`
           : String(pageNum);
-        const numW = measureText(numStr, hfFont, hfFontSize);
+        const numW = hfFont.widthOfTextAtSize(numStr, hfFontSize);
         const pos = pn.pos.toUpperCase();
 
         let pnX: number;
