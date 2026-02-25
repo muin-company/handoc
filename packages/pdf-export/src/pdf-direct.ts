@@ -24,6 +24,16 @@ function bmpToPng(bmpData: Uint8Array): Uint8Array {
   const bpp = bmpData[28] | (bmpData[29] << 8);
   const topDown = ((bmpData[22] | (bmpData[23] << 8) | (bmpData[24] << 16) | (bmpData[25] << 24)) | 0) < 0;
 
+  // Read palette for palettized BMPs (1, 4, 8 bpp)
+  const dibHeaderSize = bmpData[14] | (bmpData[15] << 8) | (bmpData[16] << 16) | (bmpData[17] << 24);
+  const paletteOffset = 14 + dibHeaderSize;
+  const paletteColors = bpp <= 8 ? (1 << bpp) : 0;
+  const palette: [number, number, number][] = [];
+  for (let i = 0; i < paletteColors; i++) {
+    const po = paletteOffset + i * 4;
+    palette.push([bmpData[po + 2], bmpData[po + 1], bmpData[po]]); // BGR → RGB
+  }
+
   // Build raw RGBA rows (PNG filter byte 0 = None per row)
   const rowBytes = Math.ceil((width * bpp / 8) / 4) * 4; // BMP rows are 4-byte aligned
   const raw = Buffer.alloc((width * 3 + 1) * height); // RGB + filter byte per row
@@ -34,15 +44,36 @@ function bmpToPng(bmpData: Uint8Array): Uint8Array {
     const dstOff = y * (width * 3 + 1);
     raw[dstOff] = 0; // filter: None
     for (let x = 0; x < width; x++) {
-      const si = srcOff + x * (bpp / 8);
       if (bpp === 24) {
+        const si = srcOff + x * 3;
         raw[dstOff + 1 + x * 3] = bmpData[si + 2]; // R
         raw[dstOff + 1 + x * 3 + 1] = bmpData[si + 1]; // G
         raw[dstOff + 1 + x * 3 + 2] = bmpData[si]; // B
       } else if (bpp === 32) {
+        const si = srcOff + x * 4;
         raw[dstOff + 1 + x * 3] = bmpData[si + 2];
         raw[dstOff + 1 + x * 3 + 1] = bmpData[si + 1];
         raw[dstOff + 1 + x * 3 + 2] = bmpData[si];
+      } else if (bpp === 8) {
+        const ci = bmpData[srcOff + x];
+        const [r, g, b] = palette[ci] ?? [0, 0, 0];
+        raw[dstOff + 1 + x * 3] = r;
+        raw[dstOff + 1 + x * 3 + 1] = g;
+        raw[dstOff + 1 + x * 3 + 2] = b;
+      } else if (bpp === 4) {
+        const byteVal = bmpData[srcOff + (x >> 1)];
+        const ci = (x & 1) === 0 ? (byteVal >> 4) : (byteVal & 0x0F);
+        const [r, g, b] = palette[ci] ?? [0, 0, 0];
+        raw[dstOff + 1 + x * 3] = r;
+        raw[dstOff + 1 + x * 3 + 1] = g;
+        raw[dstOff + 1 + x * 3 + 2] = b;
+      } else if (bpp === 1) {
+        const byteVal = bmpData[srcOff + (x >> 3)];
+        const ci = (byteVal >> (7 - (x & 7))) & 1;
+        const [r, g, b] = palette[ci] ?? [0, 0, 0];
+        raw[dstOff + 1 + x * 3] = r;
+        raw[dstOff + 1 + x * 3 + 1] = g;
+        raw[dstOff + 1 + x * 3 + 2] = b;
       }
     }
   }
@@ -1053,12 +1084,27 @@ export async function generatePdf(
     } catch { /* skip */ }
   }
 
+  // Helper: find image by binRef with exact basename matching (avoid image1 matching image10)
+  function findImageByRef(binRef: string) {
+    if (!binRef) return undefined;
+    // Try exact path match first
+    let img = doc.images.find(i => i.path === binRef || i.path === `BinData/${binRef}`);
+    if (img) return img;
+    // Try matching basename (without extension) — binRef is usually like "image1"
+    // and path is "BinData/image1.PNG"
+    const refLower = binRef.toLowerCase();
+    img = doc.images.find(i => {
+      const fname = i.path.split('/').pop() ?? '';
+      const base = fname.substring(0, fname.lastIndexOf('.')).toLowerCase();
+      return base === refLower;
+    });
+    if (img) return img;
+    // Fallback: includes match
+    return doc.images.find(i => i.path.includes(binRef));
+  }
+
   for (const section of doc.sections) {
     const sp = section.sectionProps;
-    // Helper: find image by binary reference ID
-    function findImageByRef(binRef: string) {
-      return doc.images.find(i => i.path.includes(binRef));
-    }
 
     // Handle landscape (NARROWLY): swap width/height since HWPX stores portrait dimensions
     const isLandscape = sp?.landscape ?? false;
