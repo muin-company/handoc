@@ -118,9 +118,9 @@ Implement automatic regression detection:
 
 ### Short-term (Today)
 1. ✅ Revert the 6 changes (DONE: da2c18c)
-2. Re-apply **only** the vertical alignment fix (th: middle)
-3. Test on near-miss documents
-4. If positive, commit and stop
+2. ❌ Attempted vertical alignment fix → Causes regression even alone
+3. **Finding:** Spacing-based optimizations are inherently risky for this document set
+4. **Action:** Pause spacing optimization, explore different vectors
 
 ### Medium-term (This Week)
 1. Implement document-type detection (government/education/business)
