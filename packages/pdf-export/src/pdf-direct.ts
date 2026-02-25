@@ -1898,6 +1898,7 @@ export async function generatePdf(
 
       checkBreak(h);
       page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
+      pagesWithContent.add(page);
       curY -= h;
     }
 
@@ -1955,6 +1956,7 @@ export async function generatePdf(
             const pdfImg = imageCache.get(img.path);
             if (pdfImg) {
               page.drawImage(pdfImg, { x, y, width: w, height: h });
+              pagesWithContent.add(page);
             }
           }
         }
@@ -2008,6 +2010,7 @@ export async function generatePdf(
                 curY -= lineH;
               }
               hasContent = true;
+              pagesWithContent.add(page);
             }
           }
         }
@@ -2188,6 +2191,15 @@ export async function generatePdf(
 
         drawText(pg, numStr, pnX, pnY, hfFont, hfFontSize, [0, 0, 0]);
       }
+    }
+  }
+
+  // Remove empty pages (no body content — headers/footers/page numbers don't count)
+  // Never remove the first page to avoid 0-page PDFs
+  const allPages = pdfDoc.getPages();
+  for (let i = allPages.length - 1; i >= 1; i--) {
+    if (!pagesWithContent.has(allPages[i])) {
+      pdfDoc.removePage(i);
     }
   }
 
