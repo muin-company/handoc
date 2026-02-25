@@ -299,6 +299,7 @@ interface ParaStyle {
   borderOffsetRight?: number; // pt
   borderOffsetTop?: number;   // pt
   borderOffsetBottom?: number; // pt
+  tabStops?: { pos: number; type?: string }[];  // tab stop positions in pt
 }
 
 // ── Style resolution ──
@@ -385,6 +386,15 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
     s.borderOffsetRight = hwpToPt(pp.border.offsetRight || 0);
     s.borderOffsetTop = hwpToPt(pp.border.offsetTop || 0);
     s.borderOffsetBottom = hwpToPt(pp.border.offsetBottom || 0);
+  }
+  // Resolve tab stops
+  if (pp.tabPrIDRef != null) {
+    const tp = doc.header.refList.tabProperties?.find(t => t.id === pp.tabPrIDRef);
+    if (tp && tp.tabStops.length > 0) {
+      s.tabStops = tp.tabStops
+        .map(ts => ({ pos: hwpToPt(ts.pos), type: ts.type }))
+        .sort((a, b) => a.pos - b.pos);
+    }
   }
   return s;
 }
@@ -985,6 +995,8 @@ export async function generatePdf(
       let firstLine = true;
       let prefixApplied = false;
       let prefixWidth = 0; // measured width of prefix for autoIndent hanging indent
+      let pendingTab = false; // track if a tab was encountered before current text
+      let tabIndex = 0; // which tab stop we're on (increments per tab in a line)
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
@@ -992,6 +1004,13 @@ export async function generatePdf(
         const lineH = calcLineHeight(ps, ts.fontSize);
 
         for (const child of run.children) {
+          // Handle tab characters: mark pending tab for next text segment
+          if (child.type === 'inlineObject' && child.name === 'tab') {
+            pendingTab = true;
+            tabIndex++;
+            continue;
+          }
+
           if (child.type === 'text') {
             let content = child.content;
             if (!content && !hasContent) {
@@ -1011,9 +1030,25 @@ export async function generatePdf(
               prefixApplied = true;
             }
 
+            // Handle tab: if a tab was pending, render text at the tab stop position
+            let tabXOffset = 0;
+            if (pendingTab && ps.tabStops && ps.tabStops.length > 0) {
+              // Use tab stop position relative to paragraph left edge
+              const stopIdx = Math.min(tabIndex - 1, ps.tabStops.length - 1);
+              tabXOffset = ps.tabStops[stopIdx].pos;
+              pendingTab = false;
+            } else if (pendingTab) {
+              // No defined tab stops: use default 40pt tab interval
+              tabXOffset = tabIndex * 40;
+              pendingTab = false;
+            }
+
             // Use current column dimensions
             const curColLayout = colLayouts[curCol];
             const curPW = curColLayout.width - ps.marginLeft - ps.marginRight;
+
+            // When tab offset is active, reduce available width and shift x
+            const tabAdjustedPW = tabXOffset > 0 ? Math.max(curPW - tabXOffset, 20) : curPW;
 
             // Wrap text with proper first-line indent handling:
             // First line uses curPW - indent (narrower for positive indent, wider for negative/hanging indent)
@@ -1021,11 +1056,11 @@ export async function generatePdf(
             // When autoIndent is active, continuation lines get a hanging indent equal to the prefix width
             const autoIndentOffset = (prefixAutoIndent && prefixWidth > 0) ? prefixWidth : 0;
             const indent = firstLine ? ps.textIndent : autoIndentOffset;
-            const contWidth = curPW - autoIndentOffset; // continuation line width
+            const contWidth = tabAdjustedPW - autoIndentOffset; // continuation line width
             let lines: WLine[];
             if (indent !== 0 || autoIndentOffset !== 0) {
               // Split wrapping: first line at indented width, rest at continuation width
-              const firstLineWidth = curPW - indent;
+              const firstLineWidth = tabAdjustedPW - indent;
               const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing);
               if (firstLines.length <= 1) {
                 lines = firstLines;
@@ -1039,9 +1074,10 @@ export async function generatePdf(
                 }
               }
             } else {
-              lines = wrapText(content, font, ts.fontSize, curPW, ts.charSpacing);
+              lines = wrapText(content, font, ts.fontSize, tabAdjustedPW, ts.charSpacing);
             }
 
+            let lineIdx = 0;
             for (const line of lines) {
               checkBreak(lineH);
               // Re-fetch column after potential column/page break
@@ -1050,11 +1086,13 @@ export async function generatePdf(
               const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
 
               const lineIndent = firstLine ? ps.textIndent : autoIndentOffset;
-              const effectiveW = activePW - lineIndent;
-              let x = activePL + lineIndent;
+              // Apply tab offset only to the first line of this text segment
+              const lineTabOffset = (lineIdx === 0 && tabXOffset > 0) ? tabXOffset : 0;
+              const effectiveW = activePW - lineIndent - lineTabOffset;
+              let x = activePL + lineIndent + lineTabOffset;
               let justifyCs = ts.charSpacing;
-              if (ps.align === 'center') x = activePL + lineIndent + (effectiveW - line.width) / 2;
-              else if (ps.align === 'right') x = activePL + lineIndent + effectiveW - line.width;
+              if (ps.align === 'center') x = activePL + lineIndent + lineTabOffset + (effectiveW - line.width) / 2;
+              else if (ps.align === 'right') x = activePL + lineIndent + lineTabOffset + effectiveW - line.width;
               else if (ps.align === 'justify' && line.isWrapped && line.text.length > 1) {
                 const extra = effectiveW - line.width;
                 justifyCs = ts.charSpacing + extra / (line.text.length - 1);
@@ -1095,6 +1133,7 @@ export async function generatePdf(
               curY -= lineH;
               firstLine = false;
               hasContent = true;
+              lineIdx++;
             }
           } else if (child.type === 'table') {
             hasContent = true;
@@ -1392,45 +1431,22 @@ export async function generatePdf(
         for (let i = 0; i < rowHeights.length; i++) rowHeights[i] *= tableScale;
       }
 
-      // ── Pass 2: Render ──
-      for (let ri = 0; ri < tbl.rows.length; ri++) {
-        let rowH = Math.min(rowHeights[ri], contentH);
-
-        // Page break with row-splitting for very tall rows: when a row
-        // doesn't fit and is taller than 40% of a page, render it partially
-        // at the current position if there's enough remaining space (>= 15%
-        // of page). This prevents excessive page waste from tall rows.
-        const remaining = curY - mB;
-        if (remaining < rowH) {
-          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
-            // Very tall row with significant remaining space: render partial
-            rowH = remaining;
-          } else {
-            newPage();
-          }
-        }
-
-        // Compute cell X positions per-row by accumulating declared cell widths.
-        // This is more accurate than the grid for complex merged tables.
+      // Helper: render a single row of cells at curY
+      function renderTableRow(ri: number, rowH: number) {
         let rowCellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
           const cellW = gridCellW(cell);
           const cellX = rowCellX;
 
-          // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
           for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
-          // When row was split (rowH < rowHeights[ri]), cap cell height
           if (cell.cellSpan.rowSpan === 1 && rowH < rowHeights[ri]) cellH = rowH;
 
-          // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
-
-          // Cell background fill
           if (bf.bgColor) {
             page.drawRectangle({
               x: cellX, y: curY - cellH,
@@ -1438,8 +1454,6 @@ export async function generatePdf(
               color: rgb(bf.bgColor.red, bf.bgColor.green, bf.bgColor.blue),
             });
           }
-
-          // Cell borders (draw each side individually for proper width/type)
           const bx = cellX, by = curY - cellH;
           if (bf.left.type !== 'NONE') {
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
@@ -1458,11 +1472,39 @@ export async function generatePdf(
               thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
           }
 
-          // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
           rowCellX += cellW;
         }
         curY -= rowH;
+      }
+
+      // ── Pass 2: Render ──
+      const headerRowH = rowHeights[0] ?? 0;
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        let rowH = Math.min(rowHeights[ri], contentH);
+
+        // Page break with row-splitting for very tall rows: when a row
+        // doesn't fit and is taller than 40% of a page, render it partially
+        // at the current position if there's enough remaining space (>= 15%
+        // of page). This prevents excessive page waste from tall rows.
+        const remaining = curY - mB;
+        // For repeatHeader tables, account for header row height in space check
+        const needsHeader = tbl.repeatHeader && ri > 0;
+        const spaceNeeded = needsHeader ? rowH + headerRowH : rowH;
+        if (remaining < spaceNeeded) {
+          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15 && !needsHeader) {
+            // Very tall row with significant remaining space: render partial
+            rowH = remaining;
+          } else {
+            newPage();
+            // Repeat header row after page break if repeatHeader is set
+            if (needsHeader && headerRowH > 0) {
+              renderTableRow(0, headerRowH);
+            }
+          }
+        }
+
+        renderTableRow(ri, rowH);
       }
 
     }
