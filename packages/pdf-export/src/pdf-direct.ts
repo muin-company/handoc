@@ -482,7 +482,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100);
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
 }
 
 // ── Text measurement ──
@@ -495,7 +495,7 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
     const spaceCount = text.split(' ').length - 1;
     if (spaceCount > 0) {
       const actualSpaceW = font.widthOfTextAtSize(' ', fontSize);
-      const targetSpaceW = fontSize * 0.27;
+      const targetSpaceW = fontSize * 0.30;
       if (actualSpaceW > targetSpaceW) {
         w -= spaceCount * (actualSpaceW - targetSpaceW);
       }
@@ -505,7 +505,7 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
     let w = 0;
     for (const ch of text) {
       try {
-        if (ch === ' ') { w += fontSize * 0.27; }
+        if (ch === ' ') { w += fontSize * 0.30; }
         else { w += font.widthOfTextAtSize(ch, fontSize); }
       }
       catch { w += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
@@ -592,7 +592,7 @@ function drawText(
         page.drawText(ch, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
         if (ch === ' ') {
           const actualW = font.widthOfTextAtSize(' ', fontSize);
-          const targetW = fontSize * 0.27;
+          const targetW = fontSize * 0.30;
           drawX += (actualW > targetW ? targetW : actualW) + charSpacing;
         } else {
           drawX += font.widthOfTextAtSize(ch, fontSize) + charSpacing;
