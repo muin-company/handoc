@@ -269,6 +269,8 @@ interface TextStyle {
   italic: boolean;
   underline: boolean;
   strikeout: boolean;
+  superscript: boolean;
+  subscript: boolean;
   color: [number, number, number];
   isSerif: boolean;
   charSpacing: number; // pt (character spacing)
@@ -288,7 +290,7 @@ interface ParaStyle {
 // ── Style resolution ──
 
 function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
-  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, color: [0, 0, 0], isSerif: true, charSpacing: 0 };
+  const d: TextStyle = { fontSize: 10, bold: false, italic: false, underline: false, strikeout: false, superscript: false, subscript: false, color: [0, 0, 0], isSerif: true, charSpacing: 0 };
   if (charPrIDRef == null) return d;
   const cp = doc.header.refList.charProperties.find(c => c.id === charPrIDRef);
   if (!cp) return d;
@@ -1138,6 +1140,14 @@ export async function generatePdf(
         }
       }
 
+      // Normalize column widths to match tblW when all columns are known
+      // but rounding/inference caused a small discrepancy.
+      const finalSum = colWidths.reduce((a, b) => a + b, 0);
+      if (finalSum > 0 && tblW > 0 && Math.abs(finalSum - tblW) > 0.01) {
+        const scale = tblW / finalSum;
+        for (let i = 0; i < colWidths.length; i++) colWidths[i] *= scale;
+      }
+
       // Column X offsets
       const colX: number[] = [0];
       for (let i = 0; i < colWidths.length; i++) {
@@ -1220,13 +1230,12 @@ export async function generatePdf(
           }
         }
 
-        // Compute cell X positions per-row by accumulating declared cell widths.
-        // This is more accurate than the grid for complex merged tables.
-        let rowCellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
           const cellW = gridCellW(cell);
-          const cellX = rowCellX;
+          // Use grid-based positioning: colX[ci] gives the correct X offset
+          // even when earlier columns are covered by rowSpan from previous rows.
+          const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
 
           // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
@@ -1270,7 +1279,6 @@ export async function generatePdf(
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
-          rowCellX += cellW;
         }
         curY -= rowH;
       }
