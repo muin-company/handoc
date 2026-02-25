@@ -1333,15 +1333,19 @@ export async function generatePdf(
     function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
       const cm = getCellPadding(cell);
       const innerW = cellW - cm.left - cm.right;
-      // Vertical alignment: estimate content height first
+      // Vertical alignment: estimate raw content height (no discount factor)
       const vAlign = cell.vertAlign ?? 'TOP';
+      const innerH = cellH - cm.top - cm.bottom;
       let contentHeight = 0;
       if (vAlign === 'CENTER' || vAlign === 'BOTTOM') {
-        contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - cm.top - cm.bottom;
+        // Use raw content height calculation (not estimateCellHeight which applies
+        // a 0.2 excess discount). Accurate height is needed for positioning.
+        const rawH = estimateCellHeight(doc, cell, cellW, getFont);
+        contentHeight = rawH - cm.top - cm.bottom;
       }
       let yOffset = 0;
-      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - cm.top);
-      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - cm.top - cm.bottom);
+      if (vAlign === 'CENTER') yOffset = Math.max(0, (innerH - contentHeight) / 2);
+      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, innerH - contentHeight);
 
       let ty = cellTop - cm.top - yOffset;
       for (const cp of cell.paragraphs) {
@@ -1360,7 +1364,7 @@ export async function generatePdf(
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
                 let cellJustifyCs = cts.charSpacing;
-                if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
+                if (cps.align === 'center') tx = cellX + cm.left + (innerW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 else if (cps.align === 'justify' && cl.isWrapped && cl.text.length > 1) {
                   const extra = innerW - cl.width;
