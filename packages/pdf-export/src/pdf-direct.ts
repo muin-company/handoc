@@ -101,6 +101,229 @@ for (let i = 0; i < 256; i++) {
   crc32Table[i] = c;
 }
 
+// ── GIF to PNG conversion (single-frame, no external dependencies) ──
+
+function gifToPng(gifData: Uint8Array): Uint8Array {
+  // Minimal GIF87a/GIF89a decoder — first frame only
+  if (gifData[0] !== 0x47 || gifData[1] !== 0x49 || gifData[2] !== 0x46) {
+    throw new Error('Not a GIF');
+  }
+
+  const width = gifData[6] | (gifData[7] << 8);
+  const height = gifData[8] | (gifData[9] << 8);
+  const packed = gifData[10];
+  const hasGCT = (packed & 0x80) !== 0;
+  const gctSize = hasGCT ? 3 * (1 << ((packed & 0x07) + 1)) : 0;
+  const bgIndex = gifData[11];
+
+  // Read Global Color Table
+  let offset = 13;
+  const gct: number[] = [];
+  if (hasGCT) {
+    for (let i = 0; i < gctSize; i++) gct.push(gifData[offset + i]);
+    offset += gctSize;
+  }
+
+  // Skip extensions, find first image descriptor
+  let transparentIndex = -1;
+  while (offset < gifData.length) {
+    const block = gifData[offset];
+    if (block === 0x21) { // Extension
+      offset++;
+      const label = gifData[offset++];
+      if (label === 0xF9) { // Graphics Control Extension
+        const sz = gifData[offset++];
+        const flags = gifData[offset];
+        if (flags & 0x01) transparentIndex = gifData[offset + 3];
+        offset += sz;
+        offset++; // block terminator
+      } else {
+        // Skip other extensions
+        while (true) {
+          const sz = gifData[offset++];
+          if (sz === 0) break;
+          offset += sz;
+        }
+      }
+    } else if (block === 0x2C) { // Image descriptor
+      break;
+    } else if (block === 0x3B) { // Trailer
+      break;
+    } else {
+      offset++;
+    }
+  }
+
+  if (gifData[offset] !== 0x2C) throw new Error('No image descriptor found');
+  offset++;
+  const imgLeft = gifData[offset] | (gifData[offset + 1] << 8); offset += 2;
+  const imgTop = gifData[offset] | (gifData[offset + 1] << 8); offset += 2;
+  const imgW = gifData[offset] | (gifData[offset + 1] << 8); offset += 2;
+  const imgH = gifData[offset] | (gifData[offset + 1] << 8); offset += 2;
+  const imgPacked = gifData[offset++];
+  const hasLCT = (imgPacked & 0x80) !== 0;
+  const interlaced = (imgPacked & 0x40) !== 0;
+  const lctSize = hasLCT ? 3 * (1 << ((imgPacked & 0x07) + 1)) : 0;
+
+  const ct = hasLCT ? [] : gct;
+  if (hasLCT) {
+    for (let i = 0; i < lctSize; i++) ct.push(gifData[offset + i]);
+    offset += lctSize;
+  }
+
+  // LZW decode
+  const minCodeSize = gifData[offset++];
+  const lzwData: number[] = [];
+  while (true) {
+    const sz = gifData[offset++];
+    if (sz === 0) break;
+    for (let i = 0; i < sz; i++) lzwData.push(gifData[offset + i]);
+    offset += sz;
+  }
+
+  // LZW decompression
+  const pixels = lzwDecode(lzwData, minCodeSize, imgW * imgH);
+
+  // Build RGBA image
+  const hasAlpha = transparentIndex >= 0;
+  const channels = hasAlpha ? 4 : 3;
+  const colorType = hasAlpha ? 6 : 2; // RGBA or RGB
+  const raw = Buffer.alloc((width * channels + 1) * height);
+
+  // Fill with background
+  for (let y = 0; y < height; y++) {
+    raw[y * (width * channels + 1)] = 0; // filter: None
+    for (let x = 0; x < width; x++) {
+      const off = y * (width * channels + 1) + 1 + x * channels;
+      if (hasAlpha) { raw[off] = 0; raw[off + 1] = 0; raw[off + 2] = 0; raw[off + 3] = 0; }
+    }
+  }
+
+  // De-interlace pass order
+  const passes = interlaced
+    ? [[0, 8], [4, 8], [2, 4], [1, 2]]
+    : [[0, 1]];
+
+  let pixIdx = 0;
+  for (const [startRow, step] of passes) {
+    for (let row = startRow; row < imgH; row += step) {
+      for (let col = 0; col < imgW; col++) {
+        const ci = pixels[pixIdx++] ?? bgIndex;
+        const dy = imgTop + row;
+        const dx = imgLeft + col;
+        if (dy >= height || dx >= width) continue;
+        const off = dy * (width * channels + 1) + 1 + dx * channels;
+        if (ci === transparentIndex && hasAlpha) {
+          raw[off + 3] = 0;
+        } else {
+          raw[off] = ct[ci * 3] ?? 0;
+          raw[off + 1] = ct[ci * 3 + 1] ?? 0;
+          raw[off + 2] = ct[ci * 3 + 2] ?? 0;
+          if (hasAlpha) raw[off + 3] = 255;
+        }
+      }
+    }
+  }
+
+  const compressed = zlib.deflateSync(raw);
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  function chunk(type: string, data: Buffer): Buffer {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const typeB = Buffer.from(type, 'ascii');
+    const body = Buffer.concat([typeB, data]);
+    const crcVal = crc32(body);
+    const crcB = Buffer.alloc(4);
+    crcB.writeUInt32BE(crcVal >>> 0);
+    return Buffer.concat([len, body, crcB]);
+  }
+
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = colorType;
+
+  return new Uint8Array(Buffer.concat([
+    signature,
+    chunk('IHDR', ihdr),
+    chunk('IDAT', Buffer.from(compressed)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]));
+}
+
+function lzwDecode(data: number[], minCodeSize: number, pixelCount: number): number[] {
+  const clearCode = 1 << minCodeSize;
+  const eoiCode = clearCode + 1;
+  let codeSize = minCodeSize + 1;
+  let nextCode = eoiCode + 1;
+  const maxTableSize = 4096;
+
+  // Initialize table
+  let table: number[][] = [];
+  for (let i = 0; i < clearCode; i++) table[i] = [i];
+  table[clearCode] = [];
+  table[eoiCode] = [];
+
+  const output: number[] = [];
+  let bitBuf = 0;
+  let bitCount = 0;
+  let byteIdx = 0;
+
+  function readCode(): number {
+    while (bitCount < codeSize) {
+      if (byteIdx >= data.length) return eoiCode;
+      bitBuf |= data[byteIdx++] << bitCount;
+      bitCount += 8;
+    }
+    const code = bitBuf & ((1 << codeSize) - 1);
+    bitBuf >>= codeSize;
+    bitCount -= codeSize;
+    return code;
+  }
+
+  let prevEntry: number[] | null = null;
+
+  while (output.length < pixelCount) {
+    const code = readCode();
+    if (code === eoiCode) break;
+    if (code === clearCode) {
+      codeSize = minCodeSize + 1;
+      nextCode = eoiCode + 1;
+      table = [];
+      for (let i = 0; i < clearCode; i++) table[i] = [i];
+      table[clearCode] = [];
+      table[eoiCode] = [];
+      prevEntry = null;
+      continue;
+    }
+
+    let entry: number[];
+    if (table[code]) {
+      entry = table[code];
+    } else if (code === nextCode && prevEntry) {
+      entry = [...prevEntry, prevEntry[0]];
+    } else {
+      break; // Invalid
+    }
+
+    output.push(...entry);
+
+    if (prevEntry && nextCode < maxTableSize) {
+      table[nextCode++] = [...prevEntry, entry[0]];
+      if (nextCode > (1 << codeSize) && codeSize < 12) codeSize++;
+    }
+
+    prevEntry = entry;
+  }
+
+  return output;
+}
+
+// ── BMP 8-bit (palettized) support in bmpToPng ──
+// Already handled above via bmpToPng — but let's also handle 8-bit BMPs
+
 // ── Constants ──
 
 const HWP_PER_INCH = 7200;
@@ -518,6 +741,37 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
 
 interface WLine { text: string; width: number; isWrapped?: boolean; }
 
+// CJK kinsoku (禁則処理) rules
+// Characters that must NOT start a line (closing brackets, punctuation)
+const NO_START = new Set(
+  '）」』】〕〉》）］｝、。，．？！；：・ー々〻ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ' +
+  '),.!?;:'.split('')
+);
+// Characters that must NOT end a line (opening brackets)
+const NO_END = new Set(
+  '（「『【〔〈《（［｛'.split('')
+);
+
+function isCJK(code: number): boolean {
+  return (code >= 0x3000 && code <= 0x9FFF) ||
+    (code >= 0xAC00 && code <= 0xD7AF) ||
+    (code >= 0xF900 && code <= 0xFAFF) ||
+    (code >= 0x20000 && code <= 0x2FA1F) ||
+    (code >= 0xFF01 && code <= 0xFF60);
+}
+
+/** Check if we can break between remaining[pos-1] and remaining[pos] */
+function canBreakAt(remaining: string, pos: number): boolean {
+  if (pos <= 0 || pos >= remaining.length) return false;
+  const after = remaining[pos];
+  const before = remaining[pos - 1];
+  // Don't break if next char can't start a line
+  if (NO_START.has(after)) return false;
+  // Don't break if previous char can't end a line
+  if (NO_END.has(before)) return false;
+  return true;
+}
+
 function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number, charSpacing = 0): WLine[] {
   if (!text || maxWidth <= 0) return [];
   const lines: WLine[] = [];
@@ -541,16 +795,32 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
         if (measure(remaining.substring(0, mid)) <= maxWidth) lo = mid;
         else hi = mid - 1;
       }
-      // CJK can break at any character; for spaces, break after space
-      let brk = lo;
+
+      // Find best break point with kinsoku rules
+      let brk = -1;
+      // First: try to find a space break (word boundary) looking back from lo
       for (let i = lo; i > Math.max(0, lo - 15); i--) {
-        const code = remaining.codePointAt(i) ?? 0;
-        if (code === 32) { brk = i + 1; break; }
+        if (remaining.charCodeAt(i) === 32) {
+          brk = i + 1; // break after space
+          break;
+        }
       }
+      // If no space found, find best CJK/kinsoku-compliant break
+      if (brk < 0) {
+        // Try at lo first, then search backwards
+        for (let i = lo; i > Math.max(0, lo - 10); i--) {
+          if (canBreakAt(remaining, i)) { brk = i; break; }
+        }
+        // If still no valid break (kinsoku constraints too tight), force at lo
+        if (brk < 0) brk = lo;
+      }
+
       if (brk <= 0) brk = lo;
       const lineText = remaining.substring(0, brk);
       lines.push({ text: lineText, width: measure(lineText), isWrapped: true });
-      remaining = remaining.substring(brk).trimStart();
+      remaining = remaining.substring(brk);
+      // Trim leading spaces on continuation lines (but not CJK)
+      if (remaining.charCodeAt(0) === 32) remaining = remaining.trimStart();
     }
   }
   return lines;
@@ -766,6 +1036,17 @@ export async function generatePdf(
       // Convert BMP/GIF/TIFF to PNG
       if (ext === 'bmp' || ext === 'dib') {
         try { data = bmpToPng(data); format = 'png'; } catch { continue; }
+      } else if (ext === 'gif') {
+        // GIF: extract first frame as PNG-compatible data
+        // pdf-lib only supports PNG/JPEG — try embedding as PNG (works for single-frame GIFs
+        // that share the same LZW-compressed structure)
+        try { data = gifToPng(data); format = 'png'; } catch { continue; }
+      } else if (ext === 'tif' || ext === 'tiff') {
+        // TIFF: skip — pdf-lib doesn't support TIFF and conversion is complex
+        continue;
+      } else if (ext === 'wmf' || ext === 'emf') {
+        // WMF/EMF: Windows vector formats — cannot convert without native dependencies
+        continue;
       }
       if (format === 'png') imageCache.set(img.path, await pdfDoc.embedPng(data));
       else if (format === 'jpg' || format === 'jpeg') imageCache.set(img.path, await pdfDoc.embedJpg(data));
@@ -1168,13 +1449,12 @@ export async function generatePdf(
           rh = Math.max(rh, h);
         }
         // HWP declared row height is a minimum; content can expand rows.
-        // Our embedded fonts are wider than original Korean fonts, causing
-        // overestimation from extra text wrapping. estimateCellHeight already
-        // applies a 80% discount on excess, but apply an additional row-level
-        // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
-        // for normal tables, cap at 50% expansion.
+        // estimateCellHeight already applies a 50% discount on excess over
+        // declared height to compensate for wider embedded fonts. Apply a
+        // light row-level cap only for very dense tables to prevent over-
+        // expansion, but keep it generous to avoid content clipping.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
+          const maxExpansion = tbl.rows.length > 30 ? 0.6 : 1.0;
           const excess = rh - declaredRowH;
           rh = declaredRowH + excess * maxExpansion;
         }
@@ -1206,18 +1486,12 @@ export async function generatePdf(
       for (let ri = 0; ri < tbl.rows.length; ri++) {
         let rowH = Math.min(rowHeights[ri], contentH);
 
-        // Page break with row-splitting for very tall rows: when a row
-        // doesn't fit and is taller than 40% of a page, render it partially
-        // at the current position if there's enough remaining space (>= 15%
-        // of page). This prevents excessive page waste from tall rows.
+        // Page break: when a row doesn't fit in remaining space, move to
+        // next page. Previously attempted partial row rendering, but that
+        // caused content loss since the remainder was never re-rendered.
         const remaining = curY - mB;
         if (remaining < rowH) {
-          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
-            // Very tall row with significant remaining space: render partial
-            rowH = remaining;
-          } else {
-            newPage();
-          }
+          newPage();
         }
 
         // Compute cell X positions per-row by accumulating declared cell widths.
@@ -1322,15 +1596,16 @@ export async function generatePdf(
       // Declared height is a minimum — content can legitimately exceed it (e.g. long
       // text in narrow cells that auto-expand in HWP). Our embedded fonts are ~30%
       // wider than native Korean fonts, causing extra text wrapping that inflates
-      // height estimates. Discount the excess by 35% to compensate.
+      // height estimates. Discount the excess to compensate, but keep enough to
+      // prevent content clipping (which causes missing pages).
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
+        return cellDeclaredH + (h - cellDeclaredH) * 0.5;
       }
       return Math.max(cellDeclaredH, h);
     }
 
-    /** Render cell content (text + nested tables) */
-    function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont) {
+    /** Render cell content (text + nested tables). Returns actual content height used. */
+    function renderCellContent(doc: HanDoc, cell: any, cellX: number, cellTop: number, cellW: number, cellH: number, getFont: (s: TextStyle) => PDFFont): number {
       const cm = getCellPadding(cell);
       const innerW = cellW - cm.left - cm.right;
       // Vertical alignment: estimate content height first
@@ -1417,6 +1692,8 @@ export async function generatePdf(
         }
         ty -= cps.marginBottom;
       }
+      // Return actual content height consumed
+      return cellTop - ty;
     }
 
     // ── Image rendering ──
@@ -1429,7 +1706,7 @@ export async function generatePdf(
         ?? imgTag?.attrs['binItemIDRef']
         ?? '';
       if (!binRef) return;
-      const img = doc.images.find(i => i.path.includes(binRef));
+      const img = findImageByRef(binRef);
       if (!img) return;
       const pdfImg = imageCache.get(img.path);
       if (!pdfImg) return;
@@ -1513,7 +1790,7 @@ export async function generatePdf(
           ?? imgTag?.attrs['binItemIDRef']
           ?? '';
         if (binRef) {
-          const img = doc.images.find(i => i.path.includes(binRef));
+          const img = findImageByRef(binRef);
           if (img) {
             const pdfImg = imageCache.get(img.path);
             if (pdfImg) {
