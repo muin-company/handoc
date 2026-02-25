@@ -21,6 +21,12 @@ export interface SectionProperties {
     type: string;
     /** Per-column widths and gaps (HWP units). Present when sameSz=0 */
     sizes?: Array<{ width: number; gap: number }>;
+    /** Column separator line between columns */
+    separator?: {
+      type: string;   // SOLID, DASH, etc.
+      width: string;  // e.g. "0.12 mm"
+      color: string;  // e.g. "#000000"
+    };
   };
   pageStartNumber?: number;
   /** Automatic page numbering config from <hp:pageNum> */

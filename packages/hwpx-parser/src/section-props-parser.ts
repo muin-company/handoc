@@ -57,6 +57,15 @@ export function parseSectionProps(element: GenericElement): SectionProperties {
         gap: num(cs.attrs['gap']),
       }));
     }
+    // Parse column separator line (colLine child)
+    const colLine = colPr.children.find((c) => c.tag === 'colLine');
+    if (colLine) {
+      result.columns.separator = {
+        type: colLine.attrs['type'] ?? 'SOLID',
+        width: colLine.attrs['width'] ?? '0.12 mm',
+        color: colLine.attrs['color'] ?? '#000000',
+      };
+    }
   }
 
   if (startNum) {

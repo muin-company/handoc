@@ -5,7 +5,7 @@
  * Key principle: Use HWPX values exactly as specified. No heuristic adjustments.
  */
 
-import { HanDoc, extractAnnotationText, parseFootnote } from '@handoc/hwpx-parser';
+import { HanDoc, extractAnnotationText, parseFootnote, parseHeaderFooter } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
 import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
@@ -1151,9 +1151,30 @@ export async function generatePdf(
     let curCol = 0;
     const sectionPages: PDFPage[] = [page];
 
+    // (Column separator rendering placeholder — requires parser support)
+
+    // ── Per-section header/footer collection ──
+    const sectionHeaders: import('@handoc/hwpx-parser').HeaderFooter[] = [];
+    const sectionFooters: import('@handoc/hwpx-parser').HeaderFooter[] = [];
+    for (const para of section.paragraphs) {
+      for (const run of para.runs) {
+        for (const child of run.children) {
+          if (child.type === 'ctrl') {
+            const hf = parseHeaderFooter(child.element);
+            if (hf) {
+              if (hf.type === 'header') sectionHeaders.push(hf);
+              else sectionFooters.push(hf);
+            }
+          }
+        }
+      }
+    }
+
     // ── Footnote tracking ──
     let footnoteCounter = 0;
-    const pageFootnotes = new Map<PDFPage, { num: number; text: string }[]>();
+    const pageFootnotes = new Map<PDFPage, { num: number; text: string; lines: WLine[] }[]>();
+    /** Estimated footnote area height per page (used to reduce available body space) */
+    const pageFootnoteHeight = new Map<PDFPage, number>();
 
     function newColumn() {
       curCol++;
@@ -1174,7 +1195,8 @@ export async function generatePdf(
     }
 
     function checkBreak(h: number) {
-      if (curY - h < mB) {
+      const fnH = pageFootnoteHeight.get(page) ?? 0;
+      if (curY - h < mB + fnH) {
         if (colLayouts.length > 1) newColumn();
         else newPage();
       }
@@ -1376,9 +1398,25 @@ export async function generatePdf(
               footnoteCounter++;
               const fnText = extractAnnotationText(fn);
 
+              // Pre-wrap footnote text for accurate height estimation
+              const fnFontLocal = fonts.sans;
+              const fnFontSizeLocal = 8;
+              const fnLineHLocal = fnFontSizeLocal * 1.4;
+              const fnNumStr = `${footnoteCounter}) `;
+              const fnNumW = measureText(fnNumStr, fnFontLocal, fnFontSizeLocal);
+              const fnTextWidth = cW - fnNumW;
+              const fnLines = wrapText(fnText, fnFontLocal, fnFontSizeLocal, Math.max(fnTextWidth, 1));
+
               // Collect footnote for rendering at page bottom
               if (!pageFootnotes.has(page)) pageFootnotes.set(page, []);
-              pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText });
+              pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText, lines: fnLines });
+
+              // Update footnote height reservation for this page
+              const fns = pageFootnotes.get(page)!;
+              let totalFnLines = 0;
+              for (const f of fns) totalFnLines += f.lines.length;
+              const newFnH = fnLineHLocal * totalFnLines + 10; // 10pt for separator + spacing
+              pageFootnoteHeight.set(page, newFnH);
             }
           }
         }
@@ -1939,8 +1977,10 @@ export async function generatePdf(
     const fnLineH = fnFontSize * 1.4;
     for (const [pg, footnotes] of pageFootnotes) {
       if (footnotes.length === 0) continue;
-      // Calculate total footnote area height
-      const totalFnH = fnLineH * footnotes.length + 6; // 6pt for separator line + spacing
+      // Calculate total footnote area height using pre-wrapped lines
+      let totalFnLines = 0;
+      for (const fn of footnotes) totalFnLines += fn.lines.length;
+      const totalFnH = fnLineH * totalFnLines + 10; // 10pt for separator line + spacing
       // Start from bottom margin + footer space, going up
       let fnY = mB + totalFnH;
 
@@ -1953,29 +1993,40 @@ export async function generatePdf(
         color: rgb(0, 0, 0),
       });
 
-      // Draw each footnote
+      // Draw each footnote with text wrapping
       for (const fn of footnotes) {
         const numStr = `${fn.num}) `;
-        const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
-        // Draw number
+        const numW = measureText(numStr, fnFont, fnFontSize);
+        // Draw number on first line
         drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        // Draw text
-        drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        fnY -= fnLineH;
+        // Draw wrapped text lines
+        for (let li = 0; li < fn.lines.length; li++) {
+          const lineX = li === 0 ? mL + numW : mL + numW; // hanging indent
+          drawText(pg, fn.lines[li].text, lineX, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+          fnY -= fnLineH;
+        }
       }
     }
 
     // ── Header/Footer rendering ──
     const headerMarginPt = sp ? hwpToPt(sp.margins.header) : 0;
     const footerMarginPt = sp ? hwpToPt(sp.margins.footer) : 0;
-    const sectionHeaders = doc.headers;
-    const sectionFooters = doc.footers;
     const pageStartNum = sp?.pageStartNumber ?? 1;
     const hfFont = fonts.sans;
     const hfFontSize = 10;
 
     // Total page count for {{pages}} placeholder
     const totalPages = sectionPages.length;
+
+    /** Check if a header/footer applies to this page based on applyPageType */
+    function hfApplies(applyPageType: string, pageIndex: number, pageNum: number): boolean {
+      const apt = applyPageType.toUpperCase();
+      if (apt === 'BOTH') return true;
+      if (apt === 'EVEN') return pageNum % 2 === 0;
+      if (apt === 'ODD') return pageNum % 2 !== 0;
+      if (apt === 'FIRST') return pageIndex === 0;
+      return true;
+    }
 
     for (let pi = 0; pi < sectionPages.length; pi++) {
       const pg = sectionPages[pi];
@@ -1986,29 +2037,33 @@ export async function generatePdf(
         text.replace(/\{\{page\}\}/g, String(pageNum))
             .replace(/\{\{pages\}\}/g, String(totalPages));
 
-      // Render headers
+      // Render headers — FIRST takes precedence over BOTH on first page
+      const hasFirstHeader = sectionHeaders.some(h => h.applyPageType.toUpperCase() === 'FIRST');
       for (const hdr of sectionHeaders) {
-        if (hdr.applyPageType === 'EVEN' && pageNum % 2 !== 0) continue;
-        if (hdr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
+        const apt = hdr.applyPageType.toUpperCase();
+        if (!hfApplies(hdr.applyPageType, pi, pageNum)) continue;
+        if (pi === 0 && hasFirstHeader && apt === 'BOTH') continue;
+        if (pi > 0 && apt === 'FIRST') continue;
         let text = extractAnnotationText(hdr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        // Position: top margin area, centered
-        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
+        const textW = measureText(text, hfFont, hfFontSize);
         const hdrY = pageH - headerMarginPt - hfFontSize;
         const hdrX = mL + (cW - textW) / 2;
         drawText(pg, text, hdrX, hdrY, hfFont, hfFontSize, [0, 0, 0]);
       }
 
-      // Render footers
+      // Render footers — FIRST takes precedence over BOTH on first page
+      const hasFirstFooter = sectionFooters.some(f => f.applyPageType.toUpperCase() === 'FIRST');
       for (const ftr of sectionFooters) {
-        if (ftr.applyPageType === 'EVEN' && pageNum % 2 !== 0) continue;
-        if (ftr.applyPageType === 'ODD' && pageNum % 2 === 0) continue;
+        const apt = ftr.applyPageType.toUpperCase();
+        if (!hfApplies(ftr.applyPageType, pi, pageNum)) continue;
+        if (pi === 0 && hasFirstFooter && apt === 'BOTH') continue;
+        if (pi > 0 && apt === 'FIRST') continue;
         let text = extractAnnotationText(ftr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        // Position: bottom margin area, centered
-        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
+        const textW = measureText(text, hfFont, hfFontSize);
         const ftrY = footerMarginPt;
         const ftrX = mL + (cW - textW) / 2;
         drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
@@ -2021,7 +2076,7 @@ export async function generatePdf(
         const numStr = sideChar
           ? `${sideChar} ${pageNum} ${sideChar}`
           : String(pageNum);
-        const numW = hfFont.widthOfTextAtSize(numStr, hfFontSize);
+        const numW = measureText(numStr, hfFont, hfFontSize);
         const pos = pn.pos.toUpperCase();
 
         let pnX: number;
@@ -2030,7 +2085,6 @@ export async function generatePdf(
         } else if (pos.includes('RIGHT')) {
           pnX = mL + cW - numW;
         } else {
-          // CENTER (default)
           pnX = mL + (cW - numW) / 2;
         }
 
@@ -2038,7 +2092,6 @@ export async function generatePdf(
         if (pos.includes('TOP')) {
           pnY = pageH - headerMarginPt - hfFontSize;
         } else {
-          // BOTTOM (default)
           pnY = footerMarginPt;
         }
 
