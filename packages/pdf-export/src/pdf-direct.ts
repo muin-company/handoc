@@ -771,8 +771,12 @@ export async function generatePdf(
 
   for (const section of doc.sections) {
     const sp = section.sectionProps;
-    const pageW = sp ? hwpToPt(sp.pageWidth) : 595.28;
-    const pageH = sp ? hwpToPt(sp.pageHeight) : 841.89;
+    // Handle landscape (NARROWLY): swap width/height since HWPX stores portrait dimensions
+    const isLandscape = sp?.landscape ?? false;
+    const rawW = sp ? hwpToPt(sp.pageWidth) : 595.28;
+    const rawH = sp ? hwpToPt(sp.pageHeight) : 841.89;
+    const pageW = isLandscape && rawW < rawH ? rawH : rawW;
+    const pageH = isLandscape && rawW < rawH ? rawW : rawH;
     const mL = sp ? hwpToPt(sp.margins.left) : 56.69;
     const mR = sp ? hwpToPt(sp.margins.right) : 56.69;
     const mT = sp ? hwpToPt(sp.margins.top) : 56.69;
@@ -916,7 +920,7 @@ export async function generatePdf(
             let content = child.content;
             if (!content && !hasContent) {
               // Empty text run — reduced height for empty paragraphs
-              const emptyH = lineH * 0.6;
+              const emptyH = lineH * 0.75;
               checkBreak(emptyH);
               curY -= emptyH;
               hasContent = true;
@@ -1044,7 +1048,7 @@ export async function generatePdf(
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
         const defaultLineH = calcLineHeight(ps, 10);
-        const emptyLineH = defaultLineH * 0.6;
+        const emptyLineH = defaultLineH * 0.75;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
       }
@@ -1059,7 +1063,8 @@ export async function generatePdf(
       const szEl = element.children.find(c => c.tag === 'sz');
       const tblW = szEl ? hwpToPt(Number(szEl.attrs['width'])) : maxWidth;
 
-      // ── Build grid column widths from colSpan=1 cells ──
+      // ── Build grid column widths ──
+      // First pass: collect widths from colSpan=1 cells
       const colWidths: number[] = new Array(tbl.colCnt).fill(0);
       for (const row of tbl.rows) {
         for (const cell of row.cells) {
@@ -1071,7 +1076,38 @@ export async function generatePdf(
           }
         }
       }
-      // Fill any missing columns with equal distribution
+
+      // Second pass: infer missing column widths from multi-span cells.
+      // Sort cells by colSpan ascending so smaller spans fill first.
+      const multiSpanCells: { col: number; span: number; width: number }[] = [];
+      for (const row of tbl.rows) {
+        for (const cell of row.cells) {
+          if (cell.cellSpan.colSpan > 1 && cell.cellSz.width > 0) {
+            multiSpanCells.push({
+              col: cell.cellAddr.colAddr,
+              span: cell.cellSpan.colSpan,
+              width: hwpToPt(cell.cellSz.width),
+            });
+          }
+        }
+      }
+      multiSpanCells.sort((a, b) => a.span - b.span);
+      for (const mc of multiSpanCells) {
+        let knownInSpan = 0;
+        let unknownInSpan = 0;
+        for (let i = mc.col; i < Math.min(mc.col + mc.span, tbl.colCnt); i++) {
+          if (colWidths[i] > 0) knownInSpan += colWidths[i];
+          else unknownInSpan++;
+        }
+        if (unknownInSpan > 0 && mc.width > knownInSpan) {
+          const eachUnknown = (mc.width - knownInSpan) / unknownInSpan;
+          for (let i = mc.col; i < Math.min(mc.col + mc.span, tbl.colCnt); i++) {
+            if (colWidths[i] === 0) colWidths[i] = eachUnknown;
+          }
+        }
+      }
+
+      // Fill any remaining missing columns with equal distribution
       const knownW = colWidths.reduce((a, b) => a + b, 0);
       const missingCols = colWidths.filter(w => w === 0).length;
       if (missingCols > 0 && tblW > knownW) {
@@ -1100,12 +1136,15 @@ export async function generatePdf(
         colX.push(colX[i] + colWidths[i]);
       }
 
-      // Helper: get cell width from grid
+      // Helper: get cell width — prefer cell's declared width for accuracy in
+      // complex merged tables where the grid column widths may be inaccurate.
       function gridCellW(cell: any): number {
+        const declW = cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : 0;
+        if (declW > 0) return declW;
         const ci = cell.cellAddr.colAddr;
         const cs = cell.cellSpan.colSpan;
         if (ci + cs <= colX.length) return colX[ci + cs] - colX[ci];
-        return cell.cellSz.width > 0 ? hwpToPt(cell.cellSz.width) : (tblW / tbl.colCnt) * cs;
+        return (tblW / tbl.colCnt) * cs;
       }
 
       // ── Pass 1: Calculate row heights ──
@@ -1122,15 +1161,14 @@ export async function generatePdf(
         }
         // HWP declared row height is a minimum; content can expand rows.
         // Our embedded fonts are wider than original Korean fonts, causing
-        // overestimation from extra text wrapping.
-        // For dense tables (>20 rows), strictly trust declared heights to
-        // preserve compact layout. For normal tables, allow 10% expansion.
+        // overestimation from extra text wrapping. estimateCellHeight already
+        // applies a 80% discount on excess, but apply an additional row-level
+        // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
+        // for normal tables, cap at 50% expansion.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          if (tbl.rows.length > 20) {
-            rh = declaredRowH;
-          } else if (rh > declaredRowH * 1.1) {
-            rh = declaredRowH * 1.1;
-          }
+          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
+          const excess = rh - declaredRowH;
+          rh = declaredRowH + excess * maxExpansion;
         }
         rowHeights.push(rh);
       }
@@ -1174,11 +1212,13 @@ export async function generatePdf(
           }
         }
 
+        // Compute cell X positions per-row by accumulating declared cell widths.
+        // This is more accurate than the grid for complex merged tables.
+        let rowCellX = tableX;
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
-          // Use grid-based X and width for accuracy
-          const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
           const cellW = gridCellW(cell);
+          const cellX = rowCellX;
 
           // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
@@ -1222,6 +1262,7 @@ export async function generatePdf(
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
+          rowCellX += cellW;
         }
         curY -= rowH;
       }
@@ -1270,12 +1311,12 @@ export async function generatePdf(
         }
         h += cps.marginBottom;
       }
-      // If the cell has a declared height, use the larger of declared vs estimated
-      // BUT: cap estimated height to avoid dramatic overestimation from font metric differences.
-      // When estimated height exceeds declared by more than 50%, the font is likely wider than
-      // the original, causing excessive text wrapping. Trust the declared height more.
-      if (cellDeclaredH > 0 && h > cellDeclaredH * 1.5) {
-        return cellDeclaredH * 1.1;
+      // Declared height is a minimum — content can legitimately exceed it (e.g. long
+      // text in narrow cells that auto-expand in HWP). Our embedded fonts are ~30%
+      // wider than native Korean fonts, causing extra text wrapping that inflates
+      // height estimates. Discount the excess by 35% to compensate.
+      if (cellDeclaredH > 0 && h > cellDeclaredH) {
+        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
       }
       return Math.max(cellDeclaredH, h);
     }

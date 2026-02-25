@@ -22,7 +22,8 @@ export function parseSectionProps(element: GenericElement): SectionProperties {
 
   const width = num(pagePr?.attrs['width']);
   const height = num(pagePr?.attrs['height']);
-  const landscape = pagePr?.attrs['landscape'] === 'WIDELY';
+  // HWP landscape attribute: NARROWLY = landscape (rotated), WIDELY = portrait (default)
+  const landscape = pagePr?.attrs['landscape'] === 'NARROWLY';
 
   const margins = {
     left: num(marginEl?.attrs['left']),

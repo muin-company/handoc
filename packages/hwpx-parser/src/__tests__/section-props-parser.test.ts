@@ -43,7 +43,7 @@ describe('parseSectionProps', () => {
     const props = parseSectionProps(secPr);
     expect(props.pageWidth).toBe(59528);
     expect(props.pageHeight).toBe(84186);
-    expect(props.landscape).toBe(true);
+    expect(props.landscape).toBe(false); // WIDELY = portrait (not landscape)
     expect(props.margins.left).toBe(8504);
     expect(props.margins.top).toBe(5668);
     expect(props.margins.header).toBe(4252);
@@ -82,6 +82,6 @@ describe('HanDoc section props integration', () => {
     const props = doc.sections[0].sectionProps;
     expect(props).toBeDefined();
     expect(props!.pageWidth).toBeGreaterThan(0);
-    expect(props!.landscape).toBe(true); // simple-text uses WIDELY
+    expect(props!.landscape).toBe(false); // simple-text uses WIDELY = portrait
   });
 });

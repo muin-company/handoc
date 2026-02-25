@@ -80,8 +80,8 @@ describe('hwpxToPdf', () => {
     expect(pdfOptions.margin.right).toMatch(/mm$/);
   });
 
-  it('should handle landscape orientation by swapping width and height', async () => {
-    // simple-text.hwpx has landscape: true
+  it('should handle portrait orientation (WIDELY = no swap)', async () => {
+    // simple-text.hwpx has landscape="WIDELY" which is portrait (not landscape)
     const hwpxBuffer = readFixture('simple-text.hwpx');
     
     await hwpxToPdf(hwpxBuffer);
@@ -90,8 +90,8 @@ describe('hwpxToPdf', () => {
     const width = parseFloat(pdfOptions.width);
     const height = parseFloat(pdfOptions.height);
     
-    // In landscape, width should be greater than height (297 > 210)
-    expect(width).toBeGreaterThan(height);
+    // WIDELY = portrait, height should be greater than width (297 > 210)
+    expect(height).toBeGreaterThan(width);
   });
 
   it('should enable printBackground for rendering colors and images', async () => {
@@ -149,9 +149,9 @@ describe('hwpxToPdf - Page Layout Integration', () => {
     await hwpxToPdf(hwpxBuffer);
     
     const pdfOptions = mockPdf.mock.calls[0][0];
-    // With landscape=true, dimensions are swapped: width=297, height=210
-    expect(pdfOptions.width).toBe('297mm');
-    expect(pdfOptions.height).toBe('210mm');
+    // WIDELY = portrait: width=210, height=297
+    expect(pdfOptions.width).toBe('210mm');
+    expect(pdfOptions.height).toBe('297mm');
   });
 
   it('should preserve custom page sizes', async () => {
