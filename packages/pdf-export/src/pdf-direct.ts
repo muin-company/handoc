@@ -388,11 +388,65 @@ interface ResolvedBorderFill {
   right: BorderSide;
   top: BorderSide;
   bottom: BorderSide;
+  diagonal: BorderSide;
   bgColor?: { red: number; green: number; blue: number };
 }
 
 const defaultBorder: BorderSide = { type: 'SOLID', width: 0.5, color: { red: 0, green: 0, blue: 0 } };
-const defaultBorderFill: ResolvedBorderFill = { left: defaultBorder, right: defaultBorder, top: defaultBorder, bottom: defaultBorder };
+const noneBorder: BorderSide = { type: 'NONE', width: 0, color: { red: 0, green: 0, blue: 0 } };
+const defaultBorderFill: ResolvedBorderFill = { left: defaultBorder, right: defaultBorder, top: defaultBorder, bottom: defaultBorder, diagonal: noneBorder };
+
+/** Convert border type to dash pattern for pdf-lib drawLine */
+function borderDashPattern(type: string, width: number): { dashArray?: number[]; dashPhase?: number } {
+  const w = Math.max(width, 0.5);
+  switch (type.toUpperCase()) {
+    case 'DASH':
+    case 'DASHED':
+      return { dashArray: [w * 4, w * 2] };
+    case 'DOT':
+    case 'DOTTED':
+      return { dashArray: [w, w * 2] };
+    case 'DASH_DOT':
+    case 'DOT_DASH':
+      return { dashArray: [w * 4, w * 2, w, w * 2] };
+    case 'DASH_DOT_DOT':
+      return { dashArray: [w * 4, w * 2, w, w * 2, w, w * 2] };
+    case 'LONG_DASH':
+      return { dashArray: [w * 8, w * 3] };
+    case 'LONG_DASH_DOT':
+      return { dashArray: [w * 8, w * 3, w, w * 3] };
+    default:
+      return {};
+  }
+}
+
+/** Draw a border line with proper type (solid, dash, double, etc.) */
+function drawBorderLine(
+  page: PDFPage,
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  border: BorderSide,
+): void {
+  if (border.type === 'NONE' || border.width <= 0) return;
+  const color = rgb(border.color.red, border.color.green, border.color.blue);
+  const t = border.type.toUpperCase();
+
+  if (t === 'DOUBLE') {
+    // Double line: two thin lines with gap between
+    const gap = Math.max(border.width * 0.6, 0.3);
+    const thin = Math.max(border.width * 0.4, 0.2);
+    // Calculate perpendicular offset
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) return;
+    const nx = -dy / len * gap, ny = dx / len * gap;
+    page.drawLine({ start: { x: start.x + nx, y: start.y + ny }, end: { x: end.x + nx, y: end.y + ny }, thickness: thin, color });
+    page.drawLine({ start: { x: start.x - nx, y: start.y - ny }, end: { x: end.x - nx, y: end.y - ny }, thickness: thin, color });
+  } else {
+    const dash = borderDashPattern(t, border.width);
+    page.drawLine({ start, end, thickness: border.width, color, ...dash });
+  }
+}
 
 function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorderFill {
   const bfs = doc.header.refList.borderFills;
@@ -423,6 +477,7 @@ function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorder
     right: parseSide('rightBorder'),
     top: parseSide('topBorder'),
     bottom: parseSide('bottomBorder'),
+    diagonal: parseSide('diagonal'),
     bgColor,
   };
 }
@@ -1103,6 +1158,9 @@ export async function generatePdf(
     return doc.images.find(i => i.path.includes(binRef));
   }
 
+  // Track pages that have actual body content rendered (for empty page removal)
+  const pagesWithContent = new Set<PDFPage>();
+
   for (const section of doc.sections) {
     const sp = section.sectionProps;
 
@@ -1452,6 +1510,8 @@ export async function generatePdf(
         const emptyLineH = defaultLineH * 0.75;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
+      } else {
+        pagesWithContent.add(page);
       }
 
       curY -= ps.marginBottom;
@@ -1635,27 +1695,20 @@ export async function generatePdf(
             });
           }
 
-          // Cell borders (draw each side individually for proper width/type)
+          // Cell borders (draw each side individually with proper type/dash/double)
           const bx = cellX, by = curY - cellH;
-          if (bf.left.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
-              thickness: bf.left.width, color: rgb(bf.left.color.red, bf.left.color.green, bf.left.color.blue) });
-          }
-          if (bf.right.type !== 'NONE') {
-            page.drawLine({ start: { x: bx + cellW, y: by }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.right.width, color: rgb(bf.right.color.red, bf.right.color.green, bf.right.color.blue) });
-          }
-          if (bf.top.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by + cellH }, end: { x: bx + cellW, y: by + cellH },
-              thickness: bf.top.width, color: rgb(bf.top.color.red, bf.top.color.green, bf.top.color.blue) });
-          }
-          if (bf.bottom.type !== 'NONE') {
-            page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
-              thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
+          drawBorderLine(page, { x: bx, y: by }, { x: bx, y: by + cellH }, bf.left);
+          drawBorderLine(page, { x: bx + cellW, y: by }, { x: bx + cellW, y: by + cellH }, bf.right);
+          drawBorderLine(page, { x: bx, y: by + cellH }, { x: bx + cellW, y: by + cellH }, bf.top);
+          drawBorderLine(page, { x: bx, y: by }, { x: bx + cellW, y: by }, bf.bottom);
+          // Diagonal border (top-left to bottom-right)
+          if (bf.diagonal.type !== 'NONE' && bf.diagonal.width > 0) {
+            drawBorderLine(page, { x: bx, y: by + cellH }, { x: bx + cellW, y: by }, bf.diagonal);
           }
 
           // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
+          pagesWithContent.add(page);
           rowCellX += cellW;
         }
         curY -= rowH;
