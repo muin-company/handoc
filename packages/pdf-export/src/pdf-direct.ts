@@ -1486,7 +1486,7 @@ export async function generatePdf(
       // wider than native Korean fonts, causing extra text wrapping that inflates
       // height estimates. Discount the excess by 35% to compensate.
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
+        return cellDeclaredH + (h - cellDeclaredH) * 0.45;
       }
       return Math.max(cellDeclaredH, h);
     }
@@ -1961,11 +1961,43 @@ export async function generatePdf(
     const sectionHeaders = doc.headers;
     const sectionFooters = doc.footers;
     const pageStartNum = sp?.pageStartNumber ?? 1;
-    const hfFont = fonts.sans;
-    const hfFontSize = 10;
 
     // Total page count for {{pages}} placeholder
     const totalPages = sectionPages.length;
+
+    // Helper: resolve font/size/alignment for a header/footer annotation
+    const resolveHfStyle = (hf: { paragraphs: any[] }) => {
+      let fontSize = 10;
+      let align: 'left' | 'center' | 'right' = 'center';
+      let isSerif = false;
+      let color: [number, number, number] = [0, 0, 0];
+      // Use first paragraph with content for style
+      for (const p of hf.paragraphs) {
+        const pp = doc.header.refList.paraProperties.find((x: any) => x.id === p.paraPrIDRef);
+        if (pp?.align) {
+          const a = (typeof pp.align === 'string' ? pp.align : '').toLowerCase();
+          if (a === 'left' || a === 'justify') align = 'left';
+          else if (a === 'right') align = 'right';
+          else align = 'center';
+        }
+        if (p.runs && p.runs.length > 0) {
+          const ts = resolveTextStyle(doc, p.runs[0].charPrIDRef ?? null);
+          fontSize = ts.fontSize;
+          isSerif = ts.isSerif;
+          color = ts.color;
+          break;
+        }
+      }
+      const font = isSerif ? fonts.serif : fonts.sans;
+      return { fontSize, align, font, color };
+    };
+
+    // Helper: compute X position based on alignment
+    const alignX = (align: 'left' | 'center' | 'right', textW: number) => {
+      if (align === 'left') return mL;
+      if (align === 'right') return mL + cW - textW;
+      return mL + (cW - textW) / 2;
+    };
 
     for (let pi = 0; pi < sectionPages.length; pi++) {
       const pg = sectionPages[pi];
@@ -1983,11 +2015,11 @@ export async function generatePdf(
         let text = extractAnnotationText(hdr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        // Position: top margin area, centered
-        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
-        const hdrY = pageH - headerMarginPt - hfFontSize;
-        const hdrX = mL + (cW - textW) / 2;
-        drawText(pg, text, hdrX, hdrY, hfFont, hfFontSize, [0, 0, 0]);
+        const { fontSize: hfSize, align, font: hfFont, color: hfColor } = resolveHfStyle(hdr);
+        const textW = measureText(text, hfFont, hfSize);
+        const hdrY = pageH - headerMarginPt - hfSize;
+        const hdrX = alignX(align, textW);
+        drawText(pg, text, hdrX, hdrY, hfFont, hfSize, hfColor);
       }
 
       // Render footers
@@ -1997,21 +2029,23 @@ export async function generatePdf(
         let text = extractAnnotationText(ftr);
         if (!text.trim()) continue;
         text = replacePlaceholders(text);
-        // Position: bottom margin area, centered
-        const textW = hfFont.widthOfTextAtSize(text, hfFontSize);
+        const { fontSize: hfSize, align, font: hfFont, color: hfColor } = resolveHfStyle(ftr);
+        const textW = measureText(text, hfFont, hfSize);
         const ftrY = footerMarginPt;
-        const ftrX = mL + (cW - textW) / 2;
-        drawText(pg, text, ftrX, ftrY, hfFont, hfFontSize, [0, 0, 0]);
+        const ftrX = alignX(align, textW);
+        drawText(pg, text, ftrX, ftrY, hfFont, hfSize, hfColor);
       }
 
       // Render automatic page numbering from <hp:pageNum> section config
       if (sp?.pageNumbering) {
         const pn = sp.pageNumbering;
         const sideChar = pn.sideChar || '';
+        const pnFont = fonts.sans;
+        const pnFontSize = 10;
         const numStr = sideChar
           ? `${sideChar} ${pageNum} ${sideChar}`
           : String(pageNum);
-        const numW = hfFont.widthOfTextAtSize(numStr, hfFontSize);
+        const numW = pnFont.widthOfTextAtSize(numStr, pnFontSize);
         const pos = pn.pos.toUpperCase();
 
         let pnX: number;
@@ -2026,13 +2060,13 @@ export async function generatePdf(
 
         let pnY: number;
         if (pos.includes('TOP')) {
-          pnY = pageH - headerMarginPt - hfFontSize;
+          pnY = pageH - headerMarginPt - pnFontSize;
         } else {
           // BOTTOM (default)
           pnY = footerMarginPt;
         }
 
-        drawText(pg, numStr, pnX, pnY, hfFont, hfFontSize, [0, 0, 0]);
+        drawText(pg, numStr, pnX, pnY, pnFont, pnFontSize, [0, 0, 0]);
       }
     }
   }
