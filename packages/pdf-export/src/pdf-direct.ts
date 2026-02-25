@@ -475,10 +475,13 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
     return hwpToPt(ps.lineSpacingValue);
   }
   // percent: value is percentage (e.g., 160 = 160%)
-  // HWP lineSpacing PERCENT is based on font em-square, not font size alone.
-  // Apply line height correction to match 한/글's actual line height output.
-  // HWP percent line-spacing is relative to the font's em-square.
-  // No correction factor — trust the HWPX value directly.
+  // NOTE: HWP actually computes lineHeight = fontSize × emRatio × pct, where
+  // emRatio ≈ 1.2 for Korean fonts (ascent+|descent| / unitsPerEm). However,
+  // our embedded Apple fonts are 15-30% wider than HCR fonts, causing extra
+  // text wrapping (more lines per paragraph). Using emRatio=1.0 (smaller line
+  // height) partially compensates for the wider text, preventing page overflow.
+  // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
+  // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
   return fontSize * (ps.lineSpacingValue / 100);
 }
 
