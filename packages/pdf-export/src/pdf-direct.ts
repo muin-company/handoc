@@ -1195,7 +1195,7 @@ export async function generatePdf(
         // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
         // for normal tables, cap at 50% expansion.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
+          const maxExpansion = tbl.rows.length > 40 ? 0.2 : 0.5;
           const excess = rh - declaredRowH;
           rh = declaredRowH + excess * maxExpansion;
         }
@@ -1203,7 +1203,7 @@ export async function generatePdf(
       }
 
       // Adjust for rowSpan>1 cells (skip for dense tables to preserve layout)
-      if (tbl.rows.length <= 20) {
+      if (tbl.rows.length <= 40) {
         for (let ri = 0; ri < tbl.rows.length; ri++) {
           for (const cell of tbl.rows[ri].cells) {
             const rs = cell.cellSpan.rowSpan;
@@ -1223,44 +1223,21 @@ export async function generatePdf(
         for (let i = 0; i < rowHeights.length; i++) rowHeights[i] *= tableScale;
       }
 
-      // ── Pass 2: Render ──
-      for (let ri = 0; ri < tbl.rows.length; ri++) {
-        let rowH = Math.min(rowHeights[ri], contentH);
-
-        // Page break with row-splitting for very tall rows: when a row
-        // doesn't fit and is taller than 40% of a page, render it partially
-        // at the current position if there's enough remaining space (>= 15%
-        // of page). This prevents excessive page waste from tall rows.
-        const remaining = curY - mB;
-        if (remaining < rowH) {
-          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15) {
-            // Very tall row with significant remaining space: render partial
-            rowH = remaining;
-          } else {
-            newPage();
-          }
-        }
-
+      // Helper: render a single row of cells at curY
+      function renderTableRow(ri: number, rowH: number) {
         for (const cell of tbl.rows[ri].cells) {
           const ci = cell.cellAddr.colAddr;
           const cellW = gridCellW(cell);
-          // Use grid-based positioning: colX[ci] gives the correct X offset
-          // even when earlier columns are covered by rowSpan from previous rows.
           const cellX = tableX + (ci < colX.length ? colX[ci] : 0);
 
-          // Calculate actual cell height (sum of spanned rows)
           let cellH = 0;
           for (let j = ri; j < Math.min(ri + cell.cellSpan.rowSpan, tbl.rows.length); j++) {
             cellH += rowHeights[j];
           }
           if (cellH > contentH) cellH = contentH;
-          // When row was split (rowH < rowHeights[ri]), cap cell height
           if (cell.cellSpan.rowSpan === 1 && rowH < rowHeights[ri]) cellH = rowH;
 
-          // Resolve border fill for this cell
           const bf = resolveBorderFill(doc, cell.borderFillIDRef);
-
-          // Cell background fill
           if (bf.bgColor) {
             page.drawRectangle({
               x: cellX, y: curY - cellH,
@@ -1268,8 +1245,6 @@ export async function generatePdf(
               color: rgb(bf.bgColor.red, bf.bgColor.green, bf.bgColor.blue),
             });
           }
-
-          // Cell borders (draw each side individually for proper width/type)
           const bx = cellX, by = curY - cellH;
           if (bf.left.type !== 'NONE') {
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx, y: by + cellH },
@@ -1287,17 +1262,40 @@ export async function generatePdf(
             page.drawLine({ start: { x: bx, y: by }, end: { x: bx + cellW, y: by },
               thickness: bf.bottom.width, color: rgb(bf.bottom.color.red, bf.bottom.color.green, bf.bottom.color.blue) });
           }
-
-          // Cell text
           renderCellContent(doc, cell, cellX, curY, cellW, cellH, getFont);
         }
         curY -= rowH;
       }
 
+      // ── Pass 2: Render ──
+      const headerRowH = rowHeights[0] ?? 0;
+      for (let ri = 0; ri < tbl.rows.length; ri++) {
+        let rowH = Math.min(rowHeights[ri], contentH);
+
+        // Page break check
+        const remaining = curY - mB;
+        const needsHeader = tbl.repeatHeader && ri > 0;
+        const spaceNeeded = needsHeader ? rowH + headerRowH : rowH;
+        if (remaining < spaceNeeded) {
+          if (rowH > contentH * 0.4 && remaining >= contentH * 0.15 && !needsHeader) {
+            // Very tall row with significant remaining space: render partial
+            rowH = remaining;
+          } else {
+            newPage();
+            // Repeat header row after page break
+            if (needsHeader && headerRowH > 0) {
+              renderTableRow(0, headerRowH);
+            }
+          }
+        }
+
+        renderTableRow(ri, rowH);
+      }
+
     }
 
     /** Estimate cell height from content */
-    function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont): number {
+    function estimateCellHeight(doc: HanDoc, cell: any, cellW: number, getFont: (s: TextStyle) => PDFFont, excessFactor = 0.2): number {
       const cellDeclaredH = cell.cellSz.height > 0 ? hwpToPt(cell.cellSz.height) : 0;
       const cm = getCellPadding(cell);
       const padH = cm.top + cm.bottom;
@@ -1343,7 +1341,7 @@ export async function generatePdf(
       // wider than native Korean fonts, causing extra text wrapping that inflates
       // height estimates. Discount the excess by 35% to compensate.
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
+        return cellDeclaredH + (h - cellDeclaredH) * excessFactor;
       }
       return Math.max(cellDeclaredH, h);
     }
