@@ -396,6 +396,27 @@ const HANGUL_JAMO = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ';
 const CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 const CIRCLED_HANGUL = '㉮㉯㉰㉱㉲㉳㉴㉵㉶㉷㉸㉹㉺㉻';
 
+/**
+ * Map Private Use Area (PUA) bullet characters to visible Unicode equivalents.
+ * HWP uses Wingdings-mapped PUA codepoints for common bullet symbols.
+ */
+const PUA_BULLET_MAP: Record<string, string> = {
+  '\uF09F': '●',  // Wingdings filled circle
+  '\uF0A1': '○',  // Wingdings open circle
+  '\uF09E': '◆',  // Wingdings filled diamond
+  '\uF0A7': '■',  // Wingdings filled square
+  '\uF0D8': '▶',  // Wingdings right arrow
+  '\uF0FC': '✓',  // Wingdings checkmark
+  '\uF0B7': '●',  // Symbol bullet (common in Word)
+  '\uF076': '◆',  // Wingdings diamond variant
+  '\uF0A8': '□',  // Wingdings open square
+};
+
+function mapBulletChar(char: string): string {
+  if (!char) return '';
+  return PUA_BULLET_MAP[char] ?? char;
+}
+
 function formatNumber(n: number, fmt: string): string {
   switch (fmt) {
     case 'DIGIT': return String(n);
@@ -456,8 +477,9 @@ function getParaPrefix(
       if (paraHead?.text) {
         return { prefix: paraHead.text + ' ', autoIndent: ai, level };
       }
-      if (bullet.char) {
-        return { prefix: bullet.char + ' ', autoIndent: ai, level };
+      const mappedChar = mapBulletChar(bullet.char);
+      if (mappedChar) {
+        return { prefix: mappedChar + ' ', autoIndent: ai, level };
       }
     }
     return { prefix: '', autoIndent: false, level };
@@ -515,7 +537,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100);
+  return fontSize * (ps.lineSpacingValue / 100) * 1.03; // DO NOT REMOVE 1.03 - see MEMORY.md
 }
 
 // ── Text measurement ──

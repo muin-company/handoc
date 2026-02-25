@@ -8,6 +8,8 @@ export interface HeaderFooter {
   type: 'header' | 'footer';
   applyPageType: string;
   paragraphs: Paragraph[];
+  /** Index of the section this header/footer belongs to (set by collectHeadersFooters) */
+  sectionIndex?: number;
 }
 
 export interface Footnote {
