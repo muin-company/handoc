@@ -117,10 +117,19 @@ function mmToPt(mmStr: string | undefined): number {
 /** Parse hex color string like "#000000" to rgb() */
 function parseColor(colorStr: string | undefined): { red: number; green: number; blue: number } | undefined {
   if (!colorStr || colorStr === 'none') return undefined;
-  const m = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
-  if (!m) return undefined;
-  const n = parseInt(m[1], 16);
-  return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
+  // Handle both #RRGGBB and #AARRGGBB (ARGB) formats
+  const m6 = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
+  if (m6) {
+    const n = parseInt(m6[1], 16);
+    return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
+  }
+  const m8 = colorStr.match(/^#([0-9A-Fa-f]{8})$/);
+  if (m8) {
+    const n = parseInt(m8[1], 16);
+    // ARGB: skip alpha byte, extract RGB
+    return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
+  }
+  return undefined;
 }
 
 interface BorderSide {
@@ -283,6 +292,11 @@ interface ParaStyle {
   marginTop: number;    // pt
   marginBottom: number; // pt
   textIndent: number;   // pt
+  borderFillIDRef?: number;   // paragraph border/background fill reference
+  borderOffsetLeft?: number;  // pt
+  borderOffsetRight?: number; // pt
+  borderOffsetTop?: number;   // pt
+  borderOffsetBottom?: number; // pt
 }
 
 // ── Style resolution ──
@@ -352,6 +366,13 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
     if (pp.margin.indent) s.textIndent = hwpToPt(pp.margin.indent);
     if (pp.margin.prev) s.marginTop = hwpToPt(pp.margin.prev);
     if (pp.margin.next) s.marginBottom = hwpToPt(pp.margin.next);
+  }
+  if (pp.border) {
+    s.borderFillIDRef = pp.border.borderFillIDRef;
+    s.borderOffsetLeft = hwpToPt(pp.border.offsetLeft || 0);
+    s.borderOffsetRight = hwpToPt(pp.border.offsetRight || 0);
+    s.borderOffsetTop = hwpToPt(pp.border.offsetTop || 0);
+    s.borderOffsetBottom = hwpToPt(pp.border.offsetBottom || 0);
   }
   return s;
 }
@@ -653,6 +674,7 @@ interface FloatingPos {
   horzOffset: number;  // HWP units
   width: number;       // HWP units (from hp:sz)
   height: number;      // HWP units (from hp:sz)
+  textWrap: string;    // TOP_AND_BOTTOM, SQUARE, etc.
 }
 
 /** Extract floating position info from a shape/image element */
@@ -689,6 +711,7 @@ function getFloatingPos(element: GenericElement): FloatingPos | null {
     horzOffset,
     width,
     height,
+    textWrap: element.attrs['textWrap'] ?? '',
   };
 }
 
@@ -907,6 +930,10 @@ export async function generatePdf(
 
       curY -= ps.marginTop;
 
+      // Track paragraph start position for border/background rendering
+      const paraStartY = curY;
+      const paraStartPage = page;
+
       // Track if paragraph has any content
       let hasContent = false;
       let firstLine = true;
@@ -1024,17 +1051,58 @@ export async function generatePdf(
             // Check for floating positioning (treatAsChar="0")
             const floatPos = getFloatingPos(child.element);
             if (floatPos) {
-              renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
-              // PARA-relative floating elements (vertRelTo=PARA, vertOffset=0) act like
-              // anchored-in-place images — advance curY so content doesn't overlap.
-              if (floatPos.vertRelTo === 'PARA') {
-                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
-                if (fh > 0) { checkBreak(fh); curY -= fh; }
+              // TOP_AND_BOTTOM wrap with PARA-relative: treat as block flow
+              // so page breaks work correctly (images/shapes get proper page space)
+              if (floatPos.textWrap === 'TOP_AND_BOTTOM' && floatPos.vertRelTo === 'PARA') {
+                if (child.name === 'picture' || child.name === 'pic') {
+                  renderImage(doc, child.element, activePL, activePW);
+                } else {
+                  // Container/shape with TOP_AND_BOTTOM — render as block element
+                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                  if (fh > 0) checkBreak(fh);
+                  renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
+                }
+              } else {
+                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+                // PARA-relative floating elements — advance curY so content doesn't overlap.
+                if (floatPos.vertRelTo === 'PARA') {
+                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                  if (fh > 0) { checkBreak(fh); curY -= fh; }
+                }
               }
             } else if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, activePL, activePW);
             } else {
               // Shape/drawing: render internal content (tables, images, text)
+              renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
+            }
+          } else if (child.type === 'shape') {
+            // Shape objects (container, polygon, rect, etc.)
+            hasContent = true;
+            const activeCol = colLayouts[curCol];
+            const activePL = activeCol.x + ps.marginLeft;
+            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
+            const floatPos = getFloatingPos(child.element);
+            if (child.name === 'container') {
+              // Container: render children at their offsets within reserved block space
+              if (floatPos && floatPos.textWrap !== 'TOP_AND_BOTTOM' && floatPos.vertRelTo !== 'PARA') {
+                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+              } else {
+                renderContainer(doc, child.element, activePL, activePW);
+              }
+            } else if (floatPos) {
+              if (floatPos.textWrap === 'TOP_AND_BOTTOM' && floatPos.vertRelTo === 'PARA') {
+                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                if (fh > 0) checkBreak(fh);
+                renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
+              } else {
+                renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+                if (floatPos.vertRelTo === 'PARA') {
+                  const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                  if (fh > 0) { checkBreak(fh); curY -= fh; }
+                }
+              }
+            } else {
               renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
             }
           } else if (child.type === 'ctrl') {
@@ -1062,6 +1130,52 @@ export async function generatePdf(
       }
 
       curY -= ps.marginBottom;
+
+      // ── Paragraph border/background rendering ──
+      // Only draw if paragraph stayed on the same page (no mid-paragraph page break)
+      if (ps.borderFillIDRef != null && ps.borderFillIDRef > 0 && page === paraStartPage) {
+        const bf = resolveBorderFill(doc, ps.borderFillIDRef);
+        const hasBg = bf.bgColor && !(bf.bgColor.red === 1 && bf.bgColor.green === 1 && bf.bgColor.blue === 1);
+        const hasBorders = [bf.top, bf.bottom, bf.left, bf.right].some(s => s.type !== 'NONE' && s.width > 0);
+
+        if (hasBg || hasBorders) {
+          const activeCol = colLayouts[curCol];
+          const bx = activeCol.x - (ps.borderOffsetLeft ?? 0);
+          const bw = activeCol.width + (ps.borderOffsetLeft ?? 0) + (ps.borderOffsetRight ?? 0);
+          const by = curY + ps.marginBottom; // bottom of content area
+          const bTop = paraStartY + (ps.borderOffsetTop ?? 0);
+          const bh = bTop - by;
+
+          if (bh > 0) {
+            // Draw background (drawn after text — may overlap in rare cases;
+            // paragraph backgrounds are uncommon in practice)
+            if (hasBg) {
+              page.drawRectangle({
+                x: bx, y: by, width: bw, height: bh,
+                color: rgb(bf.bgColor!.red, bf.bgColor!.green, bf.bgColor!.blue),
+                borderWidth: 0,
+                opacity: 0.85, // slight transparency so text remains readable
+              });
+            }
+
+            // Draw borders
+            if (hasBorders) {
+              const drawBorderSide = (side: typeof bf.top, x1: number, y1: number, x2: number, y2: number) => {
+                if (side.type === 'NONE' || side.width <= 0) return;
+                page.drawLine({
+                  start: { x: x1, y: y1 }, end: { x: x2, y: y2 },
+                  thickness: side.width,
+                  color: rgb(side.color.red, side.color.green, side.color.blue),
+                });
+              };
+              drawBorderSide(bf.top, bx, bTop, bx + bw, bTop);
+              drawBorderSide(bf.bottom, bx, by, bx + bw, by);
+              drawBorderSide(bf.left, bx, by, bx, bTop);
+              drawBorderSide(bf.right, bx + bw, by, bx + bw, bTop);
+            }
+          }
+        }
+      }
     }
 
 
@@ -1572,6 +1686,65 @@ export async function generatePdf(
       page.drawImage(pdfImg, { x: imgX, y: curY - h, width: w, height: h });
       curY -= h;
       return true;
+    }
+
+    /** Render a container element: reserve block space and draw children at their offsets */
+    function renderContainer(doc: HanDoc, element: GenericElement, containerX: number, maxWidth: number) {
+      // Get container dimensions from sz or orgSz
+      const szEl = findDesc(element, 'sz');
+      const orgSzEl = findDesc(element, 'orgSz');
+      const src = szEl ?? orgSzEl;
+      let containerW = maxWidth, containerH = maxWidth * 0.5;
+      if (src) {
+        const wH = Number(src.attrs['width'] ?? 0);
+        const hH = Number(src.attrs['height'] ?? 0);
+        if (wH > 0) containerW = hwpToPt(wH);
+        if (hH > 0) containerH = hwpToPt(hH);
+      }
+      // Scale to fit
+      const scale = containerW > maxWidth ? maxWidth / containerW : 1;
+      containerW *= scale;
+      containerH *= scale;
+      if (containerH > contentH) containerH = contentH;
+
+      checkBreak(containerH);
+      const baseY = curY; // top of reserved space
+
+      // Draw each child shape at its offset within the container
+      for (const child of element.children) {
+        const tag = child.tag.includes(':') ? child.tag.split(':').pop()! : child.tag;
+        if (tag === 'polygon' || tag === 'rect' || tag === 'ellipse') {
+          const fillBrush = findDesc(child, 'fillBrush');
+          if (!fillBrush) continue;
+          const imgBrush = findDesc(fillBrush, 'imgBrush');
+          if (!imgBrush) continue;
+          const imgEl = findDesc(imgBrush, 'img');
+          if (!imgEl) continue;
+          const binRef = imgEl.attrs['binaryItemIDRef'] ?? '';
+          if (!binRef) continue;
+          const img = doc.images.find(i => i.path.includes(binRef));
+          if (!img) continue;
+          const pdfImg = imageCache.get(img.path);
+          if (!pdfImg) continue;
+
+          // Get child offset and size
+          const offEl = findDesc(child, 'offset');
+          const childOrgSz = findDesc(child, 'orgSz');
+          const ox = offEl ? hwpToPt(Number(offEl.attrs['x'] ?? 0)) * scale : 0;
+          const oy = offEl ? hwpToPt(Number(offEl.attrs['y'] ?? 0)) * scale : 0;
+          let cw = childOrgSz ? hwpToPt(Number(childOrgSz.attrs['width'] ?? 0)) * scale : containerW;
+          let ch = childOrgSz ? hwpToPt(Number(childOrgSz.attrs['height'] ?? 0)) * scale : containerH;
+          // Clamp child to container bounds
+          if (ox + cw > containerW) cw = containerW - ox;
+          if (oy + ch > containerH) ch = containerH - oy;
+
+          const drawX = containerX + ox;
+          const drawY = baseY - oy - ch; // PDF Y is bottom-up
+          page.drawImage(pdfImg, { x: drawX, y: drawY, width: cw, height: ch });
+        }
+      }
+
+      curY -= containerH;
     }
 
     function renderShapeContent(
