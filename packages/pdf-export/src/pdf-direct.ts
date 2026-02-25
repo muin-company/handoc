@@ -1021,8 +1021,13 @@ export async function generatePdf(
             // Check for floating positioning (treatAsChar="0")
             const floatPos = getFloatingPos(child.element);
             if (floatPos) {
-              // Render at absolute position, don't advance curY
               renderFloatingElement(doc, child, floatPos, getFont, font, ts, ps);
+              // PARA-relative floating elements (vertRelTo=PARA, vertOffset=0) act like
+              // anchored-in-place images — advance curY so content doesn't overlap.
+              if (floatPos.vertRelTo === 'PARA') {
+                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                if (fh > 0) { checkBreak(fh); curY -= fh; }
+              }
             } else if (child.name === 'picture' || child.name === 'pic') {
               renderImage(doc, child.element, activePL, activePW);
             } else {
