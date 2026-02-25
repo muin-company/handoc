@@ -5,6 +5,7 @@
  * and produces an HWPX ZIP via HwpxBuilder with font/style information.
  */
 
+import { inflateRawSync, inflateSync } from 'node:zlib';
 import { readHwp } from './hwp-reader.js';
 import { parseRecords, HWPTAG } from './record-parser.js';
 import { parseDocInfo, type DocInfo, type BinDataItem } from './docinfo-parser.js';
@@ -87,7 +88,14 @@ export interface HwpRichTable {
   cells: HwpCellData[];
 }
 
-type SectionItem = ParagraphData | { type: 'table'; rows: string[][] } | HwpRichTable;
+export interface HwpImageData {
+  type: 'image';
+  binDataIndex: number; // 0-based index into docInfo.binDataItems
+  width: number;   // HWP units
+  height: number;  // HWP units
+}
+
+type SectionItem = ParagraphData | { type: 'table'; rows: string[][] } | HwpRichTable | HwpImageData;
 
 function readUint16LE(data: Uint8Array, offset: number): number {
   return data[offset] | (data[offset + 1] << 8);
@@ -128,11 +136,10 @@ function extractSectionItems(
   for (let i = 0; i < records.length; i++) {
     const rec = records[i];
 
-    // Detect table control: CTRL_HEADER with 'tbl ' control ID
+    // Detect table or image control: CTRL_HEADER
     if (rec.tagId === HWPTAG.CTRL_HEADER) {
       if (rec.data.byteLength >= 4) {
         const id = readUint32LE(rec.data, 0);
-        // 'tbl ' in HWP = 0x7462_6C20 but stored reversed
         const ctrlId = String.fromCharCode(
           (id >> 24) & 0xff, (id >> 16) & 0xff, (id >> 8) & 0xff, id & 0xff,
         );
@@ -141,6 +148,63 @@ function extractSectionItems(
           tableBaseLevel = rec.level;
           richCells = [];
           cellCount = 0;
+          continue;
+        }
+        // Detect picture/OLE control: 'pic ' or 'ole '
+        if (ctrlId === 'pic ' || ctrlId === 'ole ') {
+          // Search forward for the image info in subsequent records at deeper levels
+          const ctrlLevel = rec.level;
+          let imgBinDataIndex = -1;
+          let imgWidth = 0;
+          let imgHeight = 0;
+          for (let j = i + 1; j < records.length; j++) {
+            const sub = records[j];
+            if (sub.level <= ctrlLevel && sub.tagId !== HWPTAG.TABLE) break;
+            // LIST_HEADER (72) at ctrlLevel+1 often contains shape size info
+            // SHAPE_COMPONENT or pic info: look for binDataId reference
+            // In HWP 5.x, the image data appears in a specific sub-record structure
+            // The TABLE record (73) after CTRL_HEADER for 'pic' contains image dimensions
+            if (sub.tagId === HWPTAG.TABLE && sub.data.byteLength >= 8) {
+              // For pic control, tag 73 data: offset 0-3 = property, offset varies
+              // Try to extract width/height from the shape container
+            }
+            // Look for binDataId in records — typically in a record following LIST_HEADER
+            // The pic control stores binDataId in the shape's image info
+            // Common pattern: after CTRL_HEADER(pic), there are shape records
+            // with binDataId stored at known offsets
+            if (sub.data.byteLength >= 4) {
+              // Tag 75 or similar: check for binary data references
+              // In many HWP implementations, the picture info record contains:
+              // - binDataId (0-based or 1-based) at a specific offset
+              const tagId = sub.tagId;
+              // SHAPE_COMPONENT_PICTURE = HWPTAG_BEGIN + 63 = 79 or similar
+              if (tagId === 79 && sub.data.byteLength >= 4) {
+                // Picture shape component: binDataId at offset 0 (int32)
+                const binRef = readUint32LE(sub.data, 0);
+                if (binRef > 0 && binRef <= docInfo.binDataItems.length) {
+                  imgBinDataIndex = binRef - 1; // convert 1-based to 0-based
+                }
+              }
+            }
+          }
+          // Also try to get dimensions from the CTRL_HEADER data itself
+          // Offset 20-27 in CTRL_HEADER often contains width/height for GSO
+          if (rec.data.byteLength >= 28) {
+            imgWidth = readUint32LE(rec.data, 20);
+            imgHeight = readUint32LE(rec.data, 24);
+          }
+          if (imgBinDataIndex >= 0) {
+            items.push({
+              type: 'image',
+              binDataIndex: imgBinDataIndex,
+              width: imgWidth || 28346, // default ~100mm
+              height: imgHeight || 21260, // default ~75mm
+            });
+          }
+          // Skip remaining sub-records of this control
+          while (i + 1 < records.length && records[i + 1].level > ctrlLevel) {
+            i++;
+          }
           continue;
         }
       }
@@ -423,6 +487,92 @@ function extractPageDimensions(sectionData: Uint8Array): PageDimensions | null {
 }
 
 /**
+ * Decompress BinData if it's zlib/deflate compressed.
+ * HWP BinData entries may be stored compressed even separately from body streams.
+ */
+function decompressBinData(data: Uint8Array): Uint8Array {
+  // Check for common image signatures first (not compressed)
+  if (data.byteLength >= 4) {
+    // PNG: 89 50 4E 47
+    if (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47) return data;
+    // JPEG: FF D8 FF
+    if (data[0] === 0xFF && data[1] === 0xD8 && data[2] === 0xFF) return data;
+    // GIF: 47 49 46
+    if (data[0] === 0x47 && data[1] === 0x49 && data[2] === 0x46) return data;
+    // BMP: 42 4D
+    if (data[0] === 0x42 && data[1] === 0x4D) return data;
+    // TIFF: 49 49 or 4D 4D
+    if ((data[0] === 0x49 && data[1] === 0x49) || (data[0] === 0x4D && data[1] === 0x4D)) return data;
+    // EMF: 01 00 00 00
+    if (data[0] === 0x01 && data[1] === 0x00 && data[2] === 0x00 && data[3] === 0x00) return data;
+    // WMF: D7 CD C6 9A
+    if (data[0] === 0xD7 && data[1] === 0xCD && data[2] === 0xC6 && data[3] === 0x9A) return data;
+  }
+  // Try decompression
+  try {
+    return new Uint8Array(inflateRawSync(data));
+  } catch {
+    try {
+      return new Uint8Array(inflateSync(data));
+    } catch {
+      return data;
+    }
+  }
+}
+
+/**
+ * Extract binary data (image) from CFB BinData storage.
+ * HWP stores embedded binaries as BinData/BIN%04X.<ext> in the CFB.
+ */
+function extractBinData(
+  cfb: CfbFile,
+  binDataItems: BinDataItem[],
+  index: number,
+): { data: Uint8Array; ext: string } | null {
+  if (index < 0 || index >= binDataItems.length) return null;
+  const item = binDataItems[index];
+  if (!item) return null;
+
+  const ext = item.extension || 'png';
+  const binId = item.binDataId;
+
+  // Try various naming conventions used in HWP files
+  const candidates = [
+    `BinData/BIN${String(binId).padStart(4, '0')}.${ext}`,
+    `BinData/BIN${String(binId).padStart(4, '0')}.${ext.toUpperCase()}`,
+    `Root Entry/BinData/BIN${String(binId).padStart(4, '0')}.${ext}`,
+  ];
+
+  const streams = cfb.listStreams();
+  for (const candidate of candidates) {
+    try {
+      const data = cfb.getStream(candidate);
+      if (data && data.byteLength > 0) {
+        return { data: decompressBinData(data), ext };
+      }
+    } catch {
+      // Stream not found, try next candidate
+    }
+  }
+
+  // Try to find by pattern match in stream list
+  const pattern = new RegExp(`BIN${String(binId).padStart(4, '0')}`, 'i');
+  const match = streams.find(s => pattern.test(s));
+  if (match) {
+    try {
+      const data = cfb.getStream(match);
+      if (data && data.byteLength > 0) {
+        return { data: decompressBinData(data), ext };
+      }
+    } catch {
+      // Failed to extract
+    }
+  }
+
+  return null;
+}
+
+/**
  * Convert an HWP 5.x binary buffer to HWPX format.
  * Converts text content with font and formatting information (v2).
  * Tables and images are still skipped with console warnings.
@@ -469,6 +619,12 @@ export function convertHwpToHwpx(hwpBuffer: Uint8Array): Uint8Array {
       for (const item of sectionItems) {
         if ('type' in item && item.type === 'richTable') {
           builder.addRichTable(item as HwpRichTable);
+        } else if ('type' in item && item.type === 'image') {
+          const imgItem = item as HwpImageData;
+          const imageData = extractBinData(doc.cfb, docInfo.binDataItems, imgItem.binDataIndex);
+          if (imageData) {
+            builder.addImage(imageData.data, imageData.ext, imgItem.width, imgItem.height);
+          }
         } else if ('type' in item && item.type === 'table') {
           builder.addTable(item.rows);
         } else {
