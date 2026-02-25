@@ -279,6 +279,8 @@ interface TextStyle {
   underline: boolean;
   strikeout: boolean;
   color: [number, number, number];
+  highlightColor?: [number, number, number];
+  shadeColor?: [number, number, number];
   isSerif: boolean;
   charSpacing: number; // pt (character spacing)
 }
@@ -316,6 +318,16 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
   if (cp.textColor && cp.textColor !== '0' && cp.textColor !== '#000000' && cp.textColor !== '000000') {
     const c = cp.textColor.replace('#', '').padStart(6, '0');
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
+  }
+
+  // Highlight / shade background colors
+  if (cp.highlightColor && cp.highlightColor !== 'none' && cp.highlightColor !== 'NONE') {
+    const hc = cp.highlightColor.replace('#', '').padStart(6, '0');
+    s.highlightColor = [parseInt(hc.slice(0, 2), 16) / 255, parseInt(hc.slice(2, 4), 16) / 255, parseInt(hc.slice(4, 6), 16) / 255];
+  }
+  if (cp.shadeColor && cp.shadeColor !== 'none' && cp.shadeColor !== 'NONE' && cp.shadeColor !== '#000000' && cp.shadeColor !== '000000') {
+    const sc = cp.shadeColor.replace('#', '').padStart(6, '0');
+    s.shadeColor = [parseInt(sc.slice(0, 2), 16) / 255, parseInt(sc.slice(2, 4), 16) / 255, parseInt(sc.slice(4, 6), 16) / 255];
   }
 
   const fontRef = (cp as any).fontRef;
@@ -1015,6 +1027,17 @@ export async function generatePdf(
               }
 
               const textY = curY - ts.fontSize;
+
+              // Draw highlight/shade background behind text
+              const bgColor = ts.highlightColor ?? ts.shadeColor;
+              if (bgColor) {
+                page.drawRectangle({
+                  x, y: textY - 1,
+                  width: line.width, height: ts.fontSize + 2,
+                  color: rgb(...bgColor),
+                });
+              }
+
               drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
 
               if (ts.underline) {
@@ -1485,6 +1508,16 @@ export async function generatePdf(
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
+                  // Draw highlight/shade background behind text in table cells
+                  const cellBgColor = cts.highlightColor ?? cts.shadeColor;
+                  if (cellBgColor) {
+                    page.drawRectangle({
+                      x: tx, y: ty - 1,
+                      width: cl.width, height: cts.fontSize + 2,
+                      color: rgb(...cellBgColor),
+                    });
+                  }
+
                   drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
 
                   // Underline / strikethrough in table cells
