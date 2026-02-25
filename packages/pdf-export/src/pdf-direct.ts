@@ -1340,8 +1340,9 @@ export async function generatePdf(
         contentHeight = estimateCellHeight(doc, cell, cellW, getFont) - cm.top - cm.bottom;
       }
       let yOffset = 0;
-      if (vAlign === 'CENTER') yOffset = Math.max(0, (cellH - contentHeight) / 2 - cm.top);
-      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, cellH - contentHeight - cm.top - cm.bottom);
+      const innerH = cellH - cm.top - cm.bottom;
+      if (vAlign === 'CENTER') yOffset = Math.max(0, (innerH - contentHeight) / 2);
+      else if (vAlign === 'BOTTOM') yOffset = Math.max(0, innerH - contentHeight);
 
       let ty = cellTop - cm.top - yOffset;
       for (const cp of cell.paragraphs) {
@@ -1360,7 +1361,7 @@ export async function generatePdf(
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
                 let cellJustifyCs = cts.charSpacing;
-                if (cps.align === 'center') tx = cellX + (cellW - cl.width) / 2;
+                if (cps.align === 'center') tx = cellX + cm.left + (innerW - cl.width) / 2;
                 else if (cps.align === 'right') tx = cellX + cellW - cm.right - cl.width;
                 else if (cps.align === 'justify' && cl.isWrapped && cl.text.length > 1) {
                   const extra = innerW - cl.width;
