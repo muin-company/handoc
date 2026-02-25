@@ -119,8 +119,9 @@ Implement automatic regression detection:
 ### Short-term (Today)
 1. ✅ Revert the 6 changes (DONE: da2c18c)
 2. ❌ Attempted vertical alignment fix → Causes regression even alone
-3. **Finding:** Spacing-based optimizations are inherently risky for this document set
-4. **Action:** Pause spacing optimization, explore different vectors
+3. ❌ Attempted page-break-inside: avoid for tables → -14.6% regression (14:00)
+4. **Finding:** Both spacing AND page-break changes cause regressions
+5. **Conclusion:** Current baseline is a local optimum, needs different approach
 
 ### Medium-term (This Week)
 1. Implement document-type detection (government/education/business)
