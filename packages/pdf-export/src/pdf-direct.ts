@@ -492,14 +492,25 @@ function getParaPrefix(
 
     // Initialize counters for this numbering id
     if (!state.counters.has(idRef)) {
-      state.counters.set(idRef, new Array(10).fill(0));
+      // Pre-fill counters with (start - 1) so first increment yields `start`
+      const init = new Array(10).fill(0);
+      for (const lv of numbering.levels) {
+        const lvIdx = lv.level - 1; // levels are 1-based
+        if (lvIdx >= 0 && lvIdx < init.length && lv.start !== undefined) {
+          init[lvIdx] = lv.start - 1;
+        }
+      }
+      state.counters.set(idRef, init);
     }
     const counters = state.counters.get(idRef)!;
 
     // Increment this level's counter
     counters[level]++;
-    // Reset all deeper levels
-    for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
+    // Reset all deeper levels to their start values
+    for (let i = level + 1; i < counters.length; i++) {
+      const lvDef = numbering.levels.find(l => l.level === i + 1);
+      counters[i] = (lvDef?.start ?? 1) - 1;
+    }
 
     const paraHead = numbering.levels.find(l => l.level === level + 1); // levels use 1-based
     const ai = paraHead?.autoIndent ?? false;
@@ -829,7 +840,8 @@ export async function generatePdf(
     } catch { /* skip */ }
   }
 
-  for (const section of doc.sections) {
+  for (let _sectionIdx = 0; _sectionIdx < doc.sections.length; _sectionIdx++) {
+    const section = doc.sections[_sectionIdx];
     const sp = section.sectionProps;
     // Handle landscape (NARROWLY): swap width/height since HWPX stores portrait dimensions
     const isLandscape = sp?.landscape ?? false;
@@ -1508,7 +1520,7 @@ export async function generatePdf(
       // wider than native Korean fonts, causing extra text wrapping that inflates
       // height estimates. Discount the excess by 35% to compensate.
       if (cellDeclaredH > 0 && h > cellDeclaredH) {
-        return cellDeclaredH + (h - cellDeclaredH) * 0.45;
+        return cellDeclaredH + (h - cellDeclaredH) * 0.2;
       }
       return Math.max(cellDeclaredH, h);
     }
@@ -1980,8 +1992,8 @@ export async function generatePdf(
     // ── Header/Footer rendering ──
     const headerMarginPt = sp ? hwpToPt(sp.margins.header) : 0;
     const footerMarginPt = sp ? hwpToPt(sp.margins.footer) : 0;
-    const sectionHeaders = doc.headers;
-    const sectionFooters = doc.footers;
+    const sectionHeaders = doc.headers.filter(h => h.sectionIndex === undefined || h.sectionIndex === _sectionIdx);
+    const sectionFooters = doc.footers.filter(f => f.sectionIndex === undefined || f.sectionIndex === _sectionIdx);
     const pageStartNum = sp?.pageStartNumber ?? 1;
 
     // Total page count for {{pages}} placeholder

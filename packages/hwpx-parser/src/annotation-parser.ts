@@ -146,13 +146,17 @@ function genericToRawNode(el: GenericElement): Record<string, unknown> {
  */
 export function collectHeadersFooters(sections: { paragraphs: Paragraph[] }[]): HeaderFooter[] {
   const results: HeaderFooter[] = [];
-  for (const section of sections) {
+  for (let si = 0; si < sections.length; si++) {
+    const section = sections[si];
     for (const para of section.paragraphs) {
       for (const run of para.runs) {
         for (const child of run.children) {
           if (child.type === 'ctrl') {
             const hf = parseHeaderFooter(child.element);
-            if (hf) results.push(hf);
+            if (hf) {
+              hf.sectionIndex = si;
+              results.push(hf);
+            }
           }
         }
       }
