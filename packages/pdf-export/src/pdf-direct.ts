@@ -515,7 +515,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
+  return fontSize * (ps.lineSpacingValue / 100);
 }
 
 // ── Text measurement ──
@@ -1128,6 +1128,25 @@ export async function generatePdf(
             } else {
               renderShapeContent(doc, child.element, activePL, activePW, font, ts, ps, getFont);
             }
+          } else if (child.type === 'equation') {
+            // Equation fallback: render the raw script text as inline content
+            const scriptEl = child.element.children.find((c: GenericElement) => c.tag === 'script');
+            const eqText = scriptEl?.text ?? '';
+            if (eqText) {
+              hasContent = true;
+              const activeCol = colLayouts[curCol];
+              const curPW = activeCol.width - ps.marginLeft - ps.marginRight;
+              const eqContent = `[${eqText}]`;
+              const lines = wrapText(eqContent, font, ts.fontSize, curPW, ts.charSpacing);
+              for (const line of lines) {
+                checkBreak(lineH);
+                const activeCol2 = colLayouts[curCol];
+                const drawX = activeCol2.x + ps.marginLeft;
+                drawText(page, line.text, drawX, curY - ts.fontSize, font, ts.fontSize, ts.color);
+                curY -= lineH;
+                firstLine = false;
+              }
+            }
           } else if (child.type === 'ctrl') {
             // Check for footnote/endnote
             const fn = parseFootnote(child.element);
@@ -1311,7 +1330,7 @@ export async function generatePdf(
         // cap: for dense tables (>20 rows), cap at 20% expansion over declared;
         // for normal tables, cap at 50% expansion.
         if (declaredRowH > 0 && rh > declaredRowH) {
-          const maxExpansion = tbl.rows.length > 20 ? 0.2 : 0.5;
+          const maxExpansion = tbl.rows.length > 40 ? 0.2 : 0.5;
           const excess = rh - declaredRowH;
           rh = declaredRowH + excess * maxExpansion;
         }
@@ -1319,7 +1338,7 @@ export async function generatePdf(
       }
 
       // Adjust for rowSpan>1 cells (skip for dense tables to preserve layout)
-      if (tbl.rows.length <= 20) {
+      if (tbl.rows.length <= 40) {
         for (let ri = 0; ri < tbl.rows.length; ri++) {
           for (const cell of tbl.rows[ri].cells) {
             const rs = cell.cellSpan.rowSpan;
@@ -1451,6 +1470,12 @@ export async function generatePdf(
                 const shH = Number(curSzEl.attrs['height'] ?? 0);
                 h += shH > 0 ? hwpToPt(shH) : lh;
               } else { h += lh; }
+            } else if (cc.type === 'equation') {
+              const scriptEl = cc.element.children.find((c: GenericElement) => c.tag === 'script');
+              const eqText = scriptEl?.text ?? '';
+              if (eqText) {
+                h += wrapText(`[${eqText}]`, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
+              }
             }
           }
         }
@@ -1562,6 +1587,21 @@ export async function generatePdf(
               renderShapeContent(doc, cc.element, cellX + 2, cellW - 4, cf, cts, cps, getFont);
               ty = curY;
               curY = savedCurY;
+            } else if (cc.type === 'equation') {
+              // Equation fallback: render raw script text in table cell
+              const scriptEl = cc.element.children.find((c: GenericElement) => c.tag === 'script');
+              const eqText = scriptEl?.text ?? '';
+              if (eqText) {
+                const eqContent = `[${eqText}]`;
+                const cls = wrapText(eqContent, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing);
+                for (const cl of cls) {
+                  ty -= cts.fontSize;
+                  if (ty > cellTop - cellH) {
+                    drawText(page, cl.text, cellX + cm.left, ty, cf, cts.fontSize, cts.color);
+                  }
+                  ty -= (lh - cts.fontSize);
+                }
+              }
             }
           }
         }
