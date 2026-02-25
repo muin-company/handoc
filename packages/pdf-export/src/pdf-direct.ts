@@ -1055,6 +1055,11 @@ export async function generatePdf(
 
   for (const section of doc.sections) {
     const sp = section.sectionProps;
+    // Helper: find image by binary reference ID
+    function findImageByRef(binRef: string) {
+      return doc.images.find(i => i.path.includes(binRef));
+    }
+
     // Handle landscape (NARROWLY): swap width/height since HWPX stores portrait dimensions
     const isLandscape = sp?.landscape ?? false;
     const rawW = sp ? hwpToPt(sp.pageWidth) : 595.28;
