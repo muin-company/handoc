@@ -7,8 +7,9 @@
 
 import { readHwp } from './hwp-reader.js';
 import { parseRecords, HWPTAG } from './record-parser.js';
-import { parseDocInfo, type DocInfo } from './docinfo-parser.js';
+import { parseDocInfo, type DocInfo, type BinDataItem } from './docinfo-parser.js';
 import { HwpxBuilder } from '@handoc/hwpx-writer';
+import type { CfbFile } from './cfb-reader.js';
 
 /** HWPTAG_PARA_TEXT tag id */
 const HWPTAG_PARA_TEXT = 67;
@@ -348,6 +349,15 @@ function extractStyle(
       // Line spacing (convert to percentage)
       if (paraShape.lineSpacing > 0 && paraShape.lineSpacing !== 160) {
         style.lineSpacing = paraShape.lineSpacing;
+      }
+
+      // Left margin + indent (convert HWP units to mm for builder)
+      const HWP_TO_MM = 1 / 283.46;
+      if (paraShape.leftMargin > 0 || paraShape.indent !== 0) {
+        const totalIndent = (paraShape.leftMargin + paraShape.indent) * HWP_TO_MM;
+        if (totalIndent > 0.5) { // Only apply meaningful indents
+          style.indent = totalIndent;
+        }
       }
     }
   }

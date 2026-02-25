@@ -882,24 +882,18 @@ function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: numbe
         else hi = mid - 1;
       }
 
-      // Find best break point with kinsoku rules
+      // Find best break point — space-based word boundary, then force at max fit
+      // NOTE: CJK kinsoku (canBreakAt) disabled — caused +401 page regression in v38
       let brk = -1;
-      // First: try to find a space break (word boundary) looking back from lo
+      // Try to find a space break (word boundary) looking back from lo
       for (let i = lo; i > Math.max(0, lo - 15); i--) {
         if (remaining.charCodeAt(i) === 32) {
           brk = i + 1; // break after space
           break;
         }
       }
-      // If no space found, find best CJK/kinsoku-compliant break
-      if (brk < 0) {
-        // Try at lo first, then search backwards
-        for (let i = lo; i > Math.max(0, lo - 10); i--) {
-          if (canBreakAt(remaining, i)) { brk = i; break; }
-        }
-        // If still no valid break (kinsoku constraints too tight), force at lo
-        if (brk < 0) brk = lo;
-      }
+      // No space found — force break at max fit position
+      if (brk < 0) brk = lo;
 
       if (brk <= 0) brk = lo;
       const lineText = remaining.substring(0, brk);

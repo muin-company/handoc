@@ -22,12 +22,32 @@ export interface ParaShape {
   align: number;
   /** Line spacing value (percentage * 100 or HU, depends on type) */
   lineSpacing: number;
+  /** Left margin in HWP units */
+  leftMargin: number;
+  /** Right margin in HWP units */
+  rightMargin: number;
+  /** First-line indent in HWP units (negative = hanging) */
+  indent: number;
+}
+
+export interface BinDataItem {
+  /** Binary data type: 'link' | 'embedding' | 'storage' */
+  type: number;
+  /** Absolute path or relative file name */
+  absolutePath: string;
+  /** Relative path */
+  relativePath: string;
+  /** BIN_DATA ID (1-based, maps to BinData/BIN%04X in CFB) */
+  binDataId: number;
+  /** File extension */
+  extension: string;
 }
 
 export interface DocInfo {
   fontNames: string[];
   charShapes: CharShape[];
   paraShapes: ParaShape[];
+  binDataItems: BinDataItem[];
 }
 
 function readUint16LE(data: Uint8Array, offset: number): number {
@@ -91,15 +111,89 @@ function parseCharShape(data: Uint8Array): CharShape | null {
  *   20–23: int32 line spacing value (depends on type in properties1 bits 0-1)
  *   OR at different offsets depending on version. We try offset 16 for line spacing type + value.
  */
+/**
+ * Parse HWPTAG_PARA_SHAPE record.
+ * Layout (HWP 5.x):
+ *   0–3:   uint32 properties1 (bits 2-4 = alignment)
+ *   4–7:   int32 left margin (HWP units)
+ *   8–11:  int32 right margin (HWP units)
+ *   12–15: int32 indent (first line, HWP units; negative = hanging)
+ *   16–19: int32 top para spacing
+ *   20–23: int32 bottom para spacing
+ *   24–27: int32 line spacing value
+ */
 function parseParaShape(data: Uint8Array): ParaShape | null {
   if (data.byteLength < 8) return null;
   const props1 = readUint32LE(data, 0);
   const align = (props1 >> 2) & 0x7;
+
+  let leftMargin = 0;
+  let rightMargin = 0;
+  let indent = 0;
   let lineSpacing = 160; // default 160%
+
+  if (data.byteLength >= 16) {
+    // Margins are signed int32 in HWP units
+    leftMargin = readUint32LE(data, 4);
+    rightMargin = readUint32LE(data, 8);
+    indent = readUint32LE(data, 12);
+    // Convert unsigned to signed for indent (can be negative for hanging)
+    if (indent > 0x7FFFFFFF) indent = indent - 0x100000000;
+  }
   if (data.byteLength >= 28) {
     lineSpacing = readUint32LE(data, 24);
   }
-  return { align, lineSpacing };
+  return { align, lineSpacing, leftMargin, rightMargin, indent };
+}
+
+/**
+ * Parse HWPTAG_BIN_DATA record.
+ * Layout:
+ *   0–1: uint16 properties (bits 0-3 = type: 0=link, 1=embedding, 2=storage)
+ *   2+:  Depends on type. For embedding: uint16 binDataId, uint16 extLen, UTF-16LE ext
+ */
+function parseBinData(data: Uint8Array, binDataSeq: number): BinDataItem | null {
+  if (data.byteLength < 2) return null;
+  const props = readUint16LE(data, 0);
+  const type = props & 0xf;
+  const decoder = new TextDecoder('utf-16le');
+
+  if (type === 1) {
+    // Embedding type: binDataId at offset 2, then extension string
+    if (data.byteLength < 6) return null;
+    const binDataId = readUint16LE(data, 2);
+    const extLen = readUint16LE(data, 4);
+    let extension = '';
+    if (extLen > 0 && data.byteLength >= 6 + extLen * 2) {
+      const extBytes = data.slice(6, 6 + extLen * 2);
+      extension = decoder.decode(extBytes).replace(/\0/g, '');
+    }
+    return {
+      type, absolutePath: '', relativePath: '',
+      binDataId: binDataId || binDataSeq,
+      extension: extension.toLowerCase(),
+    };
+  } else if (type === 0) {
+    // Link type: absolute path, relative path
+    let offset = 2;
+    const absLen = data.byteLength >= offset + 2 ? readUint16LE(data, offset) : 0;
+    offset += 2;
+    const absolutePath = absLen > 0 && data.byteLength >= offset + absLen * 2
+      ? decoder.decode(data.slice(offset, offset + absLen * 2)).replace(/\0/g, '')
+      : '';
+    offset += absLen * 2;
+    const relLen = data.byteLength >= offset + 2 ? readUint16LE(data, offset) : 0;
+    offset += 2;
+    const relativePath = relLen > 0 && data.byteLength >= offset + relLen * 2
+      ? decoder.decode(data.slice(offset, offset + relLen * 2)).replace(/\0/g, '')
+      : '';
+    return {
+      type, absolutePath, relativePath,
+      binDataId: binDataSeq,
+      extension: absolutePath.split('.').pop()?.toLowerCase() ?? '',
+    };
+  }
+  return null;
 }
 
 /**
@@ -109,6 +203,8 @@ export function parseDocInfo(records: HwpRecord[]): DocInfo {
   const fontNames: string[] = [];
   const charShapes: CharShape[] = [];
   const paraShapes: ParaShape[] = [];
+  const binDataItems: BinDataItem[] = [];
+  let binDataSeq = 1; // 1-based sequence for BinData IDs
 
   for (const rec of records) {
     switch (rec.tagId) {
@@ -127,8 +223,14 @@ export function parseDocInfo(records: HwpRecord[]): DocInfo {
         if (ps) paraShapes.push(ps);
         break;
       }
+      case HWPTAG.BIN_DATA: {
+        const bd = parseBinData(rec.data, binDataSeq);
+        if (bd) binDataItems.push(bd);
+        binDataSeq++;
+        break;
+      }
     }
   }
 
-  return { fontNames, charShapes, paraShapes };
+  return { fontNames, charShapes, paraShapes, binDataItems };
 }
