@@ -301,6 +301,8 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
   if (cp.italic) s.italic = true;
   if (cp.underline && cp.underline !== 'none' && cp.underline !== 'NONE') s.underline = true;
   if (cp.strikeout && cp.strikeout !== 'none' && cp.strikeout !== 'NONE') s.strikeout = true;
+  if (cp.superscript) s.superscript = true;
+  if (cp.subscript) s.subscript = true;
   if (cp.textColor && cp.textColor !== '0' && cp.textColor !== '#000000' && cp.textColor !== '000000') {
     const c = cp.textColor.replace('#', '').padStart(6, '0');
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
@@ -989,8 +991,17 @@ export async function generatePdf(
                 justifyCs = ts.charSpacing + extra / (line.text.length - 1);
               }
 
-              const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
+              // Superscript/subscript: reduce font size and shift vertically
+              let renderFontSize = ts.fontSize;
+              let textY = curY - ts.fontSize;
+              if (ts.superscript) {
+                renderFontSize = ts.fontSize * 0.6;
+                textY = curY - ts.fontSize + ts.fontSize * 0.35;
+              } else if (ts.subscript) {
+                renderFontSize = ts.fontSize * 0.6;
+                textY = curY - ts.fontSize - ts.fontSize * 0.1;
+              }
+              drawText(page, line.text, x, textY, font, renderFontSize, ts.color, justifyCs, ts.bold, ts.italic);
 
               if (ts.underline) {
                 page.drawLine({
@@ -1379,7 +1390,17 @@ export async function generatePdf(
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
+                  // Superscript/subscript in table cells
+                  let cellRenderFs = cts.fontSize;
+                  let cellRenderTy = ty;
+                  if (cts.superscript) {
+                    cellRenderFs = cts.fontSize * 0.6;
+                    cellRenderTy = ty + cts.fontSize * 0.35;
+                  } else if (cts.subscript) {
+                    cellRenderFs = cts.fontSize * 0.6;
+                    cellRenderTy = ty - cts.fontSize * 0.1;
+                  }
+                  drawText(page, cl.text, tx, cellRenderTy, cf, cellRenderFs, cts.color, cellJustifyCs, cts.bold, cts.italic);
 
                   // Underline / strikethrough in table cells
                   if (cts.underline) {
