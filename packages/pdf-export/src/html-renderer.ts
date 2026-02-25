@@ -67,19 +67,10 @@ function getBorderFillBgColor(doc: HanDoc, id: number | null): string | undefine
   return bgColor.replace('#', '');
 }
 
-// HWP standard border widths (more precise defaults)
-const HWP_BORDER_THIN = 0.4;      // 가는선 (thin)
-const HWP_BORDER_NORMAL = 0.5;    // 보통선 (normal)
-const HWP_BORDER_THICK = 1.0;     // 굵은선 (thick)
-
-// HWP color palette (more precise than pure black/gray)
-const HWP_COLOR_BORDER = '#1a1a1a';        // Slightly softer than pure black
-const HWP_COLOR_TABLE_HEADER = '#efefef';  // Standard table header gray
-
 function getBorderStyles(doc: HanDoc, id: number | null): string {
-  if (id == null) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
+  if (id == null) return 'border:0.5px solid #000';
   const borderFill = doc.header.refList.borderFills.find(bf => Number(bf.attrs['id']) === id);
-  if (!borderFill) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
+  if (!borderFill) return 'border:0.5px solid #000';
   
   // Parse border elements (left, right, top, bottom)
   const borders: Record<string, string> = {};
@@ -90,7 +81,7 @@ function getBorderStyles(doc: HanDoc, id: number | null): string {
       const width = Number(borderEl.attrs['width'] || 12); // HWPUNIT (1/7200 inch)
       const color = borderEl.attrs['color'] || '000000';
       
-      const widthPx = Math.max(HWP_BORDER_THIN, width / 7200 * 96); // Convert to pixels
+      const widthPx = Math.max(0.5, width / 7200 * 96); // Convert to pixels
       const style = type === 'None' ? 'none' : 
                     type === 'Dash' ? 'dashed' :
                     type === 'Dot' ? 'dotted' : 'solid';
@@ -99,7 +90,7 @@ function getBorderStyles(doc: HanDoc, id: number | null): string {
     }
   }
   
-  if (Object.keys(borders).length === 0) return `border:${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}`;
+  if (Object.keys(borders).length === 0) return 'border:0.5px solid #000';
   
   // Check if all sides are the same
   const values = Object.values(borders);
@@ -302,15 +293,15 @@ function renderTable(doc: HanDoc, element: GenericElement): string {
       if (cell.cellSz.width > 0) {
         cellStyles.push(`width:${(cell.cellSz.width / 7200 * 25.4).toFixed(1)}mm`);
       }
-      // Cell padding from cellMargin (scale down to 25% for better spacing match)
+      // Cell padding from cellMargin (scale down to 20% to prevent excessive spacing)
       if (cell.cellMargin) {
-        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200 * 0.25).toFixed(3)}in` : '1px';
-        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200 * 0.25).toFixed(3)}in` : '2px';
-        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200 * 0.25).toFixed(3)}in` : '1px';
-        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200 * 0.25).toFixed(3)}in` : '2px';
+        const padTop = cell.cellMargin.top ? `${(cell.cellMargin.top / 7200 * 0.20).toFixed(3)}in` : '0.5px';
+        const padRight = cell.cellMargin.right ? `${(cell.cellMargin.right / 7200 * 0.20).toFixed(3)}in` : '1px';
+        const padBottom = cell.cellMargin.bottom ? `${(cell.cellMargin.bottom / 7200 * 0.20).toFixed(3)}in` : '0.5px';
+        const padLeft = cell.cellMargin.left ? `${(cell.cellMargin.left / 7200 * 0.20).toFixed(3)}in` : '1px';
         cellStyles.push(`padding:${padTop} ${padRight} ${padBottom} ${padLeft}`);
       } else {
-        cellStyles.push('padding:1px 2px');
+        cellStyles.push('padding:0.5px 1px');
       }
       // Cell background color from borderFill
       const bgColor = getBorderFillBgColor(doc, cell.borderFillIDRef);
@@ -482,15 +473,14 @@ function renderHeaderFooter(doc: HanDoc, section: Section): { headerHtml: string
 
 const BASE_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 9.5pt; line-height: 1.35; word-break: keep-all; overflow-wrap: break-word; }
-  p { margin: 0; padding: 0; orphans: 2; widows: 2; line-height: 1.35; }
+  body { font-family: 'HCR Batang', 'Batang', '바탕', 'AppleMyungjo', 'Noto Serif KR', serif; color: #000; font-size: 9.5pt; line-height: 1.3; word-break: keep-all; overflow-wrap: break-word; }
+  p { margin: 0; padding: 0; orphans: 2; widows: 2; }
   h1, h2, h3, h4, h5, h6 { page-break-after: avoid; orphans: 3; widows: 3; }
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: auto; page-break-after: auto; }
-  td, th { border: ${HWP_BORDER_NORMAL}px solid ${HWP_COLOR_BORDER}; padding: 1px 2px; font-size: inherit; line-height: 1.08; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
-  td { vertical-align: top; }
-  th { vertical-align: middle; background-color: ${HWP_COLOR_TABLE_HEADER}; font-weight: bold; }
+  td, th { border: 0.5px solid #000; padding: 0.5px 1px; vertical-align: top; font-size: inherit; line-height: 1.05; orphans: 1; widows: 1; max-height: none; word-break: keep-all; }
   td p, th p, td h1, td h2, td h3, td h4, td h5, td h6, th h1, th h2, th h3, th h4, th h5, th h6 { margin: 0 !important; padding: 0 !important; line-height: inherit !important; page-break-inside: auto !important; }
+  th { background-color: #f0f0f0; font-weight: bold; }
   img { display: inline-block; max-width: 100%; page-break-inside: avoid; }
   .page-header { padding-bottom: 4px; margin-bottom: 8px; font-size: 9pt; color: #666; }
   .page-footer { padding-top: 4px; margin-top: 8px; font-size: 9pt; color: #666; }
