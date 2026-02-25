@@ -1605,34 +1605,59 @@ export async function generatePdf(
     }
 
     // ── Footnote rendering at page bottom ──
+    // Footnote rendering settings from footNotePr or defaults
+    const fnPr = sp?.footNotePr;
     const fnFont = fonts.sans;
+    // Footnote font size: ~80% of default body size (10pt)
     const fnFontSize = 8;
     const fnLineH = fnFontSize * 1.4;
+    const fnSuffix = fnPr?.suffixChar ?? ')';
+    const fnSuperscript = fnPr?.supscript ?? false;
+    // Separator line: length=-1 means 30% of column width (HWP convention)
+    const fnSepLength = (fnPr?.noteLineLength ?? -1) < 0 ? cW * 0.3 : hwpToPt(fnPr!.noteLineLength);
+    const fnSepWidth = fnPr?.noteLineWidth ?? 0.34; // ~0.12mm default
+    // Spacing (HWP units → pt)
+    const fnAboveLine = fnPr ? hwpToPt(fnPr.aboveLine) : 6;
+    const fnBelowLine = fnPr ? hwpToPt(fnPr.belowLine) : 4;
+    const fnBetweenNotes = fnPr ? hwpToPt(fnPr.betweenNotes) : 2;
+
     for (const [pg, footnotes] of pageFootnotes) {
       if (footnotes.length === 0) continue;
       // Calculate total footnote area height
-      const totalFnH = fnLineH * footnotes.length + 6; // 6pt for separator line + spacing
-      // Start from bottom margin + footer space, going up
+      const totalFnH = fnAboveLine + fnSepWidth + fnBelowLine
+        + fnLineH * footnotes.length
+        + fnBetweenNotes * (footnotes.length - 1);
+      // Start from bottom margin, going up
       let fnY = mB + totalFnH;
 
-      // Draw separator line
-      const sepY = fnY + 4;
+      // Draw separator line (above footnotes)
+      const sepY = fnY - fnAboveLine + fnSepWidth / 2;
+      fnY -= fnAboveLine + fnSepWidth + fnBelowLine;
       pg.drawLine({
         start: { x: mL, y: sepY },
-        end: { x: mL + cW * 0.3, y: sepY },
-        thickness: 0.5,
+        end: { x: mL + fnSepLength, y: sepY },
+        thickness: fnSepWidth,
         color: rgb(0, 0, 0),
       });
 
       // Draw each footnote
-      for (const fn of footnotes) {
-        const numStr = `${fn.num}) `;
-        const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
-        // Draw number
-        drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        // Draw text
-        drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
-        fnY -= fnLineH;
+      for (let fi = 0; fi < footnotes.length; fi++) {
+        const fn = footnotes[fi];
+        const numStr = `${fn.num}${fnSuffix} `;
+
+        if (fnSuperscript) {
+          // Superscript: smaller font, raised baseline
+          const supSize = fnFontSize * 0.7;
+          const supRaise = fnFontSize * 0.3;
+          const numW = fnFont.widthOfTextAtSize(numStr, supSize);
+          drawText(pg, numStr, mL, fnY - fnFontSize + supRaise, fnFont, supSize, [0, 0, 0]);
+          drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        } else {
+          const numW = fnFont.widthOfTextAtSize(numStr, fnFontSize);
+          drawText(pg, numStr, mL, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+          drawText(pg, fn.text, mL + numW, fnY - fnFontSize, fnFont, fnFontSize, [0, 0, 0]);
+        }
+        fnY -= fnLineH + (fi < footnotes.length - 1 ? fnBetweenNotes : 0);
       }
     }
 
