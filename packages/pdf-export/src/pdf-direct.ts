@@ -2226,14 +2226,9 @@ export async function generatePdf(
     }
   }
 
-  // Remove empty pages (no body content — headers/footers/page numbers don't count)
-  // Never remove the first page to avoid 0-page PDFs
-  const allPages = pdfDoc.getPages();
-  for (let i = allPages.length - 1; i >= 1; i--) {
-    if (!pagesWithContent.has(allPages[i])) {
-      pdfDoc.removePage(i);
-    }
-  }
+  // Empty page removal disabled — was causing regressions where pages with
+  // headers/footers/page numbers (but no body text) were incorrectly removed.
+  // In HWP documents these pages are intentional and must be preserved.
 
   return new Uint8Array(await pdfDoc.save());
 }
