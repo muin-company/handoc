@@ -528,6 +528,9 @@ interface FontSet {
 
 function findSystemFont(name: string): string | undefined {
   const dirs = [
+    // Hancom Office bundled fonts (HCR Batang/Dotum = 함초롬바탕/돋움)
+    '/Applications/Hancom Office HWP.app/Contents/Resources/Hnc/Shared/TTF/Install',
+    '/Applications/Hancom Office HWP.app/Contents/Resources/Hnc/Shared/TTF/Hwp',
     '/System/Library/Fonts/Supplemental',
     '/System/Library/Fonts',
     '/Library/Fonts',
@@ -558,14 +561,17 @@ async function embedFonts(pdfDoc: PDFDocument, customFonts?: { serif?: string; s
     return await pdfDoc.embedFont(fallback as any);
   }
 
-  // Note: Noto CJK OTF (CFF-based) causes fontkit subsetting crash. Use TTF only.
+  // Priority: HCR (함초롬) > Apple > Nanum > Windows
+  // HCR fonts match 한/글's default rendering — critical for SSIM accuracy
   const serifPath = customFonts?.serif
+    ?? findSystemFont('HANBatang.ttf')      // HCR Batang (함초롬바탕) — 한/글 default serif
     ?? findSystemFont('AppleMyungjo.ttf')
     ?? findSystemFont('NanumMyeongjo.ttf')
     ?? findSystemFont('batang.ttc');
 
   // Note: .ttc files cause fontkit subsetting crash. Prefer .ttf first.
   const sansPath = customFonts?.sans
+    ?? findSystemFont('HANDotum.ttf')       // HCR Dotum (함초롬돋움) — 한/글 default sans
     ?? findSystemFont('AppleGothic.ttf')
     ?? findSystemFont('NanumGothic.ttf')
     ?? findSystemFont('malgun.ttf')
