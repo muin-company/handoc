@@ -371,7 +371,8 @@ function mmToPt(mmStr: string | undefined): number {
 /** Parse hex color string like "#000000" to rgb() */
 function parseColor(colorStr: string | undefined): { red: number; green: number; blue: number } | undefined {
   if (!colorStr || colorStr === 'none') return undefined;
-  const m = colorStr.match(/^#([0-9A-Fa-f]{6})$/);
+  // Accept both '#RRGGBB' and 'RRGGBB' formats
+  const m = colorStr.match(/^#?([0-9A-Fa-f]{6})$/);
   if (!m) return undefined;
   const n = parseInt(m[1], 16);
   return { red: ((n >> 16) & 0xFF) / 255, green: ((n >> 8) & 0xFF) / 255, blue: (n & 0xFF) / 255 };
@@ -463,13 +464,23 @@ function resolveBorderFill(doc: HanDoc, borderFillIDRef: number): ResolvedBorder
     return { type: t, width: w, color: c };
   }
 
-  // Background color from fillBrush > winBrush
+  // Background color from fillBrush > winBrush or gradation (single-color approximation)
   let bgColor: { red: number; green: number; blue: number } | undefined;
   const fillBrush = bf.children.find(c => c.tag === 'fillBrush');
   if (fillBrush) {
     const winBrush = fillBrush.children.find(c => c.tag === 'winBrush');
     if (winBrush) {
       bgColor = parseColor(winBrush.attrs['faceColor']);
+    }
+    // Gradation fallback: use first color stop as single-color approximation
+    if (!bgColor) {
+      const gradation = fillBrush.children.find(c => c.tag === 'gradation');
+      if (gradation) {
+        const firstColor = gradation.children.find(c => c.tag === 'color');
+        if (firstColor?.attrs['value']) {
+          bgColor = parseColor(firstColor.attrs['value']);
+        }
+      }
     }
   }
 
