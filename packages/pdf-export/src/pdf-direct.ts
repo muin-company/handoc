@@ -582,6 +582,7 @@ interface TextStyle {
   color: [number, number, number];
   isSerif: boolean;
   charSpacing: number; // pt (character spacing)
+  highlightColor?: [number, number, number]; // text background highlight/shade color
 }
 
 interface ParaStyle {
@@ -612,6 +613,13 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
   if (cp.textColor && cp.textColor !== '0' && cp.textColor !== '#000000' && cp.textColor !== '000000') {
     const c = cp.textColor.replace('#', '').padStart(6, '0');
     s.color = [parseInt(c.slice(0, 2), 16) / 255, parseInt(c.slice(2, 4), 16) / 255, parseInt(c.slice(4, 6), 16) / 255];
+  }
+
+  // Highlight / shade color (text background)
+  const hlc = cp.highlightColor || cp.shadeColor;
+  if (hlc && hlc !== 'none' && hlc !== 'NONE' && hlc !== '#ffffff' && hlc !== 'ffffff') {
+    const h = hlc.replace('#', '').padStart(6, '0');
+    s.highlightColor = [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255];
   }
 
   const fontRef = (cp as any).fontRef;
@@ -917,7 +925,20 @@ function drawText(
   charSpacing = 0,
   bold = false,
   italic = false,
+  highlightColor?: [number, number, number],
 ): number {
+  // Draw highlight background if present
+  if (highlightColor && text.trim().length > 0) {
+    const tw = measureText(text, font, fontSize) + (charSpacing ? charSpacing * Math.max(0, text.length - 1) : 0);
+    page.drawRectangle({
+      x,
+      y: y - fontSize * 0.25,
+      width: tw,
+      height: fontSize * 1.3,
+      color: rgb(...highlightColor),
+    });
+  }
+
   // Faux bold: FillThenStroke rendering mode with thin stroke width
   // Faux italic: skew via cm (concat matrix) operator
   const needsWrap = bold || italic;
@@ -1418,7 +1439,7 @@ export async function generatePdf(
               }
 
               const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic);
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic, ts.highlightColor);
 
               if (ts.underline) {
                 page.drawLine({
@@ -1803,7 +1824,7 @@ export async function generatePdf(
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic, cts.highlightColor);
 
                   // Underline / strikethrough in table cells
                   if (cts.underline) {
