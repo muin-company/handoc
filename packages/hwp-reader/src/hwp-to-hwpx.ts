@@ -210,8 +210,8 @@ function extractSectionItems(
       }
     }
 
-    // Parse table info record (tag 77) to get dimensions
-    if (rec.tagId === 77 && inTable) {
+    // Parse table info record (TABLE = tag 73) to get dimensions
+    if (rec.tagId === HWPTAG.TABLE && inTable) {
       if (rec.data.byteLength >= 8) {
         tableRows = readUint16LE(rec.data, 4);
         tableCols = readUint16LE(rec.data, 6);
@@ -238,24 +238,25 @@ function extractSectionItems(
 
         // Parse cell properties from LIST_HEADER data
         const d = rec.data;
-        if (d.byteLength >= 34) {
+        if (d.byteLength >= 32) {
+          // LIST_HEADER: nPara(2) + property(4) = 6 bytes, then cell fields
           currentCellData = {
-            colAddr: readUint16LE(d, 8),
-            rowAddr: readUint16LE(d, 10),
-            colSpan: readUint16LE(d, 12),
-            rowSpan: readUint16LE(d, 14),
-            width: readUint32LE(d, 16),
-            height: readUint32LE(d, 20),
-            marginLeft: readUint16LE(d, 24),
-            marginRight: readUint16LE(d, 26),
-            marginTop: readUint16LE(d, 28),
-            marginBottom: readUint16LE(d, 30),
-            borderFillId: readUint16LE(d, 32),
+            colAddr: readUint16LE(d, 6),
+            rowAddr: readUint16LE(d, 8),
+            colSpan: readUint16LE(d, 10),
+            rowSpan: readUint16LE(d, 12),
+            width: readUint32LE(d, 14),
+            height: readUint32LE(d, 18),
+            marginLeft: readUint16LE(d, 22),
+            marginRight: readUint16LE(d, 24),
+            marginTop: readUint16LE(d, 26),
+            marginBottom: readUint16LE(d, 28),
+            borderFillId: readUint16LE(d, 30),
           };
         } else {
           currentCellData = {
-            colAddr: cellCount % tableCols,
-            rowAddr: Math.floor(cellCount / tableCols),
+            colAddr: tableCols > 0 ? cellCount % tableCols : cellCount,
+            rowAddr: tableCols > 0 ? Math.floor(cellCount / tableCols) : 0,
             colSpan: 1, rowSpan: 1,
             width: 0, height: 0,
             marginLeft: 283, marginRight: 283,
