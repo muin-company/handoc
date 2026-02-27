@@ -817,7 +817,7 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   // height) partially compensates for the wider text, preventing page overflow.
   // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
   // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
+  return fontSize * (ps.lineSpacingValue / 100) * 1.01;
 }
 
 // ── Text measurement ──
