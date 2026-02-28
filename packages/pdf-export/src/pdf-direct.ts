@@ -806,8 +806,28 @@ function getParaPrefix(
   return { prefix: '', autoIndent: false, level: 0 };
 }
 
+/** Get font design-height ratio (ascent+|descent|)/unitsPerEm from fontkit metrics */
+const emRatioCache = new Map<PDFFont, number>();
+function getEmRatio(font?: PDFFont): number {
+  if (!font) return 1.0;
+  const cached = emRatioCache.get(font);
+  if (cached !== undefined) return cached;
+  try {
+    const fk = (font as any).embedder?.font;
+    if (fk && fk.unitsPerEm) {
+      // fontkit: ascent positive, descent negative
+      const ratio = (fk.ascent - fk.descent) / fk.unitsPerEm;
+      if (ratio > 0.5 && ratio < 3.0) {
+        emRatioCache.set(font, ratio);
+        return ratio;
+      }
+    }
+  } catch {}
+  return 1.0; // fallback for standard (non-fontkit) fonts
+}
+
 /** Calculate line height in pt from paragraph style and font size */
-function calcLineHeight(ps: ParaStyle, fontSize: number): number {
+function calcLineHeight(ps: ParaStyle, fontSize: number, font?: PDFFont): number {
   if (ps.lineSpacingType === 'fixed') {
     return hwpToPt(ps.lineSpacingValue);
   }
@@ -815,17 +835,17 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
     // betweenLines: gap between lines (lineHeight = fontSize + gap)
     return fontSize + hwpToPt(ps.lineSpacingValue);
   }
+  const emRatio = getEmRatio(font);
   if (ps.lineSpacingType === 'atleast') {
     // atLeast: minimum line height — use max(calculated, minimum)
-    const pctHeight = fontSize * (ps.lineSpacingValue / 100) * 0.75;
+    const pctHeight = fontSize * emRatio * (ps.lineSpacingValue / 100);
     return Math.max(pctHeight, fontSize * 1.2);
   }
   // percent: value is percentage (e.g., 160 = 160%)
-  // HWP computes lineHeight relative to the font's design height, not fontSize.
-  // For Korean fonts (HCR Batang etc.), design height ≈ 0.75 × fontSize.
-  // Evidence: HWPX lineSpacing=160% + 10pt font → reference PDF shows 12pt
-  // line height (10 × 1.6 × 0.75 = 12).
-  return fontSize * (ps.lineSpacingValue / 100) * 0.75;
+  // HWP computes lineHeight = fontSize × emRatio × (lineSpacing / 100)
+  // where emRatio = (ascent - descent) / unitsPerEm from the font's metrics.
+  // e.g., HCR Batang emRatio ≈ 1.30, so 10pt × 1.30 × 1.60 = 20.8pt
+  return fontSize * emRatio * (ps.lineSpacingValue / 100);
 }
 
 // ── Text measurement ──
@@ -1124,7 +1144,7 @@ function estimateTableHeight(
         for (const cr of cp.runs) {
           const cts = resolveTextStyle(doc, cr.charPrIDRef);
           const cf = getFont(cts);
-          const lh = calcLineHeight(cps, cts.fontSize);
+          const lh = calcLineHeight(cps, cts.fontSize, cf);
           for (const cc of cr.children) {
             if (cc.type === 'text') {
               const text = cc.content;
@@ -1402,144 +1422,202 @@ export async function generatePdf(
 
       // ── LineSeg-based rendering: use pre-computed line layout from HWPX ──
       const lineSegs = para.lineSegArray;
-      if (lineSegs.length > 1) {
-        const lsSpans: Array<{ text: string; ts: TextStyle; font: PDFFont; start: number; end: number }> = [];
-        let lsFullText = '';
-        const lsNonText: Array<{ child: any; ts: TextStyle; font: PDFFont }> = [];
+      const useLineSeg = lineSegs.length > 1; // Only use lineseg for multi-line paragraphs
+      if (useLineSeg) {
+        // Step 1: Collect all text content and styled spans from runs
+        interface StyledSpan { text: string; ts: TextStyle; font: PDFFont; start: number; end: number; }
+        const spans: StyledSpan[] = [];
+        let fullText = '';
+        const nonTextChildren: Array<{ type: string; child: any; ts: TextStyle; font: PDFFont }> = [];
+
         for (const run of para.runs) {
           const ts = resolveTextStyle(doc, run.charPrIDRef);
           const font = getFont(ts);
           for (const child of run.children) {
             if (child.type === 'text' && child.content) {
               let content = child.content;
-              if (paraPrefix && !prefixApplied) { content = paraPrefix + content; prefixApplied = true; }
-              const start = lsFullText.length;
-              lsFullText += content;
-              lsSpans.push({ text: content, ts, font, start, end: lsFullText.length });
+              if (paraPrefix && !prefixApplied) {
+                content = paraPrefix + content;
+                prefixApplied = true;
+              }
+              const start = fullText.length;
+              fullText += content;
+              spans.push({ text: content, ts, font, start, end: fullText.length });
             } else if (child.type !== 'text') {
-              lsNonText.push({ child, ts, font });
+              nonTextChildren.push({ type: child.type, child, ts, font });
             }
           }
         }
-        const lastTP = lineSegs[lineSegs.length - 1].textpos;
-        if (lsFullText.length > 0 && lastTP < lsFullText.length) {
-          // Use lineseg for line breaking (textpos) but keep incremental Y (curY)
-          // Use calcLineHeight for vertical spacing (our fonts differ from HCR fonts)
-          const defaultTs = lsSpans.length > 0 ? lsSpans[0].ts : resolveTextStyle(doc, para.runs[0]?.charPrIDRef ?? null);
-          const lsLineH = calcLineHeight(ps, defaultTs.fontSize);
 
+        if (fullText.length > 0) {
+          // Step 2: Split text into lines by lineseg textpos boundaries
+          let prevVertPos = -1;
           for (let si = 0; si < lineSegs.length; si++) {
             const seg = lineSegs[si];
             const nextSeg = lineSegs[si + 1];
             const lineStart = seg.textpos;
-            const lineEnd = nextSeg ? nextSeg.textpos : lsFullText.length;
-            if (lineStart >= lsFullText.length) break;
-            const lineText = lsFullText.substring(lineStart, Math.min(lineEnd, lsFullText.length)).replace(/\n$/, '');
-            if (!lineText && si > 0) continue;
+            const lineEnd = nextSeg ? nextSeg.textpos : fullText.length;
+            if (lineStart >= fullText.length) break;
+            const lineText = fullText.substring(lineStart, Math.min(lineEnd, fullText.length)).replace(/\n$/, '');
+            if (!lineText && si > 0) continue; // Skip empty continuation lines
 
-            const thisLineH = lsLineH;
+            // Page break detection: vertpos resets to a smaller value
+            if (prevVertPos >= 0 && seg.vertpos < prevVertPos - 100) {
+              newPage();
+            }
+            prevVertPos = seg.vertpos;
 
-            checkBreak(thisLineH);
+            // Compute Y position from lineseg vertpos (relative to page content top)
+            const segVertPt = hwpToPt(seg.vertpos);
+            const segBaselinePt = hwpToPt(seg.baseline);
+            const segHorzPosPt = hwpToPt(seg.horzpos);
+            const segHorzSizePt = hwpToPt(seg.horzsize);
+
+            // Use absolute positioning from lineseg
+            const lineY = pageH - mT - segVertPt - segBaselinePt;
+
+            // Compute X position
             const activeCol = colLayouts[curCol];
-            const activePL = activeCol.x + ps.marginLeft;
-            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
+            const basePL = activeCol.x + ps.marginLeft;
+            let x = basePL + segHorzPosPt;
 
-            // Find overlapping spans
+            // Find spans that overlap this line's character range
             const lineSpans: Array<{ text: string; ts: TextStyle; font: PDFFont }> = [];
-            for (const span of lsSpans) {
-              const os = Math.max(span.start, lineStart);
-              const oe = Math.min(span.end, lineEnd);
-              if (os < oe) {
-                const sub = span.text.substring(os - span.start, oe - span.start);
-                if (sub) lineSpans.push({ text: sub, ts: span.ts, font: span.font });
+            for (const span of spans) {
+              const overlapStart = Math.max(span.start, lineStart);
+              const overlapEnd = Math.min(span.end, lineEnd);
+              if (overlapStart < overlapEnd) {
+                const subText = span.text.substring(overlapStart - span.start, overlapEnd - span.start);
+                if (subText) lineSpans.push({ text: subText, ts: span.ts, font: span.font });
               }
             }
-            let totalW = 0;
+
+            // Measure total line width for alignment
+            let totalLineW = 0;
             for (const ls of lineSpans) {
-              totalW += measureText(ls.text, ls.font, ls.ts.fontSize);
-              if (ls.ts.charSpacing && ls.text.length > 1) totalW += ls.ts.charSpacing * (ls.text.length - 1);
+              totalLineW += measureText(ls.text, ls.font, ls.ts.fontSize);
+              if (ls.ts.charSpacing && ls.text.length > 1) totalLineW += ls.ts.charSpacing * (ls.text.length - 1);
             }
 
-            // X positioning and alignment
-            let x = activePL;
-            const lineIndent = firstLine ? ps.textIndent : 0;
-            x += lineIndent;
-            const effectiveW = activePW - lineIndent;
+            // Apply alignment
+            const effectiveW = segHorzSizePt;
             let justifyCs = 0;
-            if (ps.align === 'center') x += (effectiveW - totalW) / 2;
-            else if (ps.align === 'right') x += effectiveW - totalW;
+            if (ps.align === 'center') x += (effectiveW - totalLineW) / 2;
+            else if (ps.align === 'right') x += effectiveW - totalLineW;
             else if (ps.align === 'justify' && si < lineSegs.length - 1 && lineText.length > 1) {
-              justifyCs = (effectiveW - totalW) / (lineText.length - 1);
+              const extra = effectiveW - totalLineW;
+              justifyCs = extra / (lineText.length - 1);
             }
 
-            const textY = curY - defaultTs.fontSize;
+            // Draw each styled span
             let drawX = x;
             for (const ls of lineSpans) {
-              const jcs = ls.ts.charSpacing + justifyCs;
-              drawText(page, ls.text, drawX, textY, ls.font, ls.ts.fontSize, ls.ts.color, jcs, ls.ts.bold, ls.ts.italic, ls.ts.highlightColor, ps.condense);
-              let sw = measureText(ls.text, ls.font, ls.ts.fontSize);
-              if (jcs && ls.text.length > 1) sw += jcs * (ls.text.length - 1);
-              const cf = ps.condense > 0 ? (100 - ps.condense) / 100 : 1;
-              if (cf !== 1) sw *= cf;
-              if (ls.ts.underline) page.drawLine({ start: { x: drawX, y: textY - 2 }, end: { x: drawX + sw, y: textY - 2 }, thickness: 0.5, color: rgb(...ls.ts.color) });
-              if (ls.ts.strikeout) page.drawLine({ start: { x: drawX, y: textY + ls.ts.fontSize * 0.35 }, end: { x: drawX + sw, y: textY + ls.ts.fontSize * 0.35 }, thickness: 0.5, color: rgb(...ls.ts.color) });
-              drawX += sw;
+              const spanJustifyCs = ls.ts.charSpacing + justifyCs;
+              drawText(page, ls.text, drawX, lineY, ls.font, ls.ts.fontSize, ls.ts.color, spanJustifyCs, ls.ts.bold, ls.ts.italic, ls.ts.highlightColor, ps.condense);
+
+              let spanW = measureText(ls.text, ls.font, ls.ts.fontSize);
+              if (spanJustifyCs && ls.text.length > 1) spanW += spanJustifyCs * (ls.text.length - 1);
+              const condenseFactor = ps.condense > 0 ? (100 - ps.condense) / 100 : 1;
+              if (condenseFactor !== 1) spanW *= condenseFactor;
+
+              if (ls.ts.underline) {
+                page.drawLine({
+                  start: { x: drawX, y: lineY - 2 },
+                  end: { x: drawX + spanW, y: lineY - 2 },
+                  thickness: 0.5,
+                  color: rgb(...ls.ts.color),
+                });
+              }
+              if (ls.ts.strikeout) {
+                page.drawLine({
+                  start: { x: drawX, y: lineY + ls.ts.fontSize * 0.35 },
+                  end: { x: drawX + spanW, y: lineY + ls.ts.fontSize * 0.35 },
+                  thickness: 0.5,
+                  color: rgb(...ls.ts.color),
+                });
+              }
+
+              drawX += spanW;
             }
-            curY -= thisLineH;
+
+            // Update curY to track position for subsequent elements
+            curY = lineY;
             hasContent = true;
             firstLine = false;
           }
-          // Handle non-text children
-          for (const ntc of lsNonText) {
-            if (ntc.child.type === 'table') {
-              hasContent = true;
-              const ac = colLayouts[curCol];
-              renderTable(doc, ntc.child.element, ac.x + ps.marginLeft, ac.width - ps.marginLeft - ps.marginRight, getFont);
-            } else if (ntc.child.type === 'inlineObject') {
-              hasContent = true;
-              const ac = colLayouts[curCol];
-              const aPL = ac.x + ps.marginLeft, aPW = ac.width - ps.marginLeft - ps.marginRight;
-              const fp = getFloatingPos(ntc.child.element);
-              if (fp) {
-                renderFloatingElement(doc, ntc.child, fp, getFont, ntc.font, ntc.ts, ps);
-                if (fp.vertRelTo === 'PARA') { const fh = fp.height > 0 ? hwpToPt(fp.height) : 0; if (fh > 0) { checkBreak(fh); curY -= fh; } }
-              } else if (ntc.child.name === 'picture' || ntc.child.name === 'pic') {
-                renderImage(doc, ntc.child.element, aPL, aPW);
-              } else {
-                renderShapeContent(doc, ntc.child.element, aPL, aPW, ntc.font, ntc.ts, ps, getFont);
+
+          // After lineseg rendering, set curY below the last line
+          if (lineSegs.length > 0) {
+            const lastSeg = lineSegs[lineSegs.length - 1];
+            const lastSegBottom = hwpToPt(lastSeg.vertpos + lastSeg.vertsize + lastSeg.spacing);
+            curY = pageH - mT - lastSegBottom;
+          }
+        }
+
+        // Handle non-text children (tables, inline objects, etc.)
+        for (const ntc of nonTextChildren) {
+          if (ntc.child.type === 'table') {
+            hasContent = true;
+            const activeCol = colLayouts[curCol];
+            renderTable(doc, ntc.child.element, activeCol.x + ps.marginLeft, activeCol.width - ps.marginLeft - ps.marginRight, getFont);
+          } else if (ntc.child.type === 'inlineObject') {
+            hasContent = true;
+            const activeCol = colLayouts[curCol];
+            const activePL = activeCol.x + ps.marginLeft;
+            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
+            const floatPos = getFloatingPos(ntc.child.element);
+            if (floatPos) {
+              renderFloatingElement(doc, ntc.child, floatPos, getFont, ntc.font, ntc.ts, ps);
+              if (floatPos.vertRelTo === 'PARA') {
+                const fh = floatPos.height > 0 ? hwpToPt(floatPos.height) : 0;
+                if (fh > 0) { checkBreak(fh); curY -= fh; }
               }
-            } else if (ntc.child.type === 'ctrl') {
-              const fn = parseFootnote(ntc.child.element);
-              if (fn) {
-                footnoteCounter++;
-                const fnText = extractAnnotationText(fn);
-                const fnFL = fonts.sans, fnFS = 8, fnLH = fnFS * 1.4;
-                const fnNS = `${footnoteCounter}) `, fnNW = measureText(fnNS, fnFL, fnFS);
-                const fnLs = wrapText(fnText, fnFL, fnFS, Math.max(cW - fnNW, 1));
-                if (!pageFootnotes.has(page)) pageFootnotes.set(page, []);
-                pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText, lines: fnLs });
-                const fns = pageFootnotes.get(page)!;
-                let tfl = 0; for (const f of fns) tfl += f.lines.length;
-                pageFootnoteHeight.set(page, fnLH * tfl + 10);
-              }
+            } else if (ntc.child.name === 'picture' || ntc.child.name === 'pic') {
+              renderImage(doc, ntc.child.element, activePL, activePW);
+            } else {
+              renderShapeContent(doc, ntc.child.element, activePL, activePW, ntc.font, ntc.ts, ps, getFont);
+            }
+          } else if (ntc.child.type === 'ctrl') {
+            const fn = parseFootnote(ntc.child.element);
+            if (fn) {
+              footnoteCounter++;
+              const fnText = extractAnnotationText(fn);
+              const fnFontLocal = fonts.sans;
+              const fnFontSizeLocal = 8;
+              const fnLineHLocal = fnFontSizeLocal * 1.4;
+              const fnNumStr = `${footnoteCounter}) `;
+              const fnNumW = measureText(fnNumStr, fnFontLocal, fnFontSizeLocal);
+              const fnTextWidth = cW - fnNumW;
+              const fnLines = wrapText(fnText, fnFontLocal, fnFontSizeLocal, Math.max(fnTextWidth, 1));
+              if (!pageFootnotes.has(page)) pageFootnotes.set(page, []);
+              pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText, lines: fnLines });
+              const fns = pageFootnotes.get(page)!;
+              let totalFnLines = 0;
+              for (const f of fns) totalFnLines += f.lines.length;
+              const newFnH = fnLineHLocal * totalFnLines + 10;
+              pageFootnoteHeight.set(page, newFnH);
             }
           }
-          if (!hasContent) {
-            const dTs = resolveTextStyle(doc, para.runs[0]?.charPrIDRef ?? null);
-            const dLH = calcLineHeight(ps, dTs.fontSize);
-            checkBreak(dLH * 0.75); curY -= dLH * 0.75;
-          } else { pagesWithContent.add(page); }
-          curY -= ps.marginBottom;
-          continue; // Skip regular run-by-run rendering
         }
-        // lineseg invalid — fall through to wrapText
-        prefixApplied = false;
+
+        // Skip empty paragraph handling if lineseg had content
+        if (!hasContent) {
+          const defaultTs = resolveTextStyle(doc, para.runs[0]?.charPrIDRef ?? null);
+          const defaultLineH = calcLineHeight(ps, defaultTs.fontSize, getFont(defaultTs));
+          const emptyH = defaultLineH * 0.75;
+          checkBreak(emptyH);
+          curY -= emptyH;
+        } else {
+          pagesWithContent.add(page);
+        }
+        curY -= ps.marginBottom;
+        continue; // Skip the regular run-by-run rendering below
       }
 
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
         const font = getFont(ts);
-        const lineH = calcLineHeight(ps, ts.fontSize);
+        const lineH = calcLineHeight(ps, ts.fontSize, font);
 
         for (const child of run.children) {
           if (child.type === 'text') {
@@ -1694,7 +1772,7 @@ export async function generatePdf(
       // If paragraph had no content at all, advance by reduced height
       // Empty paragraphs in HWP typically render shorter than full line height
       if (!hasContent) {
-        const defaultLineH = calcLineHeight(ps, 10);
+        const defaultLineH = calcLineHeight(ps, 10, fonts.serif);
         const emptyLineH = defaultLineH * 0.75;
         checkBreak(emptyLineH);
         curY -= emptyLineH;
@@ -1917,7 +1995,7 @@ export async function generatePdf(
         for (const cr of cp.runs) {
           const cts = resolveTextStyle(doc, cr.charPrIDRef);
           const cf = getFont(cts);
-          const lh = calcLineHeight(cps, cts.fontSize);
+          const lh = calcLineHeight(cps, cts.fontSize, cf);
           for (const cc of cr.children) {
             if (cc.type === 'text') {
               const text = cc.content;
@@ -1979,7 +2057,7 @@ export async function generatePdf(
         for (const cr of cp.runs) {
           const cts = resolveTextStyle(doc, cr.charPrIDRef);
           const cf = getFont(cts);
-          const lh = calcLineHeight(cps, cts.fontSize);
+          const lh = calcLineHeight(cps, cts.fontSize, cf);
           for (const cc of cr.children) {
             if (cc.type === 'text') {
               const text = cc.content;
@@ -2195,7 +2273,7 @@ export async function generatePdf(
             }
             if (texts.length > 0) {
               const text = texts.join('');
-              const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
+              const lineH = calcLineHeight(defaultPs, defaultTs.fontSize, defaultFont);
               const lines = wrapText(text, defaultFont, defaultTs.fontSize, shapeW, defaultTs.charSpacing);
               for (const line of lines) {
                 checkBreak(lineH);
@@ -2226,7 +2304,7 @@ export async function generatePdf(
         if (!hasContent) {
           const shapeText = extractShapeText(element);
           if (shapeText.trim()) {
-            const lineH = calcLineHeight(defaultPs, defaultTs.fontSize);
+            const lineH = calcLineHeight(defaultPs, defaultTs.fontSize, defaultFont);
             const lines = wrapText(shapeText.trim(), defaultFont, defaultTs.fontSize, shapeW, defaultTs.charSpacing);
             for (const line of lines) {
               checkBreak(lineH);
