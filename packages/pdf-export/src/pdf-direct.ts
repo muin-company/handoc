@@ -1992,6 +1992,28 @@ export async function generatePdf(
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         h += cps.marginTop;
+        // Use lineseg data when available — 한/글's pre-computed line layout
+        // gives much more accurate heights than wrapText + calcLineHeight
+        const cellLineSegs = cp.lineSegArray ?? [];
+        if (cellLineSegs.length > 0) {
+          let hasNonTextContent = false;
+          for (const cr of cp.runs) {
+            for (const cc of cr.children) {
+              if (cc.type === 'table' || (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) || cc.type === 'shape') {
+                hasNonTextContent = true; break;
+              }
+            }
+            if (hasNonTextContent) break;
+          }
+          if (!hasNonTextContent) {
+            for (const seg of cellLineSegs) {
+              h += hwpToPt(seg.vertsize + seg.spacing);
+            }
+            h += cps.marginBottom;
+            continue;
+          }
+        }
+        // Fallback: wrapText-based estimation (no lineseg or non-text content)
         for (const cr of cp.runs) {
           const cts = resolveTextStyle(doc, cr.charPrIDRef);
           const cf = getFont(cts);
