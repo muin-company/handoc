@@ -7,7 +7,7 @@
 
 import { HanDoc, extractAnnotationText, parseFootnote, parseHeaderFooter } from '@handoc/hwpx-parser';
 import { parseTable } from '@handoc/hwpx-parser';
-import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth } from 'pdf-lib';
+import { PDFDocument, rgb, PDFFont, PDFPage, PDFImage, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth, concatTransformationMatrix } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -605,7 +605,8 @@ interface TextStyle {
 interface ParaStyle {
   align: 'left' | 'center' | 'right' | 'justify';
   lineSpacingValue: number;   // raw value from HWPX
-  lineSpacingType: string;    // 'percent' | 'fixed'
+  lineSpacingType: string;    // 'percent' | 'fixed' | 'betweenlines' | 'atleast'
+  condense: number;           // paragraph-level condensation (0 = none, N = condense by N%)
   marginLeft: number;   // pt
   marginRight: number;  // pt
   marginTop: number;    // pt
@@ -662,7 +663,7 @@ function resolveTextStyle(doc: HanDoc, charPrIDRef: number | null): TextStyle {
 function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
   const d: ParaStyle = {
     align: 'left',
-    lineSpacingValue: 160, lineSpacingType: 'percent',
+    lineSpacingValue: 160, lineSpacingType: 'percent', condense: 0,
     marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, textIndent: 0,
   };
   if (paraPrIDRef == null) return d;
@@ -681,6 +682,7 @@ function resolveParaStyle(doc: HanDoc, paraPrIDRef: number | null): ParaStyle {
     s.lineSpacingType = pp.lineSpacing.type.toLowerCase();
     s.lineSpacingValue = pp.lineSpacing.value;
   }
+  if (pp.condense && pp.condense > 0) s.condense = pp.condense;
   if (pp.margin) {
     if (pp.margin.left) s.marginLeft = hwpToPt(pp.margin.left);
     if (pp.margin.right) s.marginRight = hwpToPt(pp.margin.right);
@@ -809,6 +811,15 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   if (ps.lineSpacingType === 'fixed') {
     return hwpToPt(ps.lineSpacingValue);
   }
+  if (ps.lineSpacingType === 'betweenlines') {
+    // betweenLines: gap between lines (lineHeight = fontSize + gap)
+    return fontSize + hwpToPt(ps.lineSpacingValue);
+  }
+  if (ps.lineSpacingType === 'atleast') {
+    // atLeast: minimum line height — use max(calculated, minimum)
+    const pctHeight = fontSize * (ps.lineSpacingValue / 100) * 1.03;
+    return Math.max(pctHeight, fontSize * 1.2);
+  }
   // percent: value is percentage (e.g., 160 = 160%)
   // NOTE: HWP actually computes lineHeight = fontSize × emRatio × pct, where
   // emRatio ≈ 1.2 for Korean fonts (ascent+|descent| / unitsPerEm). However,
@@ -884,12 +895,14 @@ function canBreakAt(remaining: string, pos: number): boolean {
   return true;
 }
 
-function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number, charSpacing = 0): WLine[] {
+function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number, charSpacing = 0, condense = 0): WLine[] {
   if (!text || maxWidth <= 0) return [];
   const lines: WLine[] = [];
-  /** measureText + charSpacing adjustment */
+  /** measureText + charSpacing adjustment, with condense scaling */
+  const condenseFactor = condense > 0 ? (100 - condense) / 100 : 1;
   const measure = (t: string) => {
-    const w = measureText(t, font, fontSize);
+    let w = measureText(t, font, fontSize);
+    if (condenseFactor !== 1) w *= condenseFactor;
     return charSpacing && t.length > 1 ? w + charSpacing * (t.length - 1) : w;
   };
 
@@ -943,6 +956,7 @@ function drawText(
   bold = false,
   italic = false,
   highlightColor?: [number, number, number],
+  condense = 0,
 ): number {
   // Draw highlight background if present
   if (highlightColor && text.trim().length > 0) {
@@ -958,10 +972,16 @@ function drawText(
 
   // Faux bold: FillThenStroke rendering mode with thin stroke width
   // Faux italic: skew via cm (concat matrix) operator
-  const needsWrap = bold || italic;
+  const condenseFactor = condense > 0 ? (100 - condense) / 100 : 1;
+  const needsWrap = bold || italic || condenseFactor !== 1;
 
   if (needsWrap) {
     page.pushOperators(pushGraphicsState());
+    if (condenseFactor !== 1) {
+      // Apply horizontal scaling via text matrix
+      // concatTransformationMatrix scales x by condenseFactor around the text origin
+      page.pushOperators(concatTransformationMatrix(condenseFactor, 0, 0, 1, x * (1 - condenseFactor), 0));
+    }
     if (bold) {
       page.pushOperators(
         setTextRenderingMode(TextRenderingMode.FillAndOutline),
@@ -974,7 +994,8 @@ function drawText(
   try {
     page.drawText(text, { x, y, size: fontSize, font, color: rgb(...color), ...(charSpacing ? { characterSpacing: charSpacing } : {}) });
     if (needsWrap) page.pushOperators(popGraphicsState());
-    return measureText(text, font, fontSize) + (charSpacing ? charSpacing * Math.max(0, text.length - 1) : 0);
+    const baseW = measureText(text, font, fontSize) + (charSpacing ? charSpacing * Math.max(0, text.length - 1) : 0);
+    return condenseFactor !== 1 ? baseW * condenseFactor : baseW;
   } catch {
     for (const ch of text) {
       try {
@@ -991,7 +1012,8 @@ function drawText(
       }
     }
     if (needsWrap) page.pushOperators(popGraphicsState());
-    return drawX - x;
+    const fallbackW = drawX - x;
+    return condenseFactor !== 1 ? fallbackW * condenseFactor : fallbackW;
   }
 }
 
@@ -1110,7 +1132,7 @@ function estimateTableHeight(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing, cps.condense).length * lh;
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             }
@@ -1421,7 +1443,7 @@ export async function generatePdf(
             if (indent !== 0 || autoIndentOffset !== 0) {
               // Split wrapping: first line at indented width, rest at continuation width
               const firstLineWidth = curPW - indent;
-              const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing);
+              const firstLines = wrapText(content, font, ts.fontSize, firstLineWidth, ts.charSpacing, ps.condense);
               if (firstLines.length <= 1) {
                 lines = firstLines;
               } else {
@@ -1430,11 +1452,11 @@ export async function generatePdf(
                 const usedText = firstLines[0].text;
                 const remaining = content.substring(usedText.length).trimStart();
                 if (remaining) {
-                  lines.push(...wrapText(remaining, font, ts.fontSize, contWidth, ts.charSpacing));
+                  lines.push(...wrapText(remaining, font, ts.fontSize, contWidth, ts.charSpacing, ps.condense));
                 }
               }
             } else {
-              lines = wrapText(content, font, ts.fontSize, curPW, ts.charSpacing);
+              lines = wrapText(content, font, ts.fontSize, curPW, ts.charSpacing, ps.condense);
             }
 
             for (const line of lines) {
@@ -1456,7 +1478,7 @@ export async function generatePdf(
               }
 
               const textY = curY - ts.fontSize;
-              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic, ts.highlightColor);
+              drawText(page, line.text, x, textY, font, ts.fontSize, ts.color, justifyCs, ts.bold, ts.italic, ts.highlightColor, ps.condense);
 
               if (ts.underline) {
                 page.drawLine({
@@ -1767,7 +1789,7 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { h += lh; continue; }
-              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing).length * lh;
+              h += wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing, cps.condense).length * lh;
             } else if (cc.type === 'table') {
               h += estimateTableHeight(doc, cc.element, Math.max(innerW, 1), getFont);
             } else if (cc.type === 'inlineObject' && (cc.name === 'pic' || cc.name === 'picture')) {
@@ -1829,7 +1851,7 @@ export async function generatePdf(
             if (cc.type === 'text') {
               const text = cc.content;
               if (!text) { ty -= lh; continue; }
-              const cls = wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing);
+              const cls = wrapText(text, cf, cts.fontSize, Math.max(innerW, 1), cts.charSpacing, cps.condense);
               for (const cl of cls) {
                 ty -= cts.fontSize;
                 let tx = cellX + cm.left;
@@ -1841,7 +1863,7 @@ export async function generatePdf(
                   cellJustifyCs = cts.charSpacing + extra / (cl.text.length - 1);
                 }
                 if (ty > cellTop - cellH) {
-                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic, cts.highlightColor);
+                  drawText(page, cl.text, tx, ty, cf, cts.fontSize, cts.color, cellJustifyCs, cts.bold, cts.italic, cts.highlightColor, cps.condense);
 
                   // Underline / strikethrough in table cells
                   if (cts.underline) {
