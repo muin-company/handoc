@@ -817,18 +817,15 @@ function calcLineHeight(ps: ParaStyle, fontSize: number): number {
   }
   if (ps.lineSpacingType === 'atleast') {
     // atLeast: minimum line height — use max(calculated, minimum)
-    const pctHeight = fontSize * (ps.lineSpacingValue / 100) * 1.03;
+    const pctHeight = fontSize * (ps.lineSpacingValue / 100) * 0.75;
     return Math.max(pctHeight, fontSize * 1.2);
   }
   // percent: value is percentage (e.g., 160 = 160%)
-  // NOTE: HWP actually computes lineHeight = fontSize × emRatio × pct, where
-  // emRatio ≈ 1.2 for Korean fonts (ascent+|descent| / unitsPerEm). However,
-  // our embedded Apple fonts are 15-30% wider than HCR fonts, causing extra
-  // text wrapping (more lines per paragraph). Using emRatio=1.0 (smaller line
-  // height) partially compensates for the wider text, preventing page overflow.
-  // See: comparison-v32 analysis — emRatio=1.2 fixes 16 underflow but causes
-  // 11 overflow regressions; emRatio=1.0 is the best net trade-off.
-  return fontSize * (ps.lineSpacingValue / 100) * 1.03;
+  // HWP computes lineHeight relative to the font's design height, not fontSize.
+  // For Korean fonts (HCR Batang etc.), design height ≈ 0.75 × fontSize.
+  // Evidence: HWPX lineSpacing=160% + 10pt font → reference PDF shows 12pt
+  // line height (10 × 1.6 × 0.75 = 12).
+  return fontSize * (ps.lineSpacingValue / 100) * 0.75;
 }
 
 // ── Text measurement ──
@@ -837,11 +834,11 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
   try {
     let w = font.widthOfTextAtSize(text, fontSize);
     // Space width correction: Apple fonts have oversized spaces (0.32~0.40em)
-    // vs HWP's HCR Batang (~0.25em). Use 0.27em to reduce text wrapping overflow.
+    // vs HWP's HCR Batang (~0.25em). Use 0.22em to match HCR Batang measured width.
     const spaceCount = text.split(' ').length - 1;
     if (spaceCount > 0) {
       const actualSpaceW = font.widthOfTextAtSize(' ', fontSize);
-      const targetSpaceW = fontSize * 0.30;
+      const targetSpaceW = fontSize * 0.22;
       if (actualSpaceW > targetSpaceW) {
         w -= spaceCount * (actualSpaceW - targetSpaceW);
       }
@@ -851,7 +848,7 @@ function measureText(text: string, font: PDFFont, fontSize: number): number {
     let w = 0;
     for (const ch of text) {
       try {
-        if (ch === ' ') { w += fontSize * 0.30; }
+        if (ch === ' ') { w += fontSize * 0.22; }
         else { w += font.widthOfTextAtSize(ch, fontSize); }
       }
       catch { w += fontSize * ((ch.codePointAt(0) ?? 0) > 0x2E80 ? 1.0 : 0.5); }
@@ -1002,7 +999,7 @@ function drawText(
         page.drawText(ch, { x: drawX, y, size: fontSize, font, color: rgb(...color) });
         if (ch === ' ') {
           const actualW = font.widthOfTextAtSize(' ', fontSize);
-          const targetW = fontSize * 0.30;
+          const targetW = fontSize * 0.22;
           drawX += (actualW > targetW ? targetW : actualW) + charSpacing;
         } else {
           drawX += font.widthOfTextAtSize(ch, fontSize) + charSpacing;
