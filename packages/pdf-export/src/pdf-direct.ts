@@ -1400,6 +1400,142 @@ export async function generatePdf(
       let prefixApplied = false;
       let prefixWidth = 0; // measured width of prefix for autoIndent hanging indent
 
+      // ── LineSeg-based rendering: use pre-computed line layout from HWPX ──
+      const lineSegs = para.lineSegArray;
+      if (lineSegs.length > 1) {
+        const lsSpans: Array<{ text: string; ts: TextStyle; font: PDFFont; start: number; end: number }> = [];
+        let lsFullText = '';
+        const lsNonText: Array<{ child: any; ts: TextStyle; font: PDFFont }> = [];
+        for (const run of para.runs) {
+          const ts = resolveTextStyle(doc, run.charPrIDRef);
+          const font = getFont(ts);
+          for (const child of run.children) {
+            if (child.type === 'text' && child.content) {
+              let content = child.content;
+              if (paraPrefix && !prefixApplied) { content = paraPrefix + content; prefixApplied = true; }
+              const start = lsFullText.length;
+              lsFullText += content;
+              lsSpans.push({ text: content, ts, font, start, end: lsFullText.length });
+            } else if (child.type !== 'text') {
+              lsNonText.push({ child, ts, font });
+            }
+          }
+        }
+        const lastTP = lineSegs[lineSegs.length - 1].textpos;
+        if (lsFullText.length > 0 && lastTP < lsFullText.length) {
+          // Use lineseg for line breaking (textpos) but keep incremental Y (curY)
+          // Use calcLineHeight for vertical spacing (our fonts differ from HCR fonts)
+          const defaultTs = lsSpans.length > 0 ? lsSpans[0].ts : resolveTextStyle(doc, para.runs[0]?.charPrIDRef ?? null);
+          const lsLineH = calcLineHeight(ps, defaultTs.fontSize);
+
+          for (let si = 0; si < lineSegs.length; si++) {
+            const seg = lineSegs[si];
+            const nextSeg = lineSegs[si + 1];
+            const lineStart = seg.textpos;
+            const lineEnd = nextSeg ? nextSeg.textpos : lsFullText.length;
+            if (lineStart >= lsFullText.length) break;
+            const lineText = lsFullText.substring(lineStart, Math.min(lineEnd, lsFullText.length)).replace(/\n$/, '');
+            if (!lineText && si > 0) continue;
+
+            const thisLineH = lsLineH;
+
+            checkBreak(thisLineH);
+            const activeCol = colLayouts[curCol];
+            const activePL = activeCol.x + ps.marginLeft;
+            const activePW = activeCol.width - ps.marginLeft - ps.marginRight;
+
+            // Find overlapping spans
+            const lineSpans: Array<{ text: string; ts: TextStyle; font: PDFFont }> = [];
+            for (const span of lsSpans) {
+              const os = Math.max(span.start, lineStart);
+              const oe = Math.min(span.end, lineEnd);
+              if (os < oe) {
+                const sub = span.text.substring(os - span.start, oe - span.start);
+                if (sub) lineSpans.push({ text: sub, ts: span.ts, font: span.font });
+              }
+            }
+            let totalW = 0;
+            for (const ls of lineSpans) {
+              totalW += measureText(ls.text, ls.font, ls.ts.fontSize);
+              if (ls.ts.charSpacing && ls.text.length > 1) totalW += ls.ts.charSpacing * (ls.text.length - 1);
+            }
+
+            // X positioning and alignment
+            let x = activePL;
+            const lineIndent = firstLine ? ps.textIndent : 0;
+            x += lineIndent;
+            const effectiveW = activePW - lineIndent;
+            let justifyCs = 0;
+            if (ps.align === 'center') x += (effectiveW - totalW) / 2;
+            else if (ps.align === 'right') x += effectiveW - totalW;
+            else if (ps.align === 'justify' && si < lineSegs.length - 1 && lineText.length > 1) {
+              justifyCs = (effectiveW - totalW) / (lineText.length - 1);
+            }
+
+            const textY = curY - defaultTs.fontSize;
+            let drawX = x;
+            for (const ls of lineSpans) {
+              const jcs = ls.ts.charSpacing + justifyCs;
+              drawText(page, ls.text, drawX, textY, ls.font, ls.ts.fontSize, ls.ts.color, jcs, ls.ts.bold, ls.ts.italic, ls.ts.highlightColor, ps.condense);
+              let sw = measureText(ls.text, ls.font, ls.ts.fontSize);
+              if (jcs && ls.text.length > 1) sw += jcs * (ls.text.length - 1);
+              const cf = ps.condense > 0 ? (100 - ps.condense) / 100 : 1;
+              if (cf !== 1) sw *= cf;
+              if (ls.ts.underline) page.drawLine({ start: { x: drawX, y: textY - 2 }, end: { x: drawX + sw, y: textY - 2 }, thickness: 0.5, color: rgb(...ls.ts.color) });
+              if (ls.ts.strikeout) page.drawLine({ start: { x: drawX, y: textY + ls.ts.fontSize * 0.35 }, end: { x: drawX + sw, y: textY + ls.ts.fontSize * 0.35 }, thickness: 0.5, color: rgb(...ls.ts.color) });
+              drawX += sw;
+            }
+            curY -= thisLineH;
+            hasContent = true;
+            firstLine = false;
+          }
+          // Handle non-text children
+          for (const ntc of lsNonText) {
+            if (ntc.child.type === 'table') {
+              hasContent = true;
+              const ac = colLayouts[curCol];
+              renderTable(doc, ntc.child.element, ac.x + ps.marginLeft, ac.width - ps.marginLeft - ps.marginRight, getFont);
+            } else if (ntc.child.type === 'inlineObject') {
+              hasContent = true;
+              const ac = colLayouts[curCol];
+              const aPL = ac.x + ps.marginLeft, aPW = ac.width - ps.marginLeft - ps.marginRight;
+              const fp = getFloatingPos(ntc.child.element);
+              if (fp) {
+                renderFloatingElement(doc, ntc.child, fp, getFont, ntc.font, ntc.ts, ps);
+                if (fp.vertRelTo === 'PARA') { const fh = fp.height > 0 ? hwpToPt(fp.height) : 0; if (fh > 0) { checkBreak(fh); curY -= fh; } }
+              } else if (ntc.child.name === 'picture' || ntc.child.name === 'pic') {
+                renderImage(doc, ntc.child.element, aPL, aPW);
+              } else {
+                renderShapeContent(doc, ntc.child.element, aPL, aPW, ntc.font, ntc.ts, ps, getFont);
+              }
+            } else if (ntc.child.type === 'ctrl') {
+              const fn = parseFootnote(ntc.child.element);
+              if (fn) {
+                footnoteCounter++;
+                const fnText = extractAnnotationText(fn);
+                const fnFL = fonts.sans, fnFS = 8, fnLH = fnFS * 1.4;
+                const fnNS = `${footnoteCounter}) `, fnNW = measureText(fnNS, fnFL, fnFS);
+                const fnLs = wrapText(fnText, fnFL, fnFS, Math.max(cW - fnNW, 1));
+                if (!pageFootnotes.has(page)) pageFootnotes.set(page, []);
+                pageFootnotes.get(page)!.push({ num: footnoteCounter, text: fnText, lines: fnLs });
+                const fns = pageFootnotes.get(page)!;
+                let tfl = 0; for (const f of fns) tfl += f.lines.length;
+                pageFootnoteHeight.set(page, fnLH * tfl + 10);
+              }
+            }
+          }
+          if (!hasContent) {
+            const dTs = resolveTextStyle(doc, para.runs[0]?.charPrIDRef ?? null);
+            const dLH = calcLineHeight(ps, dTs.fontSize);
+            checkBreak(dLH * 0.75); curY -= dLH * 0.75;
+          } else { pagesWithContent.add(page); }
+          curY -= ps.marginBottom;
+          continue; // Skip regular run-by-run rendering
+        }
+        // lineseg invalid — fall through to wrapText
+        prefixApplied = false;
+      }
+
       for (const run of para.runs) {
         const ts = resolveTextStyle(doc, run.charPrIDRef);
         const font = getFont(ts);
