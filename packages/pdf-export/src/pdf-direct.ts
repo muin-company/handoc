@@ -1452,6 +1452,8 @@ export async function generatePdf(
         if (fullText.length > 0) {
           // Step 2: Split text into lines by lineseg textpos boundaries
           let prevVertPos = -1;
+          let lineSegPageOffset = 0; // accumulated page offset for multi-page lineseg
+          const hasTableChildren = nonTextChildren.some(ntc => ntc.child.type === 'table');
           for (let si = 0; si < lineSegs.length; si++) {
             const seg = lineSegs[si];
             const nextSeg = lineSegs[si + 1];
@@ -1461,14 +1463,25 @@ export async function generatePdf(
             const lineText = fullText.substring(lineStart, Math.min(lineEnd, fullText.length)).replace(/\n$/, '');
             if (!lineText && si > 0) continue; // Skip empty continuation lines
 
-            // Page break detection: vertpos resets to a smaller value
-            if (prevVertPos >= 0 && seg.vertpos < prevVertPos - 100) {
-              newPage();
+            const segVertPtAbs = hwpToPt(seg.vertpos);
+            if (!hasTableChildren) {
+              // Page break detection for text-only paragraphs
+              if (prevVertPos >= 0 && seg.vertpos < prevVertPos - 100) {
+                // vertpos reset — new page
+                newPage();
+                lineSegPageOffset = segVertPtAbs;
+              } else if (segVertPtAbs - lineSegPageOffset >= contentH) {
+                // vertpos exceeds current page content height
+                newPage();
+                while (segVertPtAbs - lineSegPageOffset >= contentH) {
+                  lineSegPageOffset += contentH;
+                }
+              }
             }
             prevVertPos = seg.vertpos;
 
             // Compute Y position from lineseg vertpos (relative to page content top)
-            const segVertPt = hwpToPt(seg.vertpos);
+            const segVertPt = segVertPtAbs - lineSegPageOffset;
             const segBaselinePt = hwpToPt(seg.baseline);
             const segHorzPosPt = hwpToPt(seg.horzpos);
             const segHorzSizePt = hwpToPt(seg.horzsize);
@@ -1548,9 +1561,22 @@ export async function generatePdf(
 
           // After lineseg rendering, set curY below the last line
           if (lineSegs.length > 0) {
-            const lastSeg = lineSegs[lineSegs.length - 1];
-            const lastSegBottom = hwpToPt(lastSeg.vertpos + lastSeg.vertsize + lastSeg.spacing);
-            curY = pageH - mT - lastSegBottom;
+            if (hasTableChildren) {
+              // For paragraphs with tables, find the maximum vertpos+vertsize to avoid
+              // curY resetting to near page top due to table cell linesegs
+              let maxBottom = 0;
+              for (const seg of lineSegs) {
+                const bottom = hwpToPt(seg.vertpos + seg.vertsize + (seg.spacing ?? 0));
+                if (bottom > maxBottom) maxBottom = bottom;
+              }
+              // Use modulo contentH for multi-page paragraphs
+              const effectiveBottom = maxBottom > contentH ? maxBottom % contentH : maxBottom;
+              curY = pageH - mT - effectiveBottom;
+            } else {
+              const lastSeg = lineSegs[lineSegs.length - 1];
+              const lastSegBottom = hwpToPt(lastSeg.vertpos + lastSeg.vertsize + lastSeg.spacing) - lineSegPageOffset;
+              curY = pageH - mT - lastSegBottom;
+            }
           }
         }
 
@@ -1989,6 +2015,7 @@ export async function generatePdf(
       const padH = cm.top + cm.bottom;
       const innerW = cellW - cm.left - cm.right;
       let h = padH;
+      let usedLineSeg = false;
       for (const cp of cell.paragraphs) {
         const cps = resolveParaStyle(doc, cp.paraPrIDRef);
         h += cps.marginTop;
@@ -2010,6 +2037,7 @@ export async function generatePdf(
               h += hwpToPt(seg.vertsize + seg.spacing);
             }
             h += cps.marginBottom;
+            usedLineSeg = true;
             continue;
           }
         }
@@ -2051,7 +2079,9 @@ export async function generatePdf(
       // wider than native Korean fonts, causing extra text wrapping that inflates
       // height estimates. Discount the excess to compensate, but keep enough to
       // prevent content clipping (which causes missing pages).
-      if (cellDeclaredH > 0 && h > cellDeclaredH) {
+      if (cellDeclaredH > 0 && h > cellDeclaredH && !usedLineSeg) {
+        // Only discount wrapText-based estimates (font width mismatch).
+        // LineSeg-based heights are pre-computed by 한/글 — no discount needed.
         return cellDeclaredH + (h - cellDeclaredH) * 0.5;
       }
       return Math.max(cellDeclaredH, h);
